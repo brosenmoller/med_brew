@@ -16,21 +16,33 @@ class SrsOverviewScreen extends StatelessWidget {
     final allQuestions = questionService.getAllQuestions();
     final categories = questionService.getCategories();
 
-    // Map: category -> quiz -> questions
+    // Map: category -> quiz -> questions with SRS enabled
     final Map<String, Map<String, List<QuestionData>>> srsData = {};
 
-    for (var cat in categories) {
-      final quizzes = questionService.getQuizzesForCategory(cat);
+    for (String category in categories) {
+      final quizzes = questionService.getQuizzesForCategory(category);
       final Map<String, List<QuestionData>> quizMap = {};
-      for (var quiz in quizzes) {
-        final questions = allQuestions
-            .where((q) => q.quizTags.first == cat && q.quizTags[1] == quiz)
-            .toList();
+      for (String quiz in quizzes) {
+        final questions = allQuestions.where((question) =>
+            question.quizTags.first == category &&
+            question.quizTags[1] == quiz &&
+            srsService.getUserData(question).spacedRepetitionEnabled
+        ).toList();
+
         if (questions.isNotEmpty) {
           quizMap[quiz] = questions;
         }
       }
-      srsData[cat] = quizMap;
+      if (quizMap.isNotEmpty) {
+        srsData[category] = quizMap; // only include categories with SRS quizzes
+      }
+    }
+
+    if (srsData.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: Text("Spaced Repetition")),
+        body: const Center(child: Text("No spaced repetition questions available")),
+      );
     }
 
     return Scaffold(
@@ -42,16 +54,6 @@ class SrsOverviewScreen extends StatelessWidget {
             final cat = categoryEntry.key;
             final quizzes = categoryEntry.value;
 
-            if (quizzes.isEmpty) {
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                child: ListTile(
-                  title: Text(cat),
-                  subtitle: const Text("No quizzes with SRS questions"),
-                ),
-              );
-            }
-
             // Determine if any quiz in this category has due questions
             final hasDueQuestions = quizzes.values.any((quizQuestions) =>
                 quizQuestions.any((q) => srsService.getUserData(q).isDue));
@@ -59,7 +61,7 @@ class SrsOverviewScreen extends StatelessWidget {
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 6),
               child: ExpansionTile(
-                initiallyExpanded: hasDueQuestions,
+                initiallyExpanded: hasDueQuestions, // expand if any due
                 title: Text(cat, style: const TextStyle(fontWeight: FontWeight.bold)),
                 children: quizzes.entries.map((quizEntry) {
                   final quizName = quizEntry.key;
@@ -70,17 +72,26 @@ class SrsOverviewScreen extends StatelessWidget {
                       .toList();
                   final hasDue = dueQuestions.isNotEmpty;
 
-                  String oldestText = "N/A";
+                  String timingText;
+
                   if (hasDue) {
-                    final oldest = dueQuestions
+                    final oldestDue = dueQuestions
                         .map((q) => srsService.getUserData(q).nextReview)
                         .reduce((a, b) => a.isBefore(b) ? a : b);
-                    oldestText = _formatDuration(DateTime.now().difference(oldest));
+
+                    timingText = "oldest due: ${_formatDuration(DateTime.now().difference(oldestDue))} ago";
+                  }
+                  else {
+                    final nextUpcoming = questions
+                        .map((q) => srsService.getUserData(q).nextReview)
+                        .reduce((a, b) => a.isBefore(b) ? a : b);
+
+                    timingText = "next due: ${_formatDuration(nextUpcoming.difference(DateTime.now()))}";
                   }
 
                   return ListTile(
                     title: Text(quizName),
-                    subtitle: Text("${dueQuestions.length} questions due, oldest: $oldestText"),
+                    subtitle: Text("${dueQuestions.length} questions due, $timingText"),
                     trailing: hasDue
                         ? ElevatedButton(
                       onPressed: () => _startQuiz(context, dueQuestions),

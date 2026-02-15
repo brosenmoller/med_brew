@@ -46,7 +46,10 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
         children: [
           TextField(
             controller: _controller,
+            autofocus: true,
             enabled: !widget.locked,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               labelText: "Your Answer",

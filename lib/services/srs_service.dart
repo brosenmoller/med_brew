@@ -17,37 +17,55 @@ class SrsService {
     if (_initialized) { return; }
 
     _userQuestionBox = await Hive.openBox<UserQuestionData>(boxName);
+
+    // print('--- UserQuestionData in Hive ---\n');
+    // for (var userData in _userQuestionBox.values) {
+    //   print(userData);
+    //   print('');
+    // }
+    // print('--- End of Hive Data ---\n');
+
     _initialized = true;
+  }
+
+  Box<UserQuestionData> get _box {
+    if (!_initialized) throw Exception('SRSService not initialized');
+    return _userQuestionBox;
   }
 
   /// Get UserQuestionData for a specific question
   UserQuestionData getUserData(QuestionData question) {
-    return _userQuestionBox.get(question.id) ?? UserQuestionData(questionId: question.id);
+    UserQuestionData? userData = _box.get(question.id);
+    if (userData == null) {
+      userData = UserQuestionData(questionId: question.id);
+      _box.put(question.id, userData);
+    }
+    return userData;
   }
 
   /// Sets the User Data's spacedRepetitionEnabled for this question to 'enabled'
   Future<void> setQuestionSrs(QuestionData question, bool enabled) async {
     final userData = getUserData(question);
     userData.spacedRepetitionEnabled = enabled;
-    await _userQuestionBox.put(question.id, userData);
+    await _box.put(question.id, userData);
   }
 
   /// Puts the Updated User Data into Hive
   Future<void> updateUserData(UserQuestionData userData) async {
-    await _userQuestionBox.put(userData.questionId, userData);
+    await _box.put(userData.questionId, userData);
   }
 
   /// Update user data after answering a question
   Future<void> updateAfterAnswer(QuestionData question, SrsQuality quality) async {
     final userData = getUserData(question);
     userData.updateAfterAnswer(quality);
-    await _userQuestionBox.put(question.id, userData);
+    await _box.put(question.id, userData);
   }
 
   /// Return all questions due for review from a given list
   List<QuestionData> getDueQuestions(List<QuestionData> allQuestions) {
     return allQuestions
-        .where((q) => getUserData(q).isDue)
+        .where((question) => getUserData(question).isDue)
         .toList();
   }
 
@@ -59,12 +77,12 @@ class SrsService {
 
   /// Return all UserQuestionData
   List<UserQuestionData> getAllUserData() {
-    return _userQuestionBox.values.toList();
+    return _box.values.toList();
   }
 
   /// Reset all user SRS data (optional, for testing)
   Future<void> resetAll() async {
-    await _userQuestionBox.clear();
+    await _box.clear();
   }
 
   /// Get next question for a category or tag

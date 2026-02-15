@@ -1,30 +1,24 @@
-import 'package:med_brew/models/question_data.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:med_brew/models/answer_type.dart';
-import 'package:med_brew/models/answer_configs.dart';
+import 'package:med_brew/models/question_data.dart';
 
 class QuestionRepository {
-  static final List<QuestionData> allQuestions = [
+  static List<QuestionData> _questions = [];
 
-    QuestionData(
-      id: "q1",
-      questionVariants: ["What is the longest bone?"],
-      answerType: AnswerType.multipleChoice,
-      multipleChoiceConfig: MultipleChoiceConfig(
-        options: ["Femur", "Tibia", "Humerus", "Fibula"],
-        correctIndex: 0,
-      ),
-      quizTags: ["Skeleton", "Femur Quiz"],
-    ),
+  /// Load questions from JSON asset
+  static Future<void> loadQuestions(String assetPath) async {
+    final jsonString = await rootBundle.loadString(assetPath);
+    final List<dynamic> jsonData = json.decode(jsonString);
+    _questions = jsonData.map((q) => QuestionData.fromJson(q)).toList();
+  }
 
-    QuestionData(
-      id: "q2",
-      questionVariants: ["What muscle flexes the elbow?"],
-      answerType: AnswerType.typed,
-      typedAnswerConfig: TypedAnswerConfig(
-        acceptedAnswers: ["Biceps", "Biceps brachii"],
-      ),
-      quizTags: ["Muscles", "Arm Muscles"],
-    ),
+  /// Get all questions
+  static List<QuestionData> get allQuestions => _questions;
 
-  ];
+  /// Filter questions by tag
+  static List<QuestionData> byTag(String tag) => _questions.where((q) => q.quizTags.contains(tag)).toList();
+
+  /// Filter questions by type
+  static List<QuestionData> byType(AnswerType type) => _questions.where((q) => q.answerType == type).toList();
 }

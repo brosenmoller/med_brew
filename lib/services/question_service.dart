@@ -5,33 +5,33 @@ class QuestionService {
   QuestionService._internal();
   static final QuestionService _instance = QuestionService._internal();
   factory QuestionService() => _instance;
-  final List<QuestionData> _questions = QuestionRepository.allQuestions;
 
   List<QuestionData> getAllQuestions() {
-    return _questions;
+    return QuestionRepository.allQuestions;
   }
 
   /// Level 1: Categories
   List<String> getCategories() {
-    return _questions
-        .map((q) => q.quizTags.first)
-        .toSet()
-        .toList();
+    return getAllQuestions().map((q) => q.quizTags.first).toSet().toList();
   }
 
   /// Level 2: Quizzes in a category
   List<String> getQuizzesForCategory(String category) {
-    return _questions
-        .where((q) => q.quizTags.first == category)
-        .map((q) => q.quizTags[1])
-        .toSet()
-        .toList();
+    final questionsInCategory = getAllQuestions().where((q) => q.quizTags.isNotEmpty && q.quizTags.first == category);
+
+    final quizzes = <String>{}; // use a set to avoid duplicates
+
+    for (QuestionData question in questionsInCategory) {
+      if (question.quizTags.length > 1) {
+        quizzes.addAll(question.quizTags.sublist(1));
+      }
+    }
+
+    return quizzes.toList();
   }
 
   /// Questions for a quiz
   List<QuestionData> getQuestionsForQuiz(String quizName) {
-    return _questions
-        .where((q) => q.quizTags.contains(quizName))
-        .toList();
+    return getAllQuestions().where((q) => q.quizTags.contains(quizName)).toList();
   }
 }

@@ -10,6 +10,18 @@ class ImageClickConfig {
   bool isCorrect(Offset tapPosition) {
     return correctArea.contains(tapPosition);
   }
+
+  factory ImageClickConfig.fromJson(Map<String, dynamic> json) {
+    final area = json['correctArea'];
+    return ImageClickConfig(
+      correctArea: Rect.fromLTRB(
+        (area['left'] as num).toDouble(),
+        (area['top'] as num).toDouble(),
+        (area['right'] as num).toDouble(),
+        (area['bottom'] as num).toDouble(),
+      ),
+    );
+  }
 }
 
 class MultipleChoiceConfig {
@@ -22,6 +34,14 @@ class MultipleChoiceConfig {
     required this.correctIndex,
     this.scrambleOptions = true,
   });
+
+  factory MultipleChoiceConfig.fromJson(Map<String, dynamic> json) {
+    return MultipleChoiceConfig(
+      options: List<String>.from(json['options'] ?? []),
+      correctIndex: json['correctIndex'] as int,
+      scrambleOptions: json['scrambleOptions'] as bool? ?? true,
+    );
+  }
 }
 
 class TypedAnswerConfig {
@@ -43,5 +63,11 @@ class TypedAnswerConfig {
     return acceptedAnswers
         .map((a) => normalize(a))
         .contains(normalizedInput);
+  }
+
+  factory TypedAnswerConfig.fromJson(Map<String, dynamic> json) {
+    return TypedAnswerConfig(
+      acceptedAnswers: List<String>.from(json['acceptedAnswers'] ?? []),
+    );
   }
 }

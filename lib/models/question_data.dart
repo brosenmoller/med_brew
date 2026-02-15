@@ -27,4 +27,23 @@ class QuestionData {
     this.imageClickConfig,
     required this.quizTags,
   });
+
+  factory QuestionData.fromJson(Map<String, dynamic> json) {
+    return QuestionData(
+      id: json['id'] as String,
+      questionVariants: List<String>.from(json['questionVariants'] ?? []),
+      imagePath: json['imagePath'] as String?,
+      answerType: AnswerType.values.firstWhere(
+            (e) => e.toString().split('.').last == json['answerType'],
+      ),
+      explanation: json['explanation'] as String?,
+      multipleChoiceConfig: json['multipleChoiceConfig'] != null
+          ? MultipleChoiceConfig.fromJson(json['multipleChoiceConfig']) : null,
+      typedAnswerConfig: json['typedAnswerConfig'] != null
+          ? TypedAnswerConfig.fromJson(json['typedAnswerConfig']) : null,
+      imageClickConfig: json['imageClickConfig'] != null
+          ? ImageClickConfig.fromJson(json['imageClickConfig']) : null,
+      quizTags: List<String>.from(json['quizTags'] ?? []),
+    );
+  }
 }

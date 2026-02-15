@@ -78,4 +78,9 @@ class UserQuestionData extends HiveObject {
   }
 
   bool get isDue =>spacedRepetitionEnabled && nextReview.isBefore(DateTime.now());
+
+  @override
+  String toString() {
+    return 'UserQuestionData(questionId: $questionId, spacedRepetitionEnabled: $spacedRepetitionEnabled streak: $streak, interval: $interval, nextReview: $nextReview)';
+  }
 }

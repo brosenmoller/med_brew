@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/screens/category_overview_screen.dart';
+import 'package:med_brew/screens/settings_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'srs_overview_screen.dart';
 
@@ -11,7 +12,21 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Med Brew")),
+      appBar: AppBar(
+        title: const Text("Med Brew"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: "Settings",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => SettingsScreen()),
+              );
+            },
+          )
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -22,12 +37,9 @@ class HomeScreen extends StatelessWidget {
                 textStyle: const TextStyle(fontSize: 22),
               ),
               onPressed: () {
-                // Navigate to normal quizzes/categories
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => CategoryOverviewScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => CategoryOverviewScreen()),
                 );
               },
               child: const Text("Categories"),
@@ -39,12 +51,9 @@ class HomeScreen extends StatelessWidget {
                 textStyle: const TextStyle(fontSize: 22),
               ),
               onPressed: () {
-                // Navigate to SRS Overview
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => SrsOverviewScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => SrsOverviewScreen()),
                 );
               },
               child: const Text("Spaced Repetition"),
