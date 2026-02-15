@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/models/question_data.dart';
 
 class ImageClickWidget extends StatefulWidget {
-  final QuestionData card;
+  final QuestionData question;
   final Function(bool isCorrect) onAnswered;
   final bool locked;
 
   const ImageClickWidget({
     super.key,
-    required this.card,
+    required this.question,
     required this.onAnswered,
     required this.locked,
   });
@@ -28,7 +28,7 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
     final localPosition =
     box.globalToLocal(details.globalPosition);
 
-    final config = widget.card.imageClickConfig!;
+    final config = widget.question.imageClickConfig!;
     final isCorrect = config.isCorrect(localPosition);
 
     setState(() {
@@ -44,7 +44,7 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
       onTapUp: (details) =>
           _handleTap(details, context),
       child: Image.asset(
-        widget.card.imagePath!,
+        widget.question.imagePath!,
         fit: BoxFit.contain,
       ),
     );

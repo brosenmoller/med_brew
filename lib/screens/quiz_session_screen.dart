@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/services/question_service.dart';
-import 'package:med_brew/screens/question_display_screen.dart';
+import 'package:med_brew/screens/question_display/question_display_screen.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/screens/quiz_completion_screen.dart';
 
@@ -68,7 +68,7 @@ class _QuizSessionScreenState extends State<QuizSessionScreen> {
     }
 
     return QuestionDisplayScreen(
-      card: questions[currentIndex],
+      question: questions[currentIndex],
       spacedRepetitionMode: false,
       onContinue: (wasCorrect) {
         _nextQuestion(wasCorrect);

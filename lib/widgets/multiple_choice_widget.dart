@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/models/question_data.dart';
 
 class MultipleChoiceWidget extends StatefulWidget {
-  final QuestionData card;
+  final QuestionData question;
   final Function(bool isCorrect) onAnswered;
   final bool locked;
 
   const MultipleChoiceWidget({
     super.key,
-    required this.card,
+    required this.question,
     required this.onAnswered,
     required this.locked,
   });
@@ -28,7 +28,7 @@ class _MultipleChoiceWidgetState
   void initState() {
     super.initState();
 
-    final config = widget.card.multipleChoiceConfig!;
+    final config = widget.question.multipleChoiceConfig!;
     options = List.from(config.options);
 
     if (config.scrambleOptions) {
@@ -44,8 +44,8 @@ class _MultipleChoiceWidgetState
     });
 
     final correctAnswer =
-    widget.card.multipleChoiceConfig!.options[
-    widget.card.multipleChoiceConfig!.correctIndex];
+    widget.question.multipleChoiceConfig!.options[
+    widget.question.multipleChoiceConfig!.correctIndex];
 
     final isCorrect = options[index] == correctAnswer;
 

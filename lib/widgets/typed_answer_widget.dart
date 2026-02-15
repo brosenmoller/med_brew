@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/models/question_data.dart';
 
 class TypedAnswerWidget extends StatefulWidget {
-  final QuestionData card;
+  final QuestionData question;
   final Function(bool isCorrect) onAnswered;
   final bool locked;
 
   const TypedAnswerWidget({
     super.key,
-    required this.card,
+    required this.question,
     required this.onAnswered,
     required this.locked,
   });
@@ -29,7 +29,7 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
 
     final input = _controller.text;
     final isCorrect =
-    widget.card.typedAnswerConfig!.isCorrect(input);
+    widget.question.typedAnswerConfig!.isCorrect(input);
 
     setState(() {
       answered = true;
