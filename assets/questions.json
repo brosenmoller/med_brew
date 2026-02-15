@@ -7,7 +7,6 @@
       "options": ["Femur", "Tibia", "Humerus", "Fibula"],
       "correctIndex": 0
     },
-    "quizTags": ["Skeleton", "Femur Quiz"],
     "explanation": "The femur is the longest bone in the human body."
   },
   {
@@ -17,7 +16,6 @@
     "typedAnswerConfig": {
       "acceptedAnswers": ["Biceps", "Biceps brachii"]
     },
-    "quizTags": ["Muscles", "Arm Muscles"]
   },
   {
     "id": "q3",
@@ -27,7 +25,6 @@
       "options": ["Patella", "Fibula", "Tibia", "Femur"],
       "correctIndex": 0
     },
-    "quizTags": ["Skeleton", "Knee Bones Quiz"],
     "explanation": "The patella is commonly known as the kneecap."
   },
   {
@@ -37,7 +34,6 @@
     "typedAnswerConfig": {
       "acceptedAnswers": ["Quadriceps", "Quadriceps femoris"]
     },
-    "quizTags": ["Muscles", "Leg Muscles"]
   },
   {
     "id": "q5",
@@ -47,7 +43,6 @@
       "options": ["Stapes", "Malleus", "Incus", "Tibia"],
       "correctIndex": 0
     },
-    "quizTags": ["Skeleton", "Ear Bones Quiz"],
     "explanation": "The stapes is the smallest bone in the human body, located in the middle ear."
   },
   {
@@ -57,7 +52,6 @@
     "typedAnswerConfig": {
       "acceptedAnswers": ["Deltoid"]
     },
-    "quizTags": ["Muscles", "Arm Muscles"]
   },
   {
     "id": "q7",
@@ -67,7 +61,6 @@
       "options": ["Frontal bone", "Parietal bone", "Occipital bone", "Temporal bone"],
       "correctIndex": 0
     },
-    "quizTags": ["Skeleton", "Skull Quiz"],
     "explanation": "The frontal bone forms the forehead and upper part of the eye sockets."
   },
   {
@@ -77,6 +70,5 @@
     "typedAnswerConfig": {
       "acceptedAnswers": ["Gluteus maximus"]
     },
-    "quizTags": ["Muscles", "Leg Muscles"]
   }
 ]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "femur_quiz",
+    "title": "Femur Quiz",
+    "imagePath": null,
+    "questionIds": ["q1"]
+  },
+  {
+    "id": "knee_bones_quiz",
+    "title": "Knee Bones Quiz",
+    "imagePath": null,
+    "questionIds": ["q3"]
+  },
+  {
+    "id": "ear_bones_quiz",
+    "title": "Ear Bones Quiz",
+    "imagePath": null,
+    "questionIds": ["q5"]
+  },
+  {
+    "id": "skull_quiz",
+    "title": "Skull Quiz",
+    "imagePath": null,
+    "questionIds": ["q7"]
+  },
+  {
+    "id": "arm_muscles",
+    "title": "Arm Muscles",
+    "imagePath": null,
+    "questionIds": ["q2", "q6"]
+  },
+  {
+    "id": "leg_muscles",
+    "title": "Leg Muscles",
+    "imagePath": null,
+    "questionIds": ["q4", "q8"]
+  }
+]

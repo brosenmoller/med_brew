@@ -50,7 +50,7 @@ class CategoryOverviewScreen extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  category,
+                  category.title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,

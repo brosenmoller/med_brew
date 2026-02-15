@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/models/category_data.dart';
+import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
 import 'package:med_brew/screens/quiz_session_screen.dart';
 
 class QuizOverviewScreen extends StatefulWidget {
-  final String category;
+  final CategoryData category;
 
   const QuizOverviewScreen({super.key, required this.category});
 
@@ -13,21 +15,21 @@ class QuizOverviewScreen extends StatefulWidget {
 }
 
 class _QuizOverviewScreenState extends State<QuizOverviewScreen> {
-  final QuestionService service = QuestionService();
+  final QuestionService questionService = QuestionService();
   final SrsService srsService = SrsService();
 
   // In-memory favorite tracking (can also persist in Hive later)
-  final Set<String> favorites = {};
+  final Set<QuizData> favorites = {};
 
   @override
   Widget build(BuildContext context) {
-    final quizzes = service.getQuizzesForCategory(widget.category);
+    final quizzes = questionService.getQuizzesForCategory(widget.category.id);
 
     final screenWidth = MediaQuery.of(context).size.width;
     int crossAxisCount = screenWidth < 600 ? 2 : 6;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.category)),
+      appBar: AppBar(title: Text(widget.category.title)),
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: quizzes.length,
@@ -40,21 +42,21 @@ class _QuizOverviewScreenState extends State<QuizOverviewScreen> {
           final quiz = quizzes[index];
 
           // Fetch all questions for this quiz
-          final questions = service.getQuestionsForQuiz(quiz);
+          final questions = questionService.getQuestionsForQuiz(quiz.id);
 
           // Determine SRS state from persisted user data
           bool isSrsEnabled = questions.isNotEmpty
               ? srsService.getUserData(questions.first).spacedRepetitionEnabled
               : false;
 
-          bool isFavorite = favorites.contains(quiz);
+          bool isFavorite = favorites.contains(quiz.id);
 
           return GestureDetector(
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => QuizSessionScreen(quizName: quiz),
+                  builder: (_) => QuizSessionScreen(quizData: quiz),
                 ),
               );
             },
@@ -68,7 +70,7 @@ class _QuizOverviewScreenState extends State<QuizOverviewScreen> {
                   // Quiz name centered
                   Center(
                     child: Text(
-                      quiz,
+                      quiz.title,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,

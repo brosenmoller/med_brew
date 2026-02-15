@@ -12,6 +12,8 @@ class SrsService {
   static const String boxName = 'userQuestions';
   late Box<UserQuestionData> _userQuestionBox;
 
+  final QuestionService _questionService = QuestionService();
+
   /// Initialize Hive box
   Future<void> init() async {
     if (_initialized) { return; }
@@ -71,7 +73,7 @@ class SrsService {
 
   /// Return all due questions across all categories/quizzes
   List<QuestionData> getAllDueQuestions() {
-    final allQuestions = QuestionService().getAllQuestions();
+    final allQuestions = _questionService.getAllQuestions();
     return getDueQuestions(allQuestions);
   }
 
@@ -80,19 +82,28 @@ class SrsService {
     return _box.values.toList();
   }
 
-  /// Reset all user SRS data (optional, for testing)
+  /// Reset all user SRS data
   Future<void> resetAll() async {
     await _box.clear();
   }
 
-  /// Get next question for a category or tag
-  QuestionData? getNextQuestion(
-      List<QuestionData> allQuestions, String category) {
-    final due = getDueQuestions(allQuestions)
-        .where((question) => question.quizTags.contains(category))
+  /// Get next due question in a quiz
+  QuestionData? getNextDueQuestionInQuiz(String quizId) {
+    final quiz = _questionService.getQuiz(quizId);
+    if (quiz == null) return null;
+
+    // Get all questions in this quiz
+    final quizQuestions = quiz.questionIds
+        .map((id) => _questionService.getQuestion(id))
+        .whereType<QuestionData>()
         .toList();
-    if (due.isEmpty) return null;
-    due.shuffle();
-    return due.first;
+
+    // Filter due questions
+    final dueQuestions = getDueQuestions(quizQuestions);
+
+    if (dueQuestions.isEmpty) return null;
+
+    dueQuestions.shuffle();
+    return dueQuestions.first;
   }
 }

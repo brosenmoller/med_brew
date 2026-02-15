@@ -77,13 +77,24 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 500),
             transitionBuilder: (child, animation) {
-              final offsetAnim = Tween<Offset>(
-                begin: const Offset(1, 0),
+              final offsetTween = Tween<Offset>(
+                begin: const Offset(1, 0),   // new slides in from right
                 end: Offset.zero,
-              ).animate(animation);
-              return SlideTransition(
-                  position: offsetAnim,
-                  child: FadeTransition(opacity: animation, child: child));
+              );
+
+              // Force old child to move out left using the same Tween
+              if (child.key != ValueKey<int>(questionKey)) {
+                return SlideTransition(
+                  position: offsetTween.animate(ReverseAnimation(animation)), // old slides left
+                  child: FadeTransition(opacity: animation, child: child),
+                );
+              } else {
+                // new child
+                return SlideTransition(
+                  position: offsetTween.animate(animation),
+                  child: FadeTransition(opacity: animation, child: child),
+                );
+              }
             },
             child: Padding(
               key: ValueKey<int>(questionKey),
@@ -158,7 +169,7 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
                         await SrsService().updateAfterAnswer(widget.question, quality);
 
                         // Only navigate if mounted
-                        if (!mounted) return;
+                        if (!context.mounted) return;
 
                         setState(() {
                           answerState = AnswerState.correct;
@@ -171,11 +182,14 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
                     )
                         : ContinueButton(
                       onContinue: () {
+                        final wasCorrect = answerState == AnswerState.correct; // capture BEFORE resetting
+
                         setState(() {
                           answerState = AnswerState.unanswered;
                           questionKey++;
                         });
-                        widget.onContinue(answerState == AnswerState.correct);
+
+                        widget.onContinue(wasCorrect);
                       },
                     )
                         : const SizedBox.shrink(),

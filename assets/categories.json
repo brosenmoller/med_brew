@@ -1,0 +1,22 @@
+[
+  {
+    "id": "skeleton",
+    "title": "Skeleton",
+    "imagePath": null,
+    "quizIds": [
+      "femur_quiz",
+      "knee_bones_quiz",
+      "ear_bones_quiz",
+      "skull_quiz"
+    ]
+  },
+  {
+    "id": "muscles",
+    "title": "Muscles",
+    "imagePath": null,
+    "quizIds": [
+      "arm_muscles",
+      "leg_muscles"
+    ]
+  }
+]

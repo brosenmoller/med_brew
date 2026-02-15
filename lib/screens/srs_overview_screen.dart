@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/models/category_data.dart';
 import 'package:med_brew/models/question_data.dart';
+import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/models/user_question_data.dart' show SrsQuality;
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
@@ -13,34 +15,37 @@ class SrsOverviewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allQuestions = questionService.getAllQuestions();
     final categories = questionService.getCategories();
+    final srsData = <String, Map<String, List<QuestionData>>>{};
 
-    // Map: category -> quiz -> questions with SRS enabled
-    final Map<String, Map<String, List<QuestionData>>> srsData = {};
+    for (final category in categories) {
+      final quizzes = category.quizIds
+          .map((quizId) => questionService.getQuiz(quizId))
+          .whereType<QuizData>()
+          .toList();
 
-    for (String category in categories) {
-      final quizzes = questionService.getQuizzesForCategory(category);
-      final Map<String, List<QuestionData>> quizMap = {};
-      for (String quiz in quizzes) {
-        final questions = allQuestions.where((question) =>
-            question.quizTags.first == category &&
-            question.quizTags[1] == quiz &&
-            srsService.getUserData(question).spacedRepetitionEnabled
-        ).toList();
+      final quizMap = <String, List<QuestionData>>{};
+
+      for (final quiz in quizzes) {
+        final questions = quiz.questionIds
+            .map((qId) => questionService.getQuestion(qId))
+            .whereType<QuestionData>()
+            .where((q) => srsService.getUserData(q).spacedRepetitionEnabled)
+            .toList();
 
         if (questions.isNotEmpty) {
-          quizMap[quiz] = questions;
+          quizMap[quiz.id] = questions;
         }
       }
+
       if (quizMap.isNotEmpty) {
-        srsData[category] = quizMap; // only include categories with SRS quizzes
+        srsData[category.id] = quizMap;
       }
     }
 
     if (srsData.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text("Spaced Repetition")),
+        appBar: AppBar(title: const Text("Spaced Repetition")),
         body: const Center(child: Text("No spaced repetition questions available")),
       );
     }

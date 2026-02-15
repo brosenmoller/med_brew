@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/screens/question_display/question_display_screen.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/screens/quiz_completion_screen.dart';
 
 class QuizSessionScreen extends StatefulWidget {
-  final String quizName;
+  final QuizData quizData;
   final bool shuffle;
 
-  const QuizSessionScreen({super.key, required this.quizName, this.shuffle = true});
+  const QuizSessionScreen({super.key, required this.quizData, this.shuffle = true});
 
   @override
   State<QuizSessionScreen> createState() =>
@@ -27,7 +28,7 @@ class _QuizSessionScreenState extends State<QuizSessionScreen> {
   void initState() {
     super.initState();
 
-    questions = service.getQuestionsForQuiz(widget.quizName);
+    questions = service.getQuestionsForQuiz(widget.quizData.id);
     totalQuestions = questions.length;
 
     if (widget.shuffle) {
@@ -49,7 +50,7 @@ class _QuizSessionScreenState extends State<QuizSessionScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => QuizCompletionScreen(
-            quizName: widget.quizName,
+            quizName: widget.quizData.title,
             correctAnswers: correctAnswers,
             totalQuestions: totalQuestions,
           ),

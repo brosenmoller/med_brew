@@ -19,10 +19,28 @@ class TypedAnswerWidget extends StatefulWidget {
 }
 
 class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
-  final TextEditingController _controller =
-  TextEditingController();
+  final TextEditingController _controller = TextEditingController();
+  late final FocusNode _focusNode;
 
   bool answered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+
+    // Request focus after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   void _submit() {
     if (widget.locked || answered) return;
@@ -46,7 +64,7 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
         children: [
           TextField(
             controller: _controller,
-            autofocus: true,
+            focusNode: _focusNode,
             enabled: !widget.locked,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submit(),

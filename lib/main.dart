@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:med_brew/data/question_repository.dart';
 import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/screens/home_screen.dart';
 import 'package:med_brew/services/question_service.dart' show QuestionService;
@@ -12,11 +11,14 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(UserQuestionDataAdapter());
 
-  await QuestionRepository.loadQuestions('assets/questions.json');
-
   final srsService = SrsService();
-  QuestionService();
+  final questionService = QuestionService();
   await srsService.init();
+  await questionService.init(
+      questionsAsset: 'assets/questions.json',
+      categoriesAsset: 'assets/categories.json',
+      quizzesAsset: 'assets/quizzes.json'
+  );
 
   runApp(const MedBrew());
 }

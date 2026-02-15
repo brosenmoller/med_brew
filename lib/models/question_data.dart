@@ -13,9 +13,6 @@ class QuestionData {
   final TypedAnswerConfig? typedAnswerConfig;
   final ImageClickConfig? imageClickConfig;
 
-  // Tags / Quiz groups
-  final List<String> quizTags;
-
   QuestionData({
     required this.id,
     required this.questionVariants,
@@ -25,7 +22,6 @@ class QuestionData {
     this.multipleChoiceConfig,
     this.typedAnswerConfig,
     this.imageClickConfig,
-    required this.quizTags,
   });
 
   factory QuestionData.fromJson(Map<String, dynamic> json) {
@@ -43,7 +39,6 @@ class QuestionData {
           ? TypedAnswerConfig.fromJson(json['typedAnswerConfig']) : null,
       imageClickConfig: json['imageClickConfig'] != null
           ? ImageClickConfig.fromJson(json['imageClickConfig']) : null,
-      quizTags: List<String>.from(json['quizTags'] ?? []),
     );
   }
 }
