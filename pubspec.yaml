@@ -39,6 +39,7 @@ dependencies:
   hive_flutter: ^1.1.0
   build_runner: ^2.4.6
   hive_generator: ^2.0.0
+  vector_math: ^2.2.0
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +61,7 @@ flutter:
     - assets/categories.json
     - assets/quizzes.json
     - assets/questions.json
+    - assets/images/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

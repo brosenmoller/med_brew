@@ -11,7 +11,13 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Med Brew"),
+        title: const Text(
+          "Med Brew",style:
+          TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+        ),),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),

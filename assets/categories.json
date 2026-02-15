@@ -2,7 +2,7 @@
   {
     "id": "skeleton",
     "title": "Skeleton",
-    "imagePath": null,
+    "imagePath": "assets/images/skull.jpg",
     "quizIds": [
       "femur_quiz",
       "knee_bones_quiz",
@@ -13,7 +13,7 @@
   {
     "id": "muscles",
     "title": "Muscles",
-    "imagePath": null,
+    "imagePath": "assets/images/muscle.jpg",
     "quizIds": [
       "arm_muscles",
       "leg_muscles"

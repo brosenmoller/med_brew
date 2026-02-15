@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/services/question_service.dart';
-import 'quiz_overview_screen.dart';
+import 'package:med_brew/screens/quiz_overview_screen.dart';
+import 'package:med_brew/widgets/category_tile.dart';
 
 class CategoryOverviewScreen extends StatelessWidget {
   CategoryOverviewScreen({super.key});
@@ -12,13 +13,7 @@ class CategoryOverviewScreen extends StatelessWidget {
     final categories = service.getCategories();
 
     final screenWidth = MediaQuery.of(context).size.width;
-
-    int crossAxisCount;
-    if (screenWidth < 600) { // mobile
-      crossAxisCount = 2;
-    } else { // tablet / desktop / laptop
-      crossAxisCount = 6;
-    }
+    final crossAxisCount = screenWidth < 600 ? 2 : 6;
 
     return Scaffold(
       appBar: AppBar(title: const Text("Categories")),
@@ -33,31 +28,16 @@ class CategoryOverviewScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final category = categories[index];
 
-          return GestureDetector(
+          return CategoryTile(
+            category: category,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      QuizOverviewScreen(category: category),
+                  builder: (_) => QuizOverviewScreen(category: category),
                 ),
               );
             },
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: Text(
-                  category.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-            ),
           );
         },
       ),
