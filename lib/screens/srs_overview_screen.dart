@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:med_brew/models/user_question_data.dart';
+import 'package:med_brew/models/question_data.dart';
+import 'package:med_brew/models/user_question_data.dart' show SrsQuality;
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
-import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/screens/question_display/question_display_screen.dart';
 
 class SrsOverviewScreen extends StatelessWidget {
@@ -16,78 +16,93 @@ class SrsOverviewScreen extends StatelessWidget {
     final allQuestions = questionService.getAllQuestions();
     final categories = questionService.getCategories();
 
-    // Compute due questions per category
-    final Map<String, List<QuestionData>> duePerCategory = {};
-    for (var cat in categories) {
-      duePerCategory[cat] = allQuestions
-          .where((q) => q.quizTags.contains(cat) && srsService.getUserData(q).isDue)
-          .toList();
-    }
+    // Map: category -> quiz -> questions
+    final Map<String, Map<String, List<QuestionData>>> srsData = {};
 
-    // Find first category with due questions
-    String? firstDueCategory;
     for (var cat in categories) {
-      if (duePerCategory[cat]!.isNotEmpty) {
-        firstDueCategory = cat;
-        break;
+      final quizzes = questionService.getQuizzesForCategory(cat);
+      final Map<String, List<QuestionData>> quizMap = {};
+      for (var quiz in quizzes) {
+        final questions = allQuestions
+            .where((q) => q.quizTags.first == cat && q.quizTags[1] == quiz)
+            .toList();
+        if (questions.isNotEmpty) {
+          quizMap[quiz] = questions;
+        }
       }
+      srsData[cat] = quizMap;
     }
 
     return Scaffold(
       appBar: AppBar(title: const Text("Spaced Repetition")),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            if (firstDueCategory != null)
-              ElevatedButton(
-                onPressed: () {
-                  _startCategory(context, firstDueCategory!, duePerCategory[firstDueCategory!]!);
-                },
-                child: Text("Start first due: $firstDueCategory"),
-              ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView(
-                children: categories.map((cat) {
-                  final dueList = duePerCategory[cat]!;
-                  if (dueList.isEmpty) return const SizedBox.shrink();
+        child: ListView(
+          children: srsData.entries.map((categoryEntry) {
+            final cat = categoryEntry.key;
+            final quizzes = categoryEntry.value;
 
-                  // Find oldest question due
-                  final oldest = dueList
-                      .map((q) => srsService.getUserData(q).nextReview)
-                      .reduce((a, b) => a.isBefore(b) ? a : b);
+            if (quizzes.isEmpty) {
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                child: ListTile(
+                  title: Text(cat),
+                  subtitle: const Text("No quizzes with SRS questions"),
+                ),
+              );
+            }
 
-                  final oldestDuration = DateTime.now().difference(oldest);
-                  final oldestText = _formatDuration(oldestDuration);
+            // Determine if any quiz in this category has due questions
+            final hasDueQuestions = quizzes.values.any((quizQuestions) =>
+                quizQuestions.any((q) => srsService.getUserData(q).isDue));
 
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      title: Text(cat),
-                      subtitle: Text("${dueList.length} questions due, oldest: $oldestText"),
-                      trailing: ElevatedButton(
-                        onPressed: () => _startCategory(context, cat, dueList),
-                        child: const Text("Start"),
-                      ),
-                    ),
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 6),
+              child: ExpansionTile(
+                initiallyExpanded: hasDueQuestions,
+                title: Text(cat, style: const TextStyle(fontWeight: FontWeight.bold)),
+                children: quizzes.entries.map((quizEntry) {
+                  final quizName = quizEntry.key;
+                  final questions = quizEntry.value;
+
+                  final dueQuestions = questions
+                      .where((q) => srsService.getUserData(q).isDue)
+                      .toList();
+                  final hasDue = dueQuestions.isNotEmpty;
+
+                  String oldestText = "N/A";
+                  if (hasDue) {
+                    final oldest = dueQuestions
+                        .map((q) => srsService.getUserData(q).nextReview)
+                        .reduce((a, b) => a.isBefore(b) ? a : b);
+                    oldestText = _formatDuration(DateTime.now().difference(oldest));
+                  }
+
+                  return ListTile(
+                    title: Text(quizName),
+                    subtitle: Text("${dueQuestions.length} questions due, oldest: $oldestText"),
+                    trailing: hasDue
+                        ? ElevatedButton(
+                      onPressed: () => _startQuiz(context, dueQuestions),
+                      child: const Text("Start"),
+                    )
+                        : null,
                   );
                 }).toList(),
               ),
-            ),
-          ],
+            );
+          }).toList(),
         ),
       ),
     );
   }
 
-  void _startCategory(BuildContext context, String category, List<QuestionData> questions) {
-    // Automatically navigate through all due questions in this category
+  void _startQuiz(BuildContext context, List<QuestionData> questions) {
     int currentIndex = 0;
 
     void navigateNext() {
       if (currentIndex >= questions.length) {
-        Navigator.pop(context); // finished category
+        Navigator.pop(context);
         return;
       }
 
@@ -101,11 +116,8 @@ class SrsOverviewScreen extends StatelessWidget {
             question: question,
             spacedRepetitionMode: true,
             onContinue: (wasCorrect) async {
-              // Automatically update SRS for correct/wrong answer
               await SrsService().updateAfterAnswer(
                   question, wasCorrect ? SrsQuality.good : SrsQuality.again);
-
-              // Navigate to the next question
               navigateNext();
             },
           ),
