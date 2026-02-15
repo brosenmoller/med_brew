@@ -7,7 +7,8 @@
       "options": ["Femur", "Tibia", "Humerus", "Fibula"],
       "correctIndex": 0
     },
-    "explanation": "The femur is the longest bone in the human body."
+    "explanation": "The femur is the longest bone in the human body.",
+    "imagePath": null
   },
   {
     "id": "q2",
@@ -15,60 +16,92 @@
     "answerType": "typed",
     "typedAnswerConfig": {
       "acceptedAnswers": ["Biceps", "Biceps brachii"]
-    },
+    }
   },
   {
     "id": "q3",
-    "questionVariants": ["Which bone is also called the kneecap?"],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["Patella", "Fibula", "Tibia", "Femur"],
-      "correctIndex": 0
-    },
-    "explanation": "The patella is commonly known as the kneecap."
-  },
-  {
-    "id": "q4",
-    "questionVariants": ["Which muscle is located on the front of the thigh?"],
-    "answerType": "typed",
-    "typedAnswerConfig": {
-      "acceptedAnswers": ["Quadriceps", "Quadriceps femoris"]
-    },
-  },
-  {
-    "id": "q5",
-    "questionVariants": ["What is the smallest bone in the human body?"],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["Stapes", "Malleus", "Incus", "Tibia"],
-      "correctIndex": 0
-    },
-    "explanation": "The stapes is the smallest bone in the human body, located in the middle ear."
-  },
-  {
-    "id": "q6",
     "questionVariants": ["Which muscle is responsible for shoulder abduction?"],
     "answerType": "typed",
     "typedAnswerConfig": {
       "acceptedAnswers": ["Deltoid"]
-    },
+    }
   },
   {
-    "id": "q7",
-    "questionVariants": ["Which bone forms the forehead?"],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["Frontal bone", "Parietal bone", "Occipital bone", "Temporal bone"],
-      "correctIndex": 0
-    },
-    "explanation": "The frontal bone forms the forehead and upper part of the eye sockets."
-  },
-  {
-    "id": "q8",
+    "id": "q4",
     "questionVariants": ["Name the largest muscle in the human body."],
     "answerType": "typed",
     "typedAnswerConfig": {
       "acceptedAnswers": ["Gluteus maximus"]
+    }
+  },
+  {
+    "id": "s1",
+    "questionVariants": ["Number 1 is pointing to ..."],
+    "answerType": "multipleChoice",
+    "multipleChoiceConfig": {
+      "options": ["Mandible", "Skull", "Sternum", "Fibula"],
+      "correctIndex": 1
     },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+  },
+  {
+    "id": "s2",
+    "questionVariants": ["The patella is indicated by number ..."],
+    "answerType": "multipleChoice",
+    "multipleChoiceConfig": {
+      "options": ["14", "11", "9", "4"],
+      "correctIndex": 0
+    },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+  },
+  {
+    "id": "s3",
+    "questionVariants": ["Number 8 is pointing to ..."],
+    "answerType": "multipleChoice",
+    "multipleChoiceConfig": {
+      "options": ["Mandible", "Tibia", "Sternum", "Ulna"],
+      "correctIndex": 0
+    },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+  },
+  {
+    "id": "s4",
+    "questionVariants": ["The pubis is indicated by number ..."],
+    "answerType": "multipleChoice",
+    "multipleChoiceConfig": {
+      "options": ["9", "11", "13", "12"],
+      "correctIndex": 2
+    },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+  },
+  {
+    "id": "s5",
+    "questionVariants": ["Number 3 is pointing to ..."],
+    "answerType": "multipleChoice",
+    "multipleChoiceConfig": {
+      "options": ["Radius", "Femur", "Humerus", "Tibia"],
+      "correctIndex": 2
+    },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+  },
+  {
+    "id": "s6",
+    "questionVariants": ["The pelvic girdle is indicated by number ..."],
+    "answerType": "multipleChoice",
+    "multipleChoiceConfig": {
+      "options": ["9", "10", "11", "12"],
+      "correctIndex": 2
+    },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+  },
+  {
+    "id": "s7",
+    "questionVariants": ["Number 2 is pointing to ..."],
+    "answerType": "multipleChoice",
+    "multipleChoiceConfig": {
+      "options": ["Sternum", "Clavicle", "Patella", "Radius"],
+      "correctIndex": 1
+    },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
   }
 ]

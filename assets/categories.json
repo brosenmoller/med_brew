@@ -5,9 +5,7 @@
     "imagePath": "assets/images/skull.jpg",
     "quizIds": [
       "femur_quiz",
-      "knee_bones_quiz",
-      "ear_bones_quiz",
-      "skull_quiz"
+      "full_skeleton_quiz"
     ]
   },
   {
@@ -15,8 +13,7 @@
     "title": "Muscles",
     "imagePath": "assets/images/muscle.jpg",
     "quizIds": [
-      "arm_muscles",
-      "leg_muscles"
+      "arm_muscles"
     ]
   }
 ]

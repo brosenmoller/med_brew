@@ -1,38 +1,27 @@
 [
   {
+    "id": "full_skeleton_quiz",
+    "title": "Full Skeleton",
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg",
+    "questionIds": ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8",
+                    "s9", "s10", "s11", "s12", "s13", "s14", "s15"]
+  },
+  {
     "id": "femur_quiz",
     "title": "Femur Quiz",
     "imagePath": null,
     "questionIds": ["q1"]
   },
   {
-    "id": "knee_bones_quiz",
-    "title": "Knee Bones Quiz",
-    "imagePath": null,
-    "questionIds": ["q3"]
-  },
-  {
-    "id": "ear_bones_quiz",
-    "title": "Ear Bones Quiz",
-    "imagePath": null,
-    "questionIds": ["q5"]
-  },
-  {
-    "id": "skull_quiz",
-    "title": "Skull Quiz",
-    "imagePath": null,
-    "questionIds": ["q7"]
-  },
-  {
     "id": "arm_muscles",
     "title": "Arm Muscles",
     "imagePath": null,
-    "questionIds": ["q2", "q6"]
+    "questionIds": ["q2", "q3"]
   },
   {
     "id": "leg_muscles",
     "title": "Leg Muscles",
     "imagePath": null,
-    "questionIds": ["q4", "q8"]
+    "questionIds": ["q4"]
   }
 ]

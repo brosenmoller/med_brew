@@ -102,32 +102,42 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
               child: Column(
                 children: [
                   if (widget.question.imagePath != null)
-                    SizedBox(
-                      height: 220,
-                      width: double.infinity,
-                      child: Image.asset(widget.question.imagePath!,
-                          fit: BoxFit.contain),
+                    Flexible(
+                      flex: 3, // gives image ~3 parts of available vertical space
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Image.asset(
+                          widget.question.imagePath!,
+                          fit: BoxFit.contain, // maintains aspect ratio
+                          width: double.infinity,
+                        ),
+                      ),
                     ),
+
                   const SizedBox(height: 16),
 
                   // Question text with shake
-                  AnimatedBuilder(
-                    animation: _shakeController,
-                    builder: (context, child) {
-                      double offset = _shakeAnimation.value *
-                          (_shakeController.status ==
-                              AnimationStatus.forward
-                              ? 1
-                              : 0);
-                      return Transform.translate(
-                        offset: Offset(offset, 0),
-                        child: child,
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(widget.question.questionVariants.first,
-                          style: Theme.of(context).textTheme.titleLarge),
+                  Flexible(
+                    flex: 2, // question text gets ~2 parts of available space
+                    child: AnimatedBuilder(
+                      animation: _shakeController,
+                      builder: (context, child) {
+                        double offset = _shakeAnimation.value *
+                            (_shakeController.status == AnimationStatus.forward ? 1 : 0);
+                        return Transform.translate(
+                          offset: Offset(offset, 0),
+                          child: child,
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: SingleChildScrollView( // handles long questions
+                          child: Text(
+                            widget.question.questionVariants.first,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
 
@@ -135,6 +145,7 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
 
                   // ANSWER AREA
                   Expanded(
+                    flex: 4, // answer area grows as needed
                     child: AnswerArea(
                       question: widget.question,
                       locked: answerState != AnswerState.unanswered,
