@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/services/favorites_service.dart';
 import 'package:med_brew/services/srs_service.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 class QuizTile extends StatefulWidget {
   final QuizData quiz;
@@ -21,6 +22,7 @@ class _QuizTileState extends State<QuizTile> {
   final FavoritesService _favoritesService = FavoritesService();
   final SrsService _srsService = SrsService();
 
+  bool _hovering = false;
   bool _isFavorite = false;
   bool _isSrsEnabled = false;
   bool _initialized = false;
@@ -77,58 +79,90 @@ class _QuizTileState extends State<QuizTile> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.green,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Stack(
-          children: [
-            // Quiz title
-            Center(
-              child: Text(
-                widget.quiz.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Transform(
+        alignment: Alignment.center,
+        transform: _hovering
+            ? (Matrix4.identity()..scaleByVector3(Vector3.all(1.02)))
+            : Matrix4.identity(),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(16),
+              image: widget.quiz.imagePath != null
+                  ? DecorationImage(
+                image: AssetImage(widget.quiz.imagePath!),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withOpacity(_hovering ? 0.25 : 0.4),
+                  BlendMode.darken,
                 ),
-                textAlign: TextAlign.center,
-              ),
+              )
+                  : null,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(_hovering ? 0.25 : 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-
-            // Top-right toggles
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // SRS toggle
-                  IconButton(
-                    icon: Icon(
-                      Icons.repeat,
-                      color: _isSrsEnabled ? Colors.blue : Colors.white,
-                      size: 20,
+            child: Stack(
+              children: [
+                // Quiz title
+                Center(
+                  child: Text(
+                    widget.quiz.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 4,
+                          color: Colors.black54,
+                          offset: Offset(1, 1),
+                        ),
+                      ],
                     ),
-                    onPressed: _toggleSrs,
+                    textAlign: TextAlign.center,
                   ),
-
-                  // Favorite toggle
-                  IconButton(
-                    icon: Icon(
-                      _isFavorite ? Icons.star : Icons.star_border,
-                      color: Colors.yellowAccent,
-                      size: 20,
-                    ),
-                    onPressed: _toggleFavorite,
+                ),
+                // Top-right toggles
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // SRS toggle
+                      IconButton(
+                        icon: Icon(
+                          Icons.repeat,
+                          color: _isSrsEnabled ? Colors.blue : Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: _toggleSrs,
+                      ),
+                      // Favorite toggle
+                      IconButton(
+                        icon: Icon(
+                          _isFavorite ? Icons.star : Icons.star_border,
+                          color: Colors.yellowAccent,
+                          size: 20,
+                        ),
+                        onPressed: _toggleFavorite,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
