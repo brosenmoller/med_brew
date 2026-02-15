@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/screens/category_overview_screen.dart';
 import 'package:med_brew/services/question_service.dart';
-import 'quiz_overview_screen.dart';
+import 'srs_overview_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -9,57 +10,47 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categories = service.getCategories();
-
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    int crossAxisCount;
-    if (screenWidth < 600) { // mobile
-      crossAxisCount = 2;
-    } else { // tablet / desktop / laptop
-      crossAxisCount = 6;
-    }
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Categories")),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: categories.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemBuilder: (context, index) {
-          final category = categories[index];
-
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      QuizOverviewScreen(category: category),
-                ),
-              );
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(16),
+      appBar: AppBar(title: const Text("Med Brew")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                textStyle: const TextStyle(fontSize: 22),
               ),
-              child: Center(
-                child: Text(
-                  category,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
+              onPressed: () {
+                // Navigate to normal quizzes/categories
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CategoryOverviewScreen(),
                   ),
-                ),
-              ),
+                );
+              },
+              child: const Text("Categories"),
             ),
-          );
-        },
+            const SizedBox(height: 30),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                textStyle: const TextStyle(fontSize: 22),
+              ),
+              onPressed: () {
+                // Navigate to SRS Overview
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SrsOverviewScreen(),
+                  ),
+                );
+              },
+              child: const Text("Spaced Repetition"),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -16,12 +16,6 @@ class QuestionData {
   // Tags / Quiz groups
   final List<String> quizTags;
 
-  // SRS data
-  int repetitions;
-  double easeFactor;
-  int interval; // in days
-  DateTime nextReview;
-
   QuestionData({
     required this.id,
     required this.questionVariants,
@@ -32,9 +26,5 @@ class QuestionData {
     this.typedAnswerConfig,
     this.imageClickConfig,
     required this.quizTags,
-    this.repetitions = 0,
-    this.easeFactor = 2.5,
-    this.interval = 1,
-    DateTime? nextReview,
-  }) : nextReview = nextReview ?? DateTime.now();
+  });
 }

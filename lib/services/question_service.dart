@@ -2,9 +2,14 @@ import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/data/question_repository.dart';
 
 class QuestionService {
+  QuestionService._internal();
+  static final QuestionService _instance = QuestionService._internal();
+  factory QuestionService() => _instance;
+  final List<QuestionData> _questions = QuestionRepository.allQuestions;
 
-  final List<QuestionData> _questions =
-      QuestionRepository.allQuestions;
+  List<QuestionData> getAllQuestions() {
+    return _questions;
+  }
 
   /// Level 1: Categories
   List<String> getCategories() {

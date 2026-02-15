@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/screens/home_screen.dart';
+import 'package:med_brew/services/question_service.dart' show QuestionService;
+import 'package:med_brew/services/srs_service.dart' show SrsService;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Hive.initFlutter();
+  Hive.registerAdapter(UserQuestionDataAdapter());
+
+  final srsService = SrsService();
+  QuestionService();
+  await srsService.init();
+
   runApp(const MedBrew());
 }
 
