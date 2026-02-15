@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/screens/home_screen.dart';
 
 void main() {
   runApp(const MedBrew());
@@ -10,30 +11,13 @@ class MedBrew extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Med Brew',
       debugShowCheckedModeBanner: false,
+      title: "Med Brew",
       theme: ThemeData(
         colorSchemeSeed: Colors.blue,
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Med Brew")),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {},
-          child: const Text("Start Review"),
-        ),
-      ),
+      home: HomeScreen(),
     );
   }
 }
