@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:med_brew/models/question_data.dart';
+import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/services/question_service.dart';
 
@@ -75,6 +76,17 @@ class SrsService {
   List<QuestionData> getAllDueQuestions() {
     final allQuestions = _questionService.getAllQuestions();
     return getDueQuestions(allQuestions);
+  }
+
+  /// Get all questions in a specific quiz
+  List<QuestionData> getQuestionsForQuiz({String? quizId, QuizData? quiz}) {
+    QuizData? q = quiz ?? (quizId != null ? _questionService.getQuiz(quizId) : null);
+    if (q == null) return [];
+
+    return q.questionIds
+        .map((id) => _questionService.getQuestion(id))
+        .whereType<QuestionData>()
+        .toList();
   }
 
   /// Return all UserQuestionData

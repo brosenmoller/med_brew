@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/screens/category_overview_screen.dart';
 import 'package:med_brew/screens/settings_screen.dart';
-import 'package:med_brew/services/question_service.dart';
+import 'package:med_brew/screens/favorites_screen.dart';
 import 'srs_overview_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
-
-  final QuestionService service = QuestionService();
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +29,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Categories Button
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -45,6 +44,8 @@ class HomeScreen extends StatelessWidget {
               child: const Text("Categories"),
             ),
             const SizedBox(height: 30),
+
+            // Spaced Repetition Button
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -58,6 +59,24 @@ class HomeScreen extends StatelessWidget {
               },
               child: const Text("Spaced Repetition"),
             ),
+            const SizedBox(height: 30),
+
+            // Favorites Button
+            ElevatedButton.icon(
+              icon: const Icon(Icons.star),
+              label: const Text("Favorites"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                textStyle: const TextStyle(fontSize: 22),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
