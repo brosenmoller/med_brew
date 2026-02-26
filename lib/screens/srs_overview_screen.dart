@@ -60,8 +60,7 @@ class SrsOverviewScreen extends StatelessWidget {
             final quizzes = categoryEntry.value;
 
             // Determine if any quiz in this category has due questions
-            final hasDueQuestions = quizzes.values.any((quizQuestions) =>
-                quizQuestions.any((q) => srsService.getUserData(q).isDue));
+            final hasDueQuestions = quizzes.values.any((quizQuestions) => quizQuestions.any((q) => srsService.getUserData(q).isDue));
 
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 6),

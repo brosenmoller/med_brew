@@ -18,16 +18,7 @@ class SrsService {
   /// Initialize Hive box
   Future<void> init() async {
     if (_initialized) { return; }
-
     _userQuestionBox = await Hive.openBox<UserQuestionData>(boxName);
-
-    // print('--- UserQuestionData in Hive ---\n');
-    // for (var userData in _userQuestionBox.values) {
-    //   print(userData);
-    //   print('');
-    // }
-    // print('--- End of Hive Data ---\n');
-
     _initialized = true;
   }
 

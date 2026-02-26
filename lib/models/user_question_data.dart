@@ -36,6 +36,18 @@ class UserQuestionData extends HiveObject {
   })  : lastReviewed = lastReviewed ?? DateTime.now(),
         nextReview = nextReview ?? DateTime.now();
 
+  UserQuestionData copy() {
+    return UserQuestionData(
+      questionId: questionId,
+      streak: streak,
+      easeFactor: easeFactor,
+      interval: interval,
+      spacedRepetitionEnabled: spacedRepetitionEnabled,
+      lastReviewed: lastReviewed,
+      nextReview: nextReview,
+    );
+  }
+
   /// Updates the SRS fields using IRAS/SM2 logic
   void updateAfterAnswer(SrsQuality quality) {
     final now = DateTime.now();

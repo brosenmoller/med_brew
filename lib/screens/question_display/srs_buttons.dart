@@ -21,9 +21,7 @@ class SrsButtons extends StatelessWidget {
         final label = "${_qualityLabel(quality)} (${_formatDuration(nextDue)})";
 
         return _srsButton(label, () async {
-          // Update SRS via the singleton service
           await SrsService().updateAfterAnswer(question, quality);
-
           if (onAnswered != null) onAnswered!(quality);
         });
       }).toList(),
@@ -59,17 +57,7 @@ class SrsButtons extends StatelessWidget {
   /// Simulate next review datetime if this quality is chosen
   DateTime _computeNextReviewForQuality(SrsQuality quality) {
     final userData = SrsService().getUserData(question);
-
-    // Copy current data to simulate update
-    final simulated = UserQuestionData(
-      questionId: userData.questionId,
-      streak: userData.streak,
-      easeFactor: userData.easeFactor,
-      interval: userData.interval,
-      lastReviewed: userData.lastReviewed,
-      nextReview: userData.nextReview,
-    );
-
+    final simulated = userData.copy();
     simulated.updateAfterAnswer(quality);
     return simulated.nextReview;
   }
