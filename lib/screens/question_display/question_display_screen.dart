@@ -74,152 +74,154 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
       ),
       body: Stack(
         children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            transitionBuilder: (child, animation) {
-              final offsetTween = Tween<Offset>(
-                begin: const Offset(1, 0),   // new slides in from right
-                end: Offset.zero,
-              );
+          Column(
+            children: [
 
-              // Force old child to move out left using the same Tween
-              if (child.key != ValueKey<int>(questionKey)) {
-                return SlideTransition(
-                  position: offsetTween.animate(ReverseAnimation(animation)), // old slides left
-                  child: FadeTransition(opacity: animation, child: child),
-                );
-              } else {
-                // new child
-                return SlideTransition(
-                  position: offsetTween.animate(animation),
-                  child: FadeTransition(opacity: animation, child: child),
-                );
-              }
-            },
-            child: Padding(
-              key: ValueKey<int>(questionKey),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  if (widget.question.imagePath != null)
-                    Flexible(
-                      flex: 3, // gives image ~3 parts of available vertical space
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Image.asset(
-                          widget.question.imagePath!,
-                          fit: BoxFit.contain, // maintains aspect ratio
-                          width: double.infinity,
-                        ),
-                      ),
-                    ),
+              /// IMAGE AREA
+              Expanded(
+                child: widget.question.imagePath != null
+                    ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Image.asset(
+                    widget.question.imagePath!,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                  ),
+                )
+                    : const SizedBox.shrink(),
+              ),
 
-                  const SizedBox(height: 16),
+              /// BOTTOM CONTENT
+              SafeArea(
+                top: false,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
 
-                  // Question text with shake
-                  Flexible(
-                    flex: 2, // question text gets ~2 parts of available space
-                    child: AnimatedBuilder(
-                      animation: _shakeController,
-                      builder: (context, child) {
-                        double offset = _shakeAnimation.value *
-                            (_shakeController.status == AnimationStatus.forward ? 1 : 0);
-                        return Transform.translate(
-                          offset: Offset(offset, 0),
-                          child: child,
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: SingleChildScrollView( // handles long questions
+                      const SizedBox(height: 16),
+
+                      /// QUESTION
+                      Center(
+                        child: AnimatedBuilder(
+                          animation: _shakeController,
+                          builder: (context, child) {
+                            double offset = _shakeAnimation.value *
+                                (_shakeController.status == AnimationStatus.forward ? 1 : 0);
+
+                            return Transform.translate(
+                              offset: Offset(offset, 0),
+                              child: child,
+                            );
+                          },
                           child: Text(
                             widget.question.questionVariants.first,
                             style: Theme.of(context).textTheme.titleLarge,
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
-                    ),
+
+                      const SizedBox(height: 20),
+
+                      /// ANSWERS
+                      AnswerArea(
+                        question: widget.question,
+                        locked:
+                        answerState != AnswerState.unanswered,
+                        onAnswered: _handleAnswer,
+                      ),
+
+                      /// FEEDBACK
+                      AnimatedOpacity(
+                        opacity:
+                        answerState == AnswerState.unanswered
+                            ? 0
+                            : 1,
+                        duration:
+                        const Duration(milliseconds: 400),
+                        child: answerState !=
+                            AnswerState.unanswered
+                            ? FeedbackBox(
+                          answerState: answerState,
+                          question: widget.question,
+                        )
+                            : const SizedBox.shrink(),
+                      ),
+
+                      /// CONTINUE / SRS
+                      AnimatedScale(
+                        scale:
+                        answerState == AnswerState.unanswered
+                            ? 0
+                            : 1,
+                        duration:
+                        const Duration(milliseconds: 300),
+                        curve: Curves.elasticOut,
+                        child: answerState !=
+                            AnswerState.unanswered
+                            ? widget.spacedRepetitionMode &&
+                            answerState ==
+                                AnswerState.correct
+                            ? SrsButtons(
+                          question: widget.question,
+                          onAnswered:
+                              (quality) async {
+                            final wasCorrect =
+                                _wasCorrect ?? true;
+
+                            await SrsService()
+                                .updateAfterAnswer(
+                                widget.question,
+                                quality);
+
+                            if (!context.mounted)
+                              return;
+
+                            Navigator.of(context)
+                                .pop(wasCorrect);
+                          },
+                        )
+                            : ContinueButton(
+                          onContinue: () {
+                            final wasCorrect =
+                                answerState ==
+                                    AnswerState
+                                        .correct;
+
+                            setState(() {
+                              answerState =
+                                  AnswerState
+                                      .unanswered;
+                              questionKey++;
+                            });
+
+                            widget.onContinue(
+                                wasCorrect);
+                          },
+                        )
+                            : const SizedBox.shrink(),
+                      ),
+
+                      const SizedBox(height: 16),
+                    ],
                   ),
-
-                  const SizedBox(height: 20),
-
-                  // ANSWER AREA
-                  Expanded(
-                    flex: 4, // answer area grows as needed
-                    child: AnswerArea(
-                      question: widget.question,
-                      locked: answerState != AnswerState.unanswered,
-                      onAnswered: _handleAnswer,
-                    ),
-                  ),
-
-                  // FEEDBACK BOX
-                  AnimatedOpacity(
-                    opacity: answerState == AnswerState.unanswered ? 0 : 1,
-                    duration: const Duration(milliseconds: 400),
-                    child: answerState != AnswerState.unanswered
-                        ? FeedbackBox(
-                      answerState: answerState,
-                      question: widget.question,
-                    )
-                        : const SizedBox.shrink(),
-                  ),
-
-                  // CONTINUE / SRS
-                  AnimatedScale(
-                    scale: answerState == AnswerState.unanswered ? 0 : 1,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.elasticOut,
-                    child: answerState != AnswerState.unanswered
-                        ? widget.spacedRepetitionMode && answerState == AnswerState.correct
-                        ? SrsButtons(
-                      question: widget.question,
-                      onAnswered: (quality) async {
-                        final wasCorrect = _wasCorrect ?? true;
-
-                        await SrsService().updateAfterAnswer(widget.question, quality);
-
-                        // Only navigate if mounted
-                        if (!context.mounted) return;
-
-                        setState(() {
-                          answerState = AnswerState.correct;
-                          _confettiController.play();
-                        });
-
-                        // Use captured context safely
-                        Navigator.of(context).pop(wasCorrect);
-                      },
-                    )
-                        : ContinueButton(
-                      onContinue: () {
-                        final wasCorrect = answerState == AnswerState.correct; // capture BEFORE resetting
-
-                        setState(() {
-                          answerState = AnswerState.unanswered;
-                          questionKey++;
-                        });
-
-                        widget.onContinue(wasCorrect);
-                      },
-                    )
-                        : const SizedBox.shrink(),
-                  ),
-
-                ],
+                ),
               ),
-            ),
+            ],
           ),
 
-          // Confetti
-          Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.2, // 1/5 up from bottom
-            left: 0,
-            right: 0,
-            child: Center(
+          /// CONFETTI OVERLAY
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: IgnorePointer(
               child: ConfettiWidget(
                 confettiController: _confettiController,
-                blastDirectionality: BlastDirectionality.explosive,
+                blastDirectionality:
+                BlastDirectionality.explosive,
                 shouldLoop: false,
                 colors: const [
                   Colors.green,
@@ -231,8 +233,8 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
                 maxBlastForce: 20,
                 minBlastForce: 10,
               ),
-            )
-          )
+            ),
+          ),
         ],
       ),
     );

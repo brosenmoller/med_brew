@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:med_brew/models/question_data.dart';
+import 'package:flutter/foundation.dart';
 
 class MultipleChoiceWidget extends StatefulWidget {
   final QuestionData question;
@@ -19,8 +20,7 @@ class MultipleChoiceWidget extends StatefulWidget {
       _MultipleChoiceWidgetState();
 }
 
-class _MultipleChoiceWidgetState
-    extends State<MultipleChoiceWidget> {
+class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
   late List<String> options;
   int? selectedIndex;
 
@@ -54,25 +54,42 @@ class _MultipleChoiceWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: options.length,
-      itemBuilder: (context, index) {
-        final isSelected = selectedIndex == index;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: ElevatedButton(
-            onPressed: widget.locked
-                ? null
-                : () => _selectOption(index),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(options.length, (index) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: 200,
+                  maxWidth: screenWidth * 0.9,
+                ),
+                child: ElevatedButton(
+                  onPressed: widget.locked
+                      ? null
+                      : () => _selectOption(index),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 24,
+                    ),
+                  ),
+                  child: Text(
+                    options[index],
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
             ),
-            child: Text(options[index]),
-          ),
-        );
-      },
+          );
+        }),
+      ),
     );
   }
+
 }

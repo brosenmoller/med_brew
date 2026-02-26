@@ -16,7 +16,8 @@
     "answerType": "typed",
     "typedAnswerConfig": {
       "acceptedAnswers": ["Biceps", "Biceps brachii"]
-    }
+    },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
   },
   {
     "id": "q3",
@@ -24,7 +25,8 @@
     "answerType": "typed",
     "typedAnswerConfig": {
       "acceptedAnswers": ["Deltoid"]
-    }
+    },
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
   },
   {
     "id": "q4",

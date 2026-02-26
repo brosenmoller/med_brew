@@ -69,6 +69,7 @@ class _QuizSessionScreenState extends State<QuizSessionScreen> {
     }
 
     return QuestionDisplayScreen(
+      key: ValueKey(currentIndex),
       question: questions[currentIndex],
       spacedRepetitionMode: false,
       onContinue: (wasCorrect) {

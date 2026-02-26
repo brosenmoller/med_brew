@@ -58,28 +58,47 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          TextField(
-            controller: _controller,
-            focusNode: _focusNode,
-            enabled: !widget.locked,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _submit(),
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: "Your Answer",
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+
+        // If screen is wide (desktop/tablet)
+        final contentWidth = maxWidth > 800
+            ? maxWidth * 0.5   // 50% width on large screens
+            : maxWidth;        // Full width on small screens
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: contentWidth,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    enabled: !widget.locked,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _submit(),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: "Your Answer",
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: widget.locked ? null : _submit,
+                    child: const Text("Submit"),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: widget.locked ? null : _submit,
-            child: const Text("Submit"),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

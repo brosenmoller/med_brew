@@ -29,35 +29,58 @@ class FeedbackBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCorrect = answerState == AnswerState.correct;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: isCorrect ? Colors.green : Colors.red,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Text(
-            isCorrect ? "Correct!" : "Incorrect",
-            style: const TextStyle(color: Colors.white, fontSize: 18),
-            textAlign: TextAlign.center,
-          ),
-          if (!isCorrect)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                "Correct Answer: $correctAnswerText",
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+
+        // For wide screens, limit width to 50% or max 600px
+        final contentWidth = maxWidth > 800
+            ? maxWidth * 0.5
+            : maxWidth - 32; // subtract horizontal margin for mobile
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: contentWidth,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: isCorrect ? Colors.green : Colors.red,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isCorrect ? "Correct!" : "Incorrect",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (!isCorrect)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        "Correct Answer: $correctAnswerText",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ],
               ),
             ),
-        ],
-      ),
+          ),
+        );
+      },
     );
   }
+
 }

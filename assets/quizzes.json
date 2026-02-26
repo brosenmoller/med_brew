@@ -15,7 +15,7 @@
   {
     "id": "arm_muscles",
     "title": "Arm Muscles",
-    "imagePath": null,
+    "imagePath": "assets/images/full_skeleton_unlabeled.jpg",
     "questionIds": ["q2", "q3"]
   },
   {
