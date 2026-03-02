@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:med_brew/models/question_data.dart';
+import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/services/srs_service.dart';
-import 'answer_area.dart';
-import 'feedback_box.dart';
-import 'continue_button.dart';
-import 'srs_buttons.dart';
+import 'package:med_brew/screens/question_display/answer_area.dart';
+import 'package:med_brew/screens/question_display/feedback_box.dart';
+import 'package:med_brew/screens/question_display/continue_button.dart';
+import 'package:med_brew/screens/question_display/srs_buttons.dart';
 
 enum AnswerState { unanswered, correct, incorrect }
 
 class QuestionDisplayScreen extends StatefulWidget {
   final QuestionData question;
   final bool spacedRepetitionMode;
-  final Function(bool wasCorrect) onContinue;
+  final Function(bool wasCorrect, SrsQuality? quality) onContinue;
 
   const QuestionDisplayScreen({
     super.key,
@@ -168,39 +169,18 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
                                 AnswerState.correct
                             ? SrsButtons(
                           question: widget.question,
-                          onAnswered:
-                              (quality) async {
-                            final wasCorrect =
-                                _wasCorrect ?? true;
-
-                            await SrsService()
-                                .updateAfterAnswer(
-                                widget.question,
-                                quality);
-
-                            if (!context.mounted)
-                              return;
-
-                            Navigator.of(context)
-                                .pop(wasCorrect);
+                          onAnswered: (quality) {
+                            widget.onContinue(true, quality);
                           },
                         )
                             : ContinueButton(
                           onContinue: () {
-                            final wasCorrect =
-                                answerState ==
-                                    AnswerState
-                                        .correct;
-
+                            final wasCorrect = answerState == AnswerState.correct;
                             setState(() {
-                              answerState =
-                                  AnswerState
-                                      .unanswered;
+                              answerState = AnswerState.unanswered;
                               questionKey++;
                             });
-
-                            widget.onContinue(
-                                wasCorrect);
+                            widget.onContinue(wasCorrect, null);
                           },
                         )
                             : const SizedBox.shrink(),

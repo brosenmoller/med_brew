@@ -20,8 +20,7 @@ class SrsButtons extends StatelessWidget {
         final nextDue = _computeNextReviewForQuality(quality);
         final label = "${_qualityLabel(quality)} (${_formatDuration(nextDue)})";
 
-        return _srsButton(label, () async {
-          await SrsService().updateAfterAnswer(question, quality);
+        return _srsButton(label, () {
           if (onAnswered != null) onAnswered!(quality);
         });
       }).toList(),

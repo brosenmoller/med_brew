@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:med_brew/models/category_data.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/models/user_question_data.dart' show SrsQuality;
+import 'package:med_brew/screens/srs_session_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
 import 'package:med_brew/screens/question_display/question_display_screen.dart';
@@ -98,7 +98,7 @@ class SrsOverviewScreen extends StatelessWidget {
                     subtitle: Text("${dueQuestions.length} questions due, $timingText"),
                     trailing: hasDue
                         ? ElevatedButton(
-                      onPressed: () => _startQuiz(context, dueQuestions),
+                      onPressed: () => _startQuiz(context, dueQuestions, quizName),
                       child: const Text("Start"),
                     )
                         : null,
@@ -112,35 +112,16 @@ class SrsOverviewScreen extends StatelessWidget {
     );
   }
 
-  void _startQuiz(BuildContext context, List<QuestionData> questions) {
-    int currentIndex = 0;
-
-    void navigateNext() {
-      if (currentIndex >= questions.length) {
-        Navigator.pop(context);
-        return;
-      }
-
-      final question = questions[currentIndex];
-      currentIndex++;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => QuestionDisplayScreen(
-            question: question,
-            spacedRepetitionMode: true,
-            onContinue: (wasCorrect) async {
-              await SrsService().updateAfterAnswer(
-                  question, wasCorrect ? SrsQuality.good : SrsQuality.again);
-              navigateNext();
-            },
-          ),
+  void _startQuiz(BuildContext context, List<QuestionData> questions, String quizName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SrsSessionScreen(
+          questions: questions,
+          sessionTitle: quizName,
         ),
-      );
-    }
-
-    navigateNext();
+      ),
+    );
   }
 
   String _formatDuration(Duration duration) {
