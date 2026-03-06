@@ -16,44 +16,35 @@ class SrsButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: SrsQuality.values.map((quality) {
-        final nextDue = _computeNextReviewForQuality(quality);
-        final label = "${_qualityLabel(quality)} (${_formatDuration(nextDue)})";
-
-        return _srsButton(label, () {
-          if (onAnswered != null) onAnswered!(quality);
-        });
-      }).toList(),
-    );
-  }
-
-  Widget _srsButton(String label, VoidCallback onPressed) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: onPressed,
-          child: Text(label),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'How well did you know this?',
+          style: Theme.of(context).textTheme.titleMedium,
+          textAlign: TextAlign.center,
         ),
-      ),
+        const SizedBox(height: 12),
+        Row(
+          children: SrsQuality.values.map((quality) {
+            final nextDue = _computeNextReviewForQuality(quality);
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: _SrsChip(
+                  quality: quality,
+                  nextReview: _formatDuration(nextDue),
+                  onTap: () => onAnswered?.call(quality),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 4),
+      ],
     );
   }
 
-  String _qualityLabel(SrsQuality quality) {
-    switch (quality) {
-      case SrsQuality.again:
-        return "Again";
-      case SrsQuality.hard:
-        return "Hard";
-      case SrsQuality.good:
-        return "Good";
-      case SrsQuality.easy:
-        return "Easy";
-    }
-  }
-
-  /// Simulate next review datetime if this quality is chosen
   DateTime _computeNextReviewForQuality(SrsQuality quality) {
     final userData = SrsService().getUserData(question);
     final simulated = userData.copy();
@@ -61,19 +52,72 @@ class SrsButtons extends StatelessWidget {
     return simulated.nextReview;
   }
 
-  /// Format the interval nicely for display
   String _formatDuration(DateTime nextReview) {
-    final now = DateTime.now();
-    final diff = nextReview.difference(now);
+    final diff = nextReview.difference(DateTime.now());
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return '${diff.inDays}d';
+  }
+}
 
-    if (diff.inSeconds < 60){
-      return "${diff.inSeconds}s";
-    } else if (diff.inMinutes < 60) {
-      return "${diff.inMinutes}m";
-    } else if (diff.inHours < 24) {
-      return "${diff.inHours}h";
-    } else {
-      return "${diff.inDays}d";
+class _SrsChip extends StatelessWidget {
+  final SrsQuality quality;
+  final String nextReview;
+  final VoidCallback onTap;
+
+  const _SrsChip({
+    required this.quality,
+    required this.nextReview,
+    required this.onTap,
+  });
+
+  Color _color() {
+    switch (quality) {
+      case SrsQuality.again:
+        return Colors.red.shade400;
+      case SrsQuality.hard:
+        return Colors.orange.shade400;
+      case SrsQuality.good:
+        return Colors.blue.shade500;
+      case SrsQuality.easy:
+        return Colors.green.shade500;
     }
+  }
+
+  String _label() {
+    switch (quality) {
+      case SrsQuality.again:
+        return 'Again';
+      case SrsQuality.hard:
+        return 'Hard';
+      case SrsQuality.good:
+        return 'Good';
+      case SrsQuality.easy:
+        return 'Easy';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _color(),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(_label(),
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(nextReview,
+              style: const TextStyle(fontSize: 12, color: Colors.white70)),
+        ],
+      ),
+    );
   }
 }

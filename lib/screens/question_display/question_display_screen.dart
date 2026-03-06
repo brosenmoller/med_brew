@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:med_brew/models/answer_state.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/user_question_data.dart';
-import 'package:med_brew/services/srs_service.dart';
 import 'package:med_brew/screens/question_display/answer_area.dart';
-import 'package:med_brew/screens/question_display/feedback_box.dart';
 import 'package:med_brew/screens/question_display/continue_button.dart';
 import 'package:med_brew/screens/question_display/srs_buttons.dart';
-
-enum AnswerState { unanswered, correct, incorrect }
 
 class QuestionDisplayScreen extends StatefulWidget {
   final QuestionData question;
@@ -26,23 +23,24 @@ class QuestionDisplayScreen extends StatefulWidget {
   State<QuestionDisplayScreen> createState() => _QuestionDisplayScreenState();
 }
 
-class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with SingleTickerProviderStateMixin {
-  bool? _wasCorrect;
+class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
+    with SingleTickerProviderStateMixin {
   AnswerState answerState = AnswerState.unanswered;
 
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
   late final ConfettiController _confettiController;
-  int questionKey = 0;
 
   @override
   void initState() {
     super.initState();
-    _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _shakeController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800));
     _shakeAnimation = Tween<double>(begin: 0, end: 8)
         .chain(CurveTween(curve: Curves.elasticIn))
         .animate(_shakeController);
-    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 1));
   }
 
   @override
@@ -54,168 +52,193 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen> with Sing
 
   void _handleAnswer(bool isCorrect) {
     setState(() {
-      _wasCorrect = isCorrect; // store correctness
       answerState = isCorrect ? AnswerState.correct : AnswerState.incorrect;
-
-      if (!isCorrect) {
-        _shakeController.forward(from: 0);
-      } else {
-        _confettiController.play();
-      }
     });
+
+    if (!isCorrect) {
+      _shakeController.forward(from: 0);
+    } else {
+      _confettiController.play();
+    }
+
+    if (widget.spacedRepetitionMode && isCorrect) {
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (mounted) _showSrsBottomSheet();
+      });
+    }
+  }
+
+  void _showSrsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+          child: SrsButtons(
+            question: widget.question,
+            onAnswered: (quality) {
+              Navigator.pop(ctx);
+              widget.onContinue(true, quality);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleContinue() {
+    final wasCorrect = answerState == AnswerState.correct;
+    setState(() {
+      answerState = AnswerState.unanswered;
+    });
+    widget.onContinue(wasCorrect, null);
   }
 
   @override
   Widget build(BuildContext context) {
+    final showContinue = answerState != AnswerState.unanswered &&
+        !(widget.spacedRepetitionMode && answerState == AnswerState.correct);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context)),
       ),
-      body: Stack(
-        children: [
-          Column(
+      // No bottomNavigationBar — using a Stack overlay instead so the body
+      // constraints never change and nothing jumps when the button appears.
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Cap the bottom section at 55% of the *fixed* body height.
+          // Because we never resize the body, this value is stable.
+          final maxBottomHeight = constraints.maxHeight * 0.55;
+
+          return Stack(
             children: [
 
-              /// IMAGE AREA
-              Expanded(
-                child: widget.question.imagePath != null
-                    ? Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Image.asset(
-                    widget.question.imagePath!,
-                    fit: BoxFit.contain,
-                    width: double.infinity,
+              /// MAIN LAYOUT
+              Column(
+                children: [
+
+                  /// IMAGE AREA
+                  Expanded(
+                    child: widget.question.imagePath != null
+                        ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Image.asset(
+                        widget.question.imagePath!,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                      ),
+                    )
+                        : const SizedBox.shrink(),
                   ),
-                )
-                    : const SizedBox.shrink(),
-              ),
 
-              /// BOTTOM CONTENT
-              SafeArea(
-                top: false,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                  /// BOTTOM SECTION — capped, scrollable
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: maxBottomHeight),
+                    child: SafeArea(
+                      top: false,
+                      // Extra bottom padding reserves space for the overlaid
+                      // continue button so it never covers answer options.
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
 
-                      const SizedBox(height: 16),
+                            /// QUESTION TEXT
+                            Center(
+                              child: AnimatedBuilder(
+                                animation: _shakeController,
+                                builder: (context, child) {
+                                  final offset = _shakeAnimation.value *
+                                      (_shakeController.status ==
+                                          AnimationStatus.forward
+                                          ? 1
+                                          : 0);
+                                  return Transform.translate(
+                                    offset: Offset(offset, 0),
+                                    child: child,
+                                  );
+                                },
+                                child: Text(
+                                  widget.question.questionVariants.first,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
 
-                      /// QUESTION
-                      Center(
-                        child: AnimatedBuilder(
-                          animation: _shakeController,
-                          builder: (context, child) {
-                            double offset = _shakeAnimation.value *
-                                (_shakeController.status == AnimationStatus.forward ? 1 : 0);
+                            const SizedBox(height: 20),
 
-                            return Transform.translate(
-                              offset: Offset(offset, 0),
-                              child: child,
-                            );
-                          },
-                          child: Text(
-                            widget.question.questionVariants.first,
-                            style: Theme.of(context).textTheme.titleLarge,
-                            textAlign: TextAlign.center,
-                          ),
+                            /// ANSWER AREA
+                            AnswerArea(
+                              question: widget.question,
+                              locked: answerState != AnswerState.unanswered,
+                              answerState: answerState,
+                              onAnswered: _handleAnswer,
+                            ),
+
+                          ],
                         ),
                       ),
+                    ),
+                  ),
 
-                      const SizedBox(height: 20),
+                ],
+              ),
 
-                      /// ANSWERS
-                      AnswerArea(
-                        question: widget.question,
-                        locked:
-                        answerState != AnswerState.unanswered,
-                        onAnswered: _handleAnswer,
-                      ),
-
-                      /// FEEDBACK
-                      AnimatedOpacity(
-                        opacity:
-                        answerState == AnswerState.unanswered
-                            ? 0
-                            : 1,
-                        duration:
-                        const Duration(milliseconds: 400),
-                        child: answerState !=
-                            AnswerState.unanswered
-                            ? FeedbackBox(
-                          answerState: answerState,
-                          question: widget.question,
-                        )
-                            : const SizedBox.shrink(),
-                      ),
-
-                      /// CONTINUE / SRS
-                      AnimatedScale(
-                        scale:
-                        answerState == AnswerState.unanswered
-                            ? 0
-                            : 1,
-                        duration:
-                        const Duration(milliseconds: 300),
-                        curve: Curves.elasticOut,
-                        child: answerState !=
-                            AnswerState.unanswered
-                            ? widget.spacedRepetitionMode &&
-                            answerState ==
-                                AnswerState.correct
-                            ? SrsButtons(
-                          question: widget.question,
-                          onAnswered: (quality) {
-                            widget.onContinue(true, quality);
-                          },
-                        )
-                            : ContinueButton(
-                          onContinue: () {
-                            final wasCorrect = answerState == AnswerState.correct;
-                            setState(() {
-                              answerState = AnswerState.unanswered;
-                              questionKey++;
-                            });
-                            widget.onContinue(wasCorrect, null);
-                          },
-                        )
-                            : const SizedBox.shrink(),
-                      ),
-
-                      const SizedBox(height: 16),
-                    ],
+              /// CONTINUE BUTTON — overlaid at the bottom, never affects layout
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).padding.bottom + 16,
+                child: AnimatedSlide(
+                  offset: showContinue ? Offset.zero : const Offset(0, 0.3),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                  child: AnimatedOpacity(
+                    opacity: showContinue ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: IgnorePointer(
+                      ignoring: !showContinue,
+                      child: ContinueButton(onContinue: _handleContinue),
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
 
-          /// CONFETTI OVERLAY
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: IgnorePointer(
-              child: ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirectionality:
-                BlastDirectionality.explosive,
-                shouldLoop: false,
-                colors: const [
-                  Colors.green,
-                  Colors.blue,
-                  Colors.pink,
-                  Colors.orange
-                ],
-                numberOfParticles: 10,
-                maxBlastForce: 20,
-                minBlastForce: 10,
+              /// CONFETTI OVERLAY
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: IgnorePointer(
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    shouldLoop: false,
+                    colors: const [
+                      Colors.green,
+                      Colors.blue,
+                      Colors.pink,
+                      Colors.orange,
+                    ],
+                    numberOfParticles: 10,
+                    maxBlastForce: 20,
+                    minBlastForce: 10,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+
+            ],
+          );
+        },
       ),
     );
   }

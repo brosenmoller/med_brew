@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/models/answer_state.dart';
 import 'package:med_brew/models/question_data.dart';
 
 class TypedAnswerWidget extends StatefulWidget {
   final QuestionData question;
   final Function(bool isCorrect) onAnswered;
   final bool locked;
+  final AnswerState answerState;
 
   const TypedAnswerWidget({
     super.key,
     required this.question,
     required this.onAnswered,
     required this.locked,
+    required this.answerState,
   });
 
   @override
-  State<TypedAnswerWidget> createState() =>
-      _TypedAnswerWidgetState();
+  State<TypedAnswerWidget> createState() => _TypedAnswerWidgetState();
 }
 
 class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
   final TextEditingController _controller = TextEditingController();
   late final FocusNode _focusNode;
-
-  bool answered = false;
+  bool _submitted = false;
 
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
-
-    // Request focus after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusNode.requestFocus();
     });
@@ -43,39 +42,33 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
   }
 
   void _submit() {
-    if (widget.locked || answered) return;
-
-    final input = _controller.text;
+    if (widget.locked || _submitted) return;
     final isCorrect =
-    widget.question.typedAnswerConfig!.isCorrect(input);
-
-    setState(() {
-      answered = true;
-    });
-
+    widget.question.typedAnswerConfig!.isCorrect(_controller.text);
+    setState(() => _submitted = true);
     widget.onAnswered(isCorrect);
   }
 
   @override
   Widget build(BuildContext context) {
+    final answered = widget.answerState != AnswerState.unanswered;
+    final isCorrect = widget.answerState == AnswerState.correct;
+    final feedbackColor =
+    isCorrect ? Colors.green.shade600 : Colors.red.shade600;
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
-
-        // If screen is wide (desktop/tablet)
-        final contentWidth = maxWidth > 800
-            ? maxWidth * 0.5   // 50% width on large screens
-            : maxWidth;        // Full width on small screens
+        final contentWidth =
+        constraints.maxWidth > 800 ? constraints.maxWidth * 0.5 : constraints.maxWidth;
 
         return Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: contentWidth,
-            ),
+            constraints: BoxConstraints(maxWidth: contentWidth),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   TextField(
                     controller: _controller,
@@ -83,15 +76,59 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                     enabled: !widget.locked,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _submit(),
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Your Answer",
+                    decoration: InputDecoration(
+                      labelText: 'Your Answer',
+                      border: const OutlineInputBorder(),
+                      // Colour the border and label once answered.
+                      enabledBorder: answered
+                          ? OutlineInputBorder(
+                        borderSide:
+                        BorderSide(color: feedbackColor, width: 2),
+                      )
+                          : null,
+                      disabledBorder: answered
+                          ? OutlineInputBorder(
+                        borderSide:
+                        BorderSide(color: feedbackColor, width: 2),
+                      )
+                          : null,
+                      labelStyle:
+                      answered ? TextStyle(color: feedbackColor) : null,
+                      // Small icon to reinforce the result at a glance.
+                      suffixIcon: answered
+                          ? Icon(
+                        isCorrect ? Icons.check_circle : Icons.cancel,
+                        color: feedbackColor,
+                      )
+                          : null,
                     ),
                   ),
+
+                  // Reveal the correct answer when the user got it wrong.
+                  if (answered && !isCorrect) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.lightbulb_outline,
+                            size: 16, color: Colors.green.shade600),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Correct answer: '
+                              '${widget.question.typedAnswerConfig!.acceptedAnswers.join(' / ')}',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
                   const SizedBox(height: 12),
+
                   ElevatedButton(
                     onPressed: widget.locked ? null : _submit,
-                    child: const Text("Submit"),
+                    child: const Text('Submit'),
                   ),
                 ],
               ),

@@ -1,0 +1,1 @@
+enum AnswerState { unanswered, correct, incorrect }
