@@ -5,7 +5,7 @@ enum SrsQuality { again, hard, good, easy }
 @HiveType(typeId: 0)
 class UserQuestionData extends HiveObject {
   @HiveField(0)
-  final String questionId; // reference to QuestionData
+  final String questionId;
 
   @HiveField(1)
   int streak;
@@ -14,7 +14,7 @@ class UserQuestionData extends HiveObject {
   double easeFactor;
 
   @HiveField(3)
-  int interval; // in days
+  double intervalSeconds;
 
   @HiveField(4)
   DateTime lastReviewed;
@@ -28,8 +28,8 @@ class UserQuestionData extends HiveObject {
   UserQuestionData({
     required this.questionId,
     this.streak = 0,
-    this.easeFactor = 2.5, // default Anki starting EF
-    this.interval = 0,
+    this.easeFactor = 2.0,
+    this.intervalSeconds = 0,
     this.spacedRepetitionEnabled = false,
     DateTime? lastReviewed,
     DateTime? nextReview,
@@ -41,58 +41,74 @@ class UserQuestionData extends HiveObject {
       questionId: questionId,
       streak: streak,
       easeFactor: easeFactor,
-      interval: interval,
+      intervalSeconds: intervalSeconds,
       spacedRepetitionEnabled: spacedRepetitionEnabled,
       lastReviewed: lastReviewed,
       nextReview: nextReview,
     );
   }
 
-  /// Updates the SRS fields using IRAS/SM2 logic
+  Duration get intervalDuration => Duration(seconds: intervalSeconds.round());
+
+  void _adjustEase(double adjustment) {
+    easeFactor = (easeFactor + adjustment).clamp(1.1, 3.0);
+  }
+
   void updateAfterAnswer(SrsQuality quality) {
     final now = DateTime.now();
     lastReviewed = now;
 
-    if (quality == SrsQuality.again) {
-      // Again: reset interval
-      streak = 0;
-      interval = 1;
-    } else {
-      streak++;
-      double factorMultiplier;
+    if (streak == 0) {
       switch (quality) {
+        case SrsQuality.again:
+          intervalSeconds = const Duration(minutes: 1).inSeconds.toDouble();
+          break;
         case SrsQuality.hard:
-          factorMultiplier = 0.9;
+          intervalSeconds = const Duration(minutes: 5).inSeconds.toDouble();
           break;
         case SrsQuality.good:
-          factorMultiplier = 1.0;
+          intervalSeconds = const Duration(minutes: 10).inSeconds.toDouble();
           break;
         case SrsQuality.easy:
-          factorMultiplier = 1.2;
+          intervalSeconds = const Duration(days: 7).inSeconds.toDouble();
           break;
-        default:
-          factorMultiplier = 1.0;
       }
-
-      easeFactor *= factorMultiplier;
-      easeFactor = easeFactor.clamp(1.3, 2.5); // min/max EF
-
-      if (streak == 1) {
-        interval = 1;
-      } else if (streak == 2) {
-        interval = 6;
-      } else {
-        interval = (interval * easeFactor).round();
-      }
+      if (quality != SrsQuality.again) streak++;
+      nextReview = now.add(intervalDuration);
+      return;
     }
 
-    nextReview = now.add(Duration(days: interval));
+    if (quality == SrsQuality.again) {
+      streak = 0;
+      intervalSeconds = const Duration(minutes: 1).inSeconds.toDouble();
+      _adjustEase(-0.20);
+    } else {
+      streak++;
+      switch (quality) {
+        case SrsQuality.hard:
+          _adjustEase(-0.15);
+          break;
+        case SrsQuality.good:
+          _adjustEase(0.0);
+          break;
+        case SrsQuality.easy:
+          _adjustEase(0.15);
+          break;
+        default:
+          break;
+      }
+      intervalSeconds = intervalSeconds * easeFactor;
+    }
+
+    nextReview = now.add(intervalDuration);
   }
 
-  bool get isDue =>spacedRepetitionEnabled && nextReview.isBefore(DateTime.now());
+  bool get isDue =>
+      spacedRepetitionEnabled && nextReview.isBefore(DateTime.now());
 
   @override
   String toString() {
-    return 'UserQuestionData(questionId: $questionId, spacedRepetitionEnabled: $spacedRepetitionEnabled streak: $streak, interval: $interval, nextReview: $nextReview)';
+    return 'UserQuestionData(questionId: $questionId, spacedRepetitionEnabled: $spacedRepetitionEnabled, '
+        'streak: $streak, intervalSeconds: $intervalSeconds, nextReview: $nextReview)';
   }
 }

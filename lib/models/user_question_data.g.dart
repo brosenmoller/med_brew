@@ -20,7 +20,7 @@ class UserQuestionDataAdapter extends TypeAdapter<UserQuestionData> {
       questionId: fields[0] as String,
       streak: fields[1] as int,
       easeFactor: fields[2] as double,
-      interval: fields[3] as int,
+      intervalSeconds: fields[3] as double,
       spacedRepetitionEnabled: fields[6] as bool,
       lastReviewed: fields[4] as DateTime?,
       nextReview: fields[5] as DateTime?,
@@ -38,7 +38,7 @@ class UserQuestionDataAdapter extends TypeAdapter<UserQuestionData> {
       ..writeByte(2)
       ..write(obj.easeFactor)
       ..writeByte(3)
-      ..write(obj.interval)
+      ..write(obj.intervalSeconds)
       ..writeByte(4)
       ..write(obj.lastReviewed)
       ..writeByte(5)

@@ -66,7 +66,9 @@ class SrsButtons extends StatelessWidget {
     final now = DateTime.now();
     final diff = nextReview.difference(now);
 
-    if (diff.inMinutes < 60) {
+    if (diff.inSeconds < 60){
+      return "${diff.inSeconds}s";
+    } else if (diff.inMinutes < 60) {
       return "${diff.inMinutes}m";
     } else if (diff.inHours < 24) {
       return "${diff.inHours}h";
