@@ -24,7 +24,7 @@
     "questionVariants": ["Which muscle is responsible for shoulder abduction?"],
     "answerType": "typed",
     "typedAnswerConfig": {
-      "acceptedAnswers": ["Deltoid"]
+      "acceptedAnswers": ["Deltoid", "deltojd"]
     },
     "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
   },

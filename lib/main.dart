@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/screens/home_screen.dart';
 import 'package:med_brew/services/favorites_service.dart' show FavoritesService;
@@ -12,22 +13,21 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(UserQuestionDataAdapter());
 
+  final db = AppDatabase();
+
   final srsService = SrsService();
   final questionService = QuestionService();
   final favoritesService = FavoritesService();
   await srsService.init();
-  await questionService.init(
-      questionsAsset: 'assets/questions.json',
-      categoriesAsset: 'assets/categories.json',
-      quizzesAsset: 'assets/quizzes.json'
-  );
+  await questionService.init(db);
   await favoritesService.init();
 
-  runApp(const MedBrew());
+  runApp(MedBrew(db: db));
 }
 
 class MedBrew extends StatelessWidget {
-  const MedBrew({super.key});
+  final AppDatabase db;
+  const MedBrew({super.key, required this.db});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class MedBrew extends StatelessWidget {
         colorSchemeSeed: Colors.blue,
         useMaterial3: true,
       ),
-      home: HomeScreen(),
+      home: HomeScreen(db: db),
     );
   }
 }

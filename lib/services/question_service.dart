@@ -1,8 +1,10 @@
 import 'dart:convert';
-import 'package:flutter/services.dart';
+import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/category_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
+import 'package:med_brew/models/answer_configs.dart';
+import 'package:med_brew/models/answer_type.dart';
 
 class QuestionService {
   QuestionService._internal();
@@ -10,69 +12,92 @@ class QuestionService {
   factory QuestionService() => _instance;
 
   bool _initialized = false;
+  late AppDatabase _db;
 
   final Map<String, QuestionData> _questions = {};
   final Map<String, CategoryData> _categories = {};
   final Map<String, QuizData> _quizzes = {};
 
-  /// Initialize everything
-  Future<void> init({
-    required String questionsAsset,
-    required String categoriesAsset,
-    required String quizzesAsset,
-  }) async {
+  Future<void> init(AppDatabase db) async {
     if (_initialized) return;
+    _db = db;
+    await _load();
+  }
 
-    await _loadQuestions(questionsAsset);
-    await _loadCategories(categoriesAsset);
-    await _loadQuizzes(quizzesAsset);
+  Future<void> refresh() async {
+    _initialized = false;
+    await _load();
+  }
+
+  Future<void> _load() async {
+    _questions.clear();
+    _categories.clear();
+    _quizzes.clear();
+
+    final categories = await _db.getAllCategories();
+    for (final cat in categories) {
+      final quizzes = await _db.getQuizzesForCategory(cat.id);
+      final quizIds = <String>[];
+
+      for (final quiz in quizzes) {
+        final questions = await _db.getQuestionsForQuiz(quiz.id);
+        final questionIds = <String>[];
+
+        for (final question in questions) {
+          final questionId = question.id.toString();
+          questionIds.add(questionId);
+
+          final answerType = AnswerType.values.firstWhere(
+                (e) => e.toString().split('.').last == question.answerType,
+          );
+
+          final config = jsonDecode(question.answerConfig) as Map<String, dynamic>;
+
+          _questions[questionId] = QuestionData(
+            id: questionId,
+            questionVariants: question.questionVariants != null
+                ? List<String>.from(jsonDecode(question.questionVariants!))
+                : [question.questionText],
+            imagePath: question.imagePath,
+            answerType: answerType,
+            explanation: question.explanation,
+            multipleChoiceConfig: answerType == AnswerType.multipleChoice
+                ? MultipleChoiceConfig.fromJson(config)
+                : null,
+            typedAnswerConfig: answerType == AnswerType.typed
+                ? TypedAnswerConfig.fromJson(config)
+                : null,
+            imageClickConfig: answerType == AnswerType.imageClick
+                ? ImageClickConfig.fromJson(config)
+                : null,
+          );
+        }
+
+        final quizId = quiz.id.toString();
+        quizIds.add(quizId);
+        _quizzes[quizId] = QuizData(
+          id: quizId,
+          title: quiz.title,
+          imagePath: quiz.imagePath,
+          questionIds: questionIds,
+        );
+      }
+
+      final categoryId = cat.id.toString();
+      _categories[categoryId] = CategoryData(
+        id: categoryId,
+        title: cat.title,
+        imagePath: cat.imagePath,
+        quizIds: quizIds,
+      );
+    }
 
     _initialized = true;
   }
 
   void _ensureInitialized() {
-    if (!_initialized) {
-      throw Exception("QuestionService not initialized");
-    }
+    if (!_initialized) throw Exception('QuestionService not initialized');
   }
-
-  // ----------------------------
-  // Loading
-  // ----------------------------
-
-  Future<void> _loadQuestions(String path) async {
-    final jsonString = await rootBundle.loadString(path);
-    final List<dynamic> jsonData = json.decode(jsonString);
-
-    for (final q in jsonData) {
-      final question = QuestionData.fromJson(q);
-      _questions[question.id] = question;
-    }
-  }
-
-  Future<void> _loadCategories(String path) async {
-    final jsonString = await rootBundle.loadString(path);
-    final List<dynamic> jsonData = json.decode(jsonString);
-
-    for (final c in jsonData) {
-      final category = CategoryData.fromJson(c);
-      _categories[category.id] = category;
-    }
-  }
-
-  Future<void> _loadQuizzes(String path) async {
-    final jsonString = await rootBundle.loadString(path);
-    final List<dynamic> jsonData = json.decode(jsonString);
-
-    for (final question in jsonData) {
-      final quiz = QuizData.fromJson(question);
-      _quizzes[quiz.id] = quiz;
-    }
-  }
-
-  // ----------------------------
-  // Public Getters
-  // ----------------------------
 
   List<QuestionData> getAllQuestions() {
     _ensureInitialized();
@@ -85,9 +110,9 @@ class QuestionService {
   }
 
   List<QuizData> getQuizzesForCategory(String categoryId) {
+    _ensureInitialized();
     final category = _categories[categoryId];
     if (category == null) return [];
-
     return category.quizIds
         .map((id) => _quizzes[id])
         .whereType<QuizData>()
@@ -96,10 +121,8 @@ class QuestionService {
 
   List<QuestionData> getQuestionsForQuiz(String quizId) {
     _ensureInitialized();
-
     final quiz = _quizzes[quizId];
     if (quiz == null) return [];
-
     return quiz.questionIds
         .map((id) => _questions[id])
         .whereType<QuestionData>()

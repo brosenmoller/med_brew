@@ -22,6 +22,15 @@ class ImageClickConfig {
       ),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'correctArea': {
+      'left': correctArea.left,
+      'top': correctArea.top,
+      'right': correctArea.right,
+      'bottom': correctArea.bottom,
+    },
+  };
 }
 
 class MultipleChoiceConfig {
@@ -42,6 +51,12 @@ class MultipleChoiceConfig {
       scrambleOptions: json['scrambleOptions'] as bool? ?? true,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'options': options,
+    'correctIndex': correctIndex,
+    'scrambleOptions': scrambleOptions,
+  };
 }
 
 class TypedAnswerConfig {
@@ -70,4 +85,8 @@ class TypedAnswerConfig {
       acceptedAnswers: List<String>.from(json['acceptedAnswers'] ?? []),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'acceptedAnswers': acceptedAnswers,
+  };
 }
