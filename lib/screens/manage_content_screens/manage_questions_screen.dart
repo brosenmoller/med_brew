@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/screens/manage_content_screens/add_question_screen.dart';
@@ -58,25 +59,26 @@ class ManageQuestionsScreen extends StatelessWidget {
                   newIndex: newIndex);
             },
             itemBuilder: (context, i) {
-              final q = questions[i];
+              final question = questions[i];
+              final canEdit = !question.isPermanent || kDebugMode;
               return ListTile(
-                key: ValueKey(q.id),
-                leading: _answerTypeIcon(q.answerType),
+                key: ValueKey(question.id),
+                leading: _answerTypeIcon(question.answerType),
                 title: Text(
-                  q.questionText,
+                  question.questionText,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: Row(
                   children: [
-                    _answerTypeChip(q.answerType),
-                    if (q.isPermanent) ...[
+                    _answerTypeChip(question.answerType),
+                    if (question.isPermanent) ...[
                       const SizedBox(width: 6),
                       const _Chip(label: 'Built-in', color: Colors.grey),
                     ],
                   ],
                 ),
-                trailing: q.isPermanent
+                trailing: canEdit
                     ? const Icon(Icons.drag_handle, color: Colors.grey)
                     : Row(
                   mainAxisSize: MainAxisSize.min,
@@ -85,7 +87,7 @@ class ManageQuestionsScreen extends StatelessWidget {
                       icon: const Icon(Icons.delete_outline,
                           color: Colors.red),
                       tooltip: 'Delete',
-                      onPressed: () => _confirmDelete(context, q),
+                      onPressed: () => _confirmDelete(context, question),
                     ),
                     const Icon(Icons.drag_handle),
                   ],

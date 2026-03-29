@@ -1,109 +1,160 @@
-[
-  {
-    "id": "q1",
-    "questionVariants": ["What is the longest bone?"],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["Femur", "Tibia", "Humerus", "Fibula"],
-      "correctIndex": 0
+{
+  "questions":
+  [
+    {
+      "id": "q1",
+      "questionVariants": ["What is the longest bone?"],
+      "answerType": "multipleChoice",
+      "multipleChoiceConfig": {
+        "options": ["Femur", "Tibia", "Humerus", "Fibula"],
+        "correctIndex": 0
+      },
+      "explanation": "The femur is the longest bone in the human body.",
+      "imagePath": null
     },
-    "explanation": "The femur is the longest bone in the human body.",
-    "imagePath": null
-  },
-  {
-    "id": "q2",
-    "questionVariants": ["What muscle flexes the elbow?"],
-    "answerType": "typed",
-    "typedAnswerConfig": {
-      "acceptedAnswers": ["Biceps", "Biceps brachii"]
+    {
+      "id": "q2",
+      "questionVariants": ["What muscle flexes the elbow?"],
+      "answerType": "typed",
+      "typedAnswerConfig": {
+        "acceptedAnswers": ["Biceps", "Biceps brachii"]
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
     },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  },
-  {
-    "id": "q3",
-    "questionVariants": ["Which muscle is responsible for shoulder abduction?"],
-    "answerType": "typed",
-    "typedAnswerConfig": {
-      "acceptedAnswers": ["Deltoid", "deltojd"]
+    {
+      "id": "q3",
+      "questionVariants": ["Which muscle is responsible for shoulder abduction?"],
+      "answerType": "typed",
+      "typedAnswerConfig": {
+        "acceptedAnswers": ["Deltoid", "deltojd"]
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
     },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  },
-  {
-    "id": "q4",
-    "questionVariants": ["Name the largest muscle in the human body."],
-    "answerType": "typed",
-    "typedAnswerConfig": {
-      "acceptedAnswers": ["Gluteus maximus"]
+    {
+      "id": "q4",
+      "questionVariants": ["Name the largest muscle in the human body."],
+      "answerType": "typed",
+      "typedAnswerConfig": {
+        "acceptedAnswers": ["Gluteus maximus"]
+      }
+    },
+    {
+      "id": "s1",
+      "questionVariants": ["Number 1 is pointing to ..."],
+      "answerType": "multipleChoice",
+      "multipleChoiceConfig": {
+        "options": ["Mandible", "Skull", "Sternum", "Fibula"],
+        "correctIndex": 1
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+    },
+    {
+      "id": "s2",
+      "questionVariants": ["The patella is indicated by number ..."],
+      "answerType": "multipleChoice",
+      "multipleChoiceConfig": {
+        "options": ["14", "11", "9", "4"],
+        "correctIndex": 0
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+    },
+    {
+      "id": "s3",
+      "questionVariants": ["Number 8 is pointing to ..."],
+      "answerType": "multipleChoice",
+      "multipleChoiceConfig": {
+        "options": ["Mandible", "Tibia", "Sternum", "Ulna"],
+        "correctIndex": 0
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+    },
+    {
+      "id": "s4",
+      "questionVariants": ["The pubis is indicated by number ..."],
+      "answerType": "multipleChoice",
+      "multipleChoiceConfig": {
+        "options": ["9", "11", "13", "12"],
+        "correctIndex": 2
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+    },
+    {
+      "id": "s5",
+      "questionVariants": ["Number 3 is pointing to ..."],
+      "answerType": "multipleChoice",
+      "multipleChoiceConfig": {
+        "options": ["Radius", "Femur", "Humerus", "Tibia"],
+        "correctIndex": 2
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+    },
+    {
+      "id": "s6",
+      "questionVariants": ["The pelvic girdle is indicated by number ..."],
+      "answerType": "multipleChoice",
+      "multipleChoiceConfig": {
+        "options": ["9", "10", "11", "12"],
+        "correctIndex": 2
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
+    },
+    {
+      "id": "s7",
+      "questionVariants": ["Number 2 is pointing to ..."],
+      "answerType": "multipleChoice",
+      "multipleChoiceConfig": {
+        "options": ["Sternum", "Clavicle", "Patella", "Radius"],
+        "correctIndex": 1
+      },
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
     }
-  },
-  {
-    "id": "s1",
-    "questionVariants": ["Number 1 is pointing to ..."],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["Mandible", "Skull", "Sternum", "Fibula"],
-      "correctIndex": 1
+  ],
+  "quizzes":
+  [
+    {
+      "id": "full_skeleton_quiz",
+      "title": "Full Skeleton",
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg",
+      "questionIds": ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8",
+        "s9", "s10", "s11", "s12", "s13", "s14", "s15"]
     },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  },
-  {
-    "id": "s2",
-    "questionVariants": ["The patella is indicated by number ..."],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["14", "11", "9", "4"],
-      "correctIndex": 0
+    {
+      "id": "femur_quiz",
+      "title": "Femur Quiz",
+      "imagePath": null,
+      "questionIds": ["q1"]
     },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  },
-  {
-    "id": "s3",
-    "questionVariants": ["Number 8 is pointing to ..."],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["Mandible", "Tibia", "Sternum", "Ulna"],
-      "correctIndex": 0
+    {
+      "id": "arm_muscles",
+      "title": "Arm Muscles",
+      "imagePath": "assets/images/full_skeleton_unlabeled.jpg",
+      "questionIds": ["q2", "q3"]
     },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  },
-  {
-    "id": "s4",
-    "questionVariants": ["The pubis is indicated by number ..."],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["9", "11", "13", "12"],
-      "correctIndex": 2
+    {
+      "id": "leg_muscles",
+      "title": "Leg Muscles",
+      "imagePath": null,
+      "questionIds": ["q4"]
+    }
+  ],
+  "categories":
+  [
+    {
+      "id": "skeleton",
+      "title": "Skeleton",
+      "imagePath": "assets/images/skull.jpg",
+      "quizIds": [
+        "femur_quiz",
+        "full_skeleton_quiz"
+      ]
     },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  },
-  {
-    "id": "s5",
-    "questionVariants": ["Number 3 is pointing to ..."],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["Radius", "Femur", "Humerus", "Tibia"],
-      "correctIndex": 2
-    },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  },
-  {
-    "id": "s6",
-    "questionVariants": ["The pelvic girdle is indicated by number ..."],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["9", "10", "11", "12"],
-      "correctIndex": 2
-    },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  },
-  {
-    "id": "s7",
-    "questionVariants": ["Number 2 is pointing to ..."],
-    "answerType": "multipleChoice",
-    "multipleChoiceConfig": {
-      "options": ["Sternum", "Clavicle", "Patella", "Radius"],
-      "correctIndex": 1
-    },
-    "imagePath": "assets/images/full_skeleton_unlabeled.jpg"
-  }
-]
+    {
+      "id": "muscles",
+      "title": "Muscles",
+      "imagePath": "assets/images/muscle.jpg",
+      "quizIds": [
+        "arm_muscles"
+      ]
+    }
+  ]
+}

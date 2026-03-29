@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
@@ -49,6 +50,7 @@ class ManageQuizzesScreen extends StatelessWidget {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, i) {
               final quiz = quizzes[i];
+              final canEdit = !quiz.isPermanent || kDebugMode;
               return ListTile(
                 leading: quiz.imagePath != null
                     ? ClipRRect(
@@ -72,7 +74,7 @@ class ManageQuizzesScreen extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (!quiz.isPermanent) ...[
+                    if (canEdit) ...[
                       IconButton(
                         icon: const Icon(Icons.edit_outlined),
                         tooltip: 'Edit',

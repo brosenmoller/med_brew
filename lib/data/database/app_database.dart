@@ -148,21 +148,26 @@ class AppDatabase extends _$AppDatabase {
     }
 
     // 2 — Categories
-    for (final c in categoriesRaw) {
+    for (final category in categoriesRaw) {
       final newId = await insertCategory(CategoriesCompanion.insert(
-        title: c['title'] as String,
-        imagePath: Value(c['imagePath'] as String?),
+        title: category['title'] as String,
+        imagePath: Value(category['imagePath'] as String?),
       ));
-      categoryIdMap[c['id'] as String] = newId;
+      categoryIdMap[category['id'] as String] = newId;
     }
 
     // 3 — Quizzes + junction rows
     for (final quiz in quizzesRaw) {
       // Find which category owns this quiz
-      final ownerCatId = categoriesRaw.cast<Map>().firstWhere(
+
+      final owner = categoriesRaw
+          .cast<Map<String, dynamic>>()
+          .firstWhere(
             (c) => (c['quizIds'] as List).contains(quiz['id']),
-        orElse: () => {},
-      )['id'] as String?;
+        orElse: () => <String, dynamic>{},
+      );
+
+      final ownerCatId = owner['id'] as String?;
 
       if (ownerCatId == null) continue;
       final catIntId = categoryIdMap[ownerCatId];
