@@ -20,6 +20,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _questionController = TextEditingController();
   final _explanationController = TextEditingController();
+  final _imagePathController = TextEditingController();
 
   String _answerType = 'multipleChoice';
   Rect? _selectedImageRect;
@@ -34,6 +35,20 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
   final List<TextEditingController> _acceptedAnswerControllers = [
     TextEditingController()
   ];
+
+  @override
+  void dispose() {
+    _questionController.dispose();
+    _explanationController.dispose();
+    _imagePathController.dispose();
+    for (final c in _optionControllers) {
+      c.dispose();
+    }
+    for (final c in _acceptedAnswerControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +200,16 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
               ),
             ],
 
+            TextFormField(
+              controller: _imagePathController,
+              decoration: const InputDecoration(
+                labelText: 'Question image path (optional)',
+                hintText: 'assets/images/...',
+                border: OutlineInputBorder(),
+              ),
+            ),
             const SizedBox(height: 16),
+
             TextFormField(
               controller: _explanationController,
               decoration: const InputDecoration(
@@ -243,6 +267,9 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
         explanation: Value(_explanationController.text.trim().isEmpty
             ? null
             : _explanationController.text.trim()),
+        imagePath: Value(_imagePathController.text.trim().isEmpty
+            ? null
+            : _imagePathController.text.trim()),
       ),
     );
 
