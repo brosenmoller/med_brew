@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/services/question_service.dart';
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'manage_quizzes_screen.dart';
@@ -134,9 +134,9 @@ class ManageContentScreen extends StatelessWidget {
   Future<void> _exportSeedDb(BuildContext context) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final source = File(p.join(dir.path, 'med_brew.db'));
+      final source = File(path.join(dir.path, 'med_brew.db'));
 
-      final destPath = p.join(Directory.current.path, 'assets', 'seed.db');
+      final destPath = path.join(Directory.current.path, 'assets', 'seed.db');
       final dest = File(destPath);
       await source.copy(destPath);
 
@@ -168,7 +168,7 @@ class ManageContentScreen extends StatelessWidget {
       const JsonEncoder.withIndent('  ').convert(data);
 
       final dir = await getApplicationDocumentsDirectory();
-      final file = File(p.join(dir.path, 'med_brew_export.json'));
+      final file = File(path.join(dir.path, 'med_brew_export.json'));
       await file.writeAsString(jsonString);
 
       if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {

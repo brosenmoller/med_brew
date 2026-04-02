@@ -45,6 +45,7 @@ dependencies:
   path_provider: ^2.0.0
   path: ^1.8.0
   file_picker: ^10.3.10
+  desktop_drop: ^0.4.0
   share_plus: 12.0.1
 
 
