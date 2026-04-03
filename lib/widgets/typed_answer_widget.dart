@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/models/answer_state.dart';
 import 'package:med_brew/models/question_data.dart';
+import 'package:med_brew/widgets/question_image.dart';
 
 class TypedAnswerWidget extends StatefulWidget {
   final QuestionData question;
@@ -53,13 +54,13 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
   Widget build(BuildContext context) {
     final answered = widget.answerState != AnswerState.unanswered;
     final isCorrect = widget.answerState == AnswerState.correct;
-    final feedbackColor =
-    isCorrect ? Colors.green.shade600 : Colors.red.shade600;
+    final feedbackColor = isCorrect ? Colors.green.shade600 : Colors.red.shade600;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final contentWidth =
-        constraints.maxWidth > 800 ? constraints.maxWidth * 0.5 : constraints.maxWidth;
+        final contentWidth = constraints.maxWidth > 800
+            ? constraints.maxWidth * 0.5
+            : constraints.maxWidth;
 
         return Center(
           child: ConstrainedBox(
@@ -70,6 +71,10 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (widget.question.imagePath != null) ...[
+                    QuestionImage(path: widget.question.imagePath!),
+                    const SizedBox(height: 16),
+                  ],
                   TextField(
                     controller: _controller,
                     focusNode: _focusNode,
@@ -79,7 +84,6 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                     decoration: InputDecoration(
                       labelText: 'Your Answer',
                       border: const OutlineInputBorder(),
-                      // Colour the border and label once answered.
                       enabledBorder: answered
                           ? OutlineInputBorder(
                         borderSide:
@@ -94,7 +98,6 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                           : null,
                       labelStyle:
                       answered ? TextStyle(color: feedbackColor) : null,
-                      // Small icon to reinforce the result at a glance.
                       suffixIcon: answered
                           ? Icon(
                         isCorrect ? Icons.check_circle : Icons.cancel,
@@ -103,8 +106,6 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                           : null,
                     ),
                   ),
-
-                  // Reveal the correct answer when the user got it wrong.
                   if (answered && !isCorrect) ...[
                     const SizedBox(height: 8),
                     Row(
@@ -123,9 +124,7 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                       ],
                     ),
                   ],
-
                   const SizedBox(height: 12),
-
                   ElevatedButton(
                     onPressed: widget.locked ? null : _submit,
                     child: const Text('Submit'),

@@ -7,12 +7,12 @@ import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/image_area_selector.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 
-class AddQuestionScreen extends StatefulWidget {
+class EditQuestionScreen extends StatefulWidget {
   final int quizId;
   final AppDatabase db;
   final Question? question; // If provided → edit mode; if null → add mode
 
-  const AddQuestionScreen({
+  const EditQuestionScreen({
     super.key,
     required this.quizId,
     required this.db,
@@ -22,10 +22,10 @@ class AddQuestionScreen extends StatefulWidget {
   bool get isEditing => question != null;
 
   @override
-  State<AddQuestionScreen> createState() => _AddQuestionScreenState();
+  State<EditQuestionScreen> createState() => _EditQuestionScreenState();
 }
 
-class _AddQuestionScreenState extends State<AddQuestionScreen> {
+class _EditQuestionScreenState extends State<EditQuestionScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _questionController;
   late final TextEditingController _explanationController;
@@ -41,7 +41,6 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
   // Image click
   Rect? _selectedImageRect;
-  String? _imageClickImagePath;
 
   @override
   void initState() {
@@ -84,7 +83,6 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
       if (_answerType == 'imageClick') {
         final ic = ImageClickConfig.fromJson(config);
         _selectedImageRect = ic.correctArea;
-        _imageClickImagePath = q.imagePath;
       }
     } else {
       // Add mode defaults
@@ -189,17 +187,16 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
             if (_answerType == 'imageClick') ...[
               ImagePickerField(
                 label: 'Click area image',
-                initialPath: _imageClickImagePath,
+                initialPath: _imagePath,
                 onChanged: (path) => setState(() {
-                  _imageClickImagePath = path;
+                  _imagePath = path;
                   _selectedImageRect = null;
                 }),
               ),
               const SizedBox(height: 12),
-              if (_imageClickImagePath != null &&
-                  _imageClickImagePath!.isNotEmpty)
+              if (_imagePath != null && _imagePath!.isNotEmpty)
                 ImageAreaSelector(
-                  imagePath: _imageClickImagePath!,
+                  imagePath: _imagePath!,
                   initialRect: _selectedImageRect,
                   onRectSelected: (rect) =>
                       setState(() => _selectedImageRect = rect),
@@ -253,13 +250,15 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
               ),
             ],
 
-            const SizedBox(height: 8),
-            ImagePickerField(
-              label: 'Question image (optional)',
-              initialPath: _imagePath,
-              onChanged: (path) => setState(() => _imagePath = path),
-            ),
-            const SizedBox(height: 16),
+            if (_answerType != 'imageClick') ...[
+              const SizedBox(height: 8),
+              ImagePickerField(
+                label: 'Question image (optional)',
+                initialPath: _imagePath,
+                onChanged: (path) => setState(() => _imagePath = path),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             TextFormField(
               controller: _explanationController,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/models/answer_state.dart';
 import 'package:med_brew/models/question_data.dart';
+import 'package:med_brew/widgets/app_image.dart';
 
 class ImageClickWidget extends StatefulWidget {
   final QuestionData question;
@@ -21,59 +22,90 @@ class ImageClickWidget extends StatefulWidget {
 }
 
 class _ImageClickWidgetState extends State<ImageClickWidget> {
-  bool _answered = false;
   Offset? _tapPosition;
 
-  void _handleTap(TapUpDetails details, BuildContext context) {
-    if (widget.locked || _answered) return;
+  void _handleTap(TapUpDetails details, BoxConstraints constraints) {
+    if (widget.locked) return;
 
-    final box = context.findRenderObject() as RenderBox;
-    final localPosition = box.globalToLocal(details.globalPosition);
-    final isCorrect = widget.question.imageClickConfig!.isCorrect(localPosition);
+    final localPosition = details.localPosition;
+    final size = Size(constraints.maxWidth, constraints.maxHeight);
 
-    setState(() {
-      _answered = true;
-      _tapPosition = localPosition;
-    });
+    // Normalize the tap to 0.0–1.0 to match the stored correctArea
+    final normalizedTap = Offset(
+      localPosition.dx / size.width,
+      localPosition.dy / size.height,
+    );
 
+    final isCorrect =
+    widget.question.imageClickConfig!.isCorrect(normalizedTap);
+
+    setState(() => _tapPosition = localPosition);
     widget.onAnswered(isCorrect);
   }
 
   @override
   Widget build(BuildContext context) {
+    final imagePath = widget.question.imagePath;
+
+    if (imagePath == null) {
+      return const Center(
+        child: Text(
+          'No image set for this question.',
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
     final config = widget.question.imageClickConfig!;
     final answered = widget.answerState != AnswerState.unanswered;
     final isCorrect = widget.answerState == AnswerState.correct;
 
-    return GestureDetector(
-      onTapUp: (details) => _handleTap(details, context),
-      child: Stack(
-        children: [
-          Image.asset(
-            widget.question.imagePath!,
-            fit: BoxFit.contain,
-          ),
-
-          // Overlay: drawn once the user has tapped.
-          if (answered)
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _ClickOverlayPainter(
-                  correctArea: config.correctArea,
-                  tapPosition: _tapPosition,
-                  wasCorrect: isCorrect,
-                ),
+    return SizedBox(
+      height: MediaQuery
+          .of(context)
+          .size
+          .height * 0.6,
+      child: LayoutBuilder(
+          builder: (context, constraints) {
+            return GestureDetector(
+              onTapUp: (details) => _handleTap(details, constraints),
+              child: Stack(
+                children: [
+                  AppImage(
+                    path: imagePath,
+                    fit: BoxFit.contain,
+                    width: constraints.maxWidth,
+                  ),
+                  if (answered)
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _ClickOverlayPainter(
+                          // Pass normalized rect — painter will scale to canvas
+                          correctArea: config.correctArea,
+                          // Normalize tap position for the painter too
+                          tapPosition: _tapPosition != null
+                              ? Offset(
+                            _tapPosition!.dx / constraints.maxWidth,
+                            _tapPosition!.dy / constraints.maxHeight,
+                          )
+                              : null,
+                          wasCorrect: isCorrect,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ),
-        ],
+            );
+          },
       ),
     );
   }
 }
 
+
 class _ClickOverlayPainter extends CustomPainter {
-  final Rect correctArea;
-  final Offset? tapPosition;
+  final Rect correctArea;     // normalized 0.0–1.0
+  final Offset? tapPosition;  // normalized 0.0–1.0
   final bool wasCorrect;
 
   _ClickOverlayPainter({
@@ -84,29 +116,43 @@ class _ClickOverlayPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Green highlight showing the correct area.
-    final correctFill = Paint()
-      ..color = Colors.green.withOpacity(0.25)
-      ..style = PaintingStyle.fill;
-    final correctBorder = Paint()
-      ..color = Colors.green.shade600
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
+    // Scale the normalized rect to canvas pixels
+    final scaledRect = Rect.fromLTRB(
+      correctArea.left * size.width,
+      correctArea.top * size.height,
+      correctArea.right * size.width,
+      correctArea.bottom * size.height,
+    );
 
-    canvas.drawRect(correctArea, correctFill);
-    canvas.drawRect(correctArea, correctBorder);
+    canvas.drawRect(
+      scaledRect,
+      Paint()
+        ..color = Colors.green.withOpacity(0.25)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawRect(
+      scaledRect,
+      Paint()
+        ..color = Colors.green.shade600
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
 
-    // If the user missed, draw a red cross where they tapped.
+    // Red cross at the tap position if wrong
     if (!wasCorrect && tapPosition != null) {
+      final scaledTap = Offset(
+        tapPosition!.dx * size.width,
+        tapPosition!.dy * size.height,
+      );
+      const r = 10.0;
       final crossPaint = Paint()
         ..color = Colors.red.shade600
         ..strokeWidth = 3
         ..strokeCap = StrokeCap.round;
-
-      const r = 10.0;
-      final c = tapPosition!;
-      canvas.drawLine(c.translate(-r, -r), c.translate(r, r), crossPaint);
-      canvas.drawLine(c.translate(r, -r), c.translate(-r, r), crossPaint);
+      canvas.drawLine(
+          scaledTap.translate(-r, -r), scaledTap.translate(r, r), crossPaint);
+      canvas.drawLine(
+          scaledTap.translate(r, -r), scaledTap.translate(-r, r), crossPaint);
     }
   }
 

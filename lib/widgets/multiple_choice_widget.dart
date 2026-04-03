@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:med_brew/models/answer_state.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:flutter/foundation.dart';
+import 'package:med_brew/widgets/question_image.dart';
 
 class MultipleChoiceWidget extends StatefulWidget {
   final QuestionData question;
@@ -114,8 +115,6 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
                   vertical: 16,
                   horizontal: 24,
                 ),
-                // Override disabled colour so answered buttons keep their
-                // feedback colour rather than going grey.
                 backgroundColor: bgColor,
                 disabledBackgroundColor: bgColor,
                 disabledForegroundColor: _textColor(index),
@@ -130,7 +129,6 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
                         width: 28,
                         child: _ShortcutBadge(
                           number: index + 1,
-                          // Tint the badge to stay visible on coloured buttons.
                           overrideColor: _textColor(index),
                         ),
                       ),
@@ -152,7 +150,17 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
 
     Widget content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Center(child: buttons),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (widget.question.imagePath != null) ...[
+            QuestionImage(path: widget.question.imagePath!),
+            const SizedBox(height: 16),
+          ],
+          Center(child: buttons),
+        ],
+      ),
     );
 
     if (!isDesktop) return content;

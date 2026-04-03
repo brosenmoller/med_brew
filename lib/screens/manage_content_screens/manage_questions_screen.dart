@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
-import 'package:med_brew/screens/manage_content_screens/add_question_screen.dart';
+import 'package:med_brew/screens/manage_content_screens/edit_question_screen.dart';
 
 class ManageQuestionsScreen extends StatelessWidget {
   final AppDatabase db;
@@ -33,7 +33,7 @@ class ManageQuestionsScreen extends StatelessWidget {
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => AddQuestionScreen(
+            builder: (_) => EditQuestionScreen(
               quizId: quiz.id,
               db: db,
             ),
@@ -91,7 +91,7 @@ class ManageQuestionsScreen extends StatelessWidget {
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => AddQuestionScreen(
+                          builder: (_) => EditQuestionScreen(
                             quizId: quiz.id,
                             db: db,
                             question: question,

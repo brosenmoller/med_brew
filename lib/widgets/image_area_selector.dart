@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/widgets/app_image.dart';
 
 class ImageAreaSelector extends StatefulWidget {
   final String imagePath;
@@ -40,35 +41,39 @@ class _ImageAreaSelectorState extends State<ImageAreaSelector> {
           style: TextStyle(fontSize: 12, color: Colors.grey),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 260,
-          child: LayoutBuilder(builder: (context, constraints) {
-            return GestureDetector(
-              onTapDown: (details) {
-                final pos = details.localPosition;
-                setState(() {
-                  if (_start == null || _end != null) {
-                    // Start fresh
-                    _start = pos;
-                    _end = null;
-                  } else {
-                    _end = pos;
-                    final rect = Rect.fromPoints(_start!, _end!);
-                    // Normalize to 0.0–1.0
-                    final normalized = Rect.fromLTRB(
-                      rect.left / constraints.maxWidth,
-                      rect.top / constraints.maxHeight,
-                      rect.right / constraints.maxWidth,
-                      rect.bottom / constraints.maxHeight,
-                    );
-                    widget.onRectSelected(normalized);
-                  }
-                });
-              },
+        LayoutBuilder(builder: (context, constraints) {
+          return GestureDetector(
+            onTapDown: (details) {
+              final pos = details.localPosition;
+              setState(() {
+                if (_start == null || _end != null) {
+                  // Start fresh
+                  _start = pos;
+                  _end = null;
+                } else {
+                  _end = pos;
+                  final rect = Rect.fromPoints(_start!, _end!);
+                  // Normalize to 0.0–1.0
+                  final normalized = Rect.fromLTRB(
+                    rect.left / constraints.maxWidth,
+                    rect.top / constraints.maxHeight,
+                    rect.right / constraints.maxWidth,
+                    rect.bottom / constraints.maxHeight,
+                  );
+                  widget.onRectSelected(normalized);
+                }
+              });
+            },
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(widget.imagePath, fit: BoxFit.cover),
+                  AppImage(
+                    path: widget.imagePath,
+                    fit: BoxFit.contain,
+                    width: constraints.maxWidth,
+                  ),
                   if (_start != null && _end == null)
                     Positioned(
                       left: _start!.dx - 10,
@@ -87,9 +92,9 @@ class _ImageAreaSelectorState extends State<ImageAreaSelector> {
                     ),
                 ],
               ),
-            );
-          }),
-        ),
+            ),
+          );
+        }),
         if (_start != null)
           TextButton.icon(
             onPressed: () => setState(() {

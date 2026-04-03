@@ -107,138 +107,96 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context)),
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      // No bottomNavigationBar — using a Stack overlay instead so the body
-      // constraints never change and nothing jumps when the button appears.
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          // Cap the bottom section at 55% of the *fixed* body height.
-          // Because we never resize the body, this value is stable.
-          final maxBottomHeight = constraints.maxHeight * 0.55;
+      body: Stack(
+        children: [
 
-          return Stack(
-            children: [
-
-              /// MAIN LAYOUT
-              Column(
+          /// SCROLLABLE CONTENT
+          SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
-                  /// IMAGE AREA
-                  Expanded(
-                    child: widget.question.imagePath != null
-                        ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Image.asset(
-                        widget.question.imagePath!,
-                        fit: BoxFit.contain,
-                        width: double.infinity,
-                      ),
-                    )
-                        : const SizedBox.shrink(),
-                  ),
-
-                  /// BOTTOM SECTION — capped, scrollable
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: maxBottomHeight),
-                    child: SafeArea(
-                      top: false,
-                      // Extra bottom padding reserves space for the overlaid
-                      // continue button so it never covers answer options.
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-
-                            /// QUESTION TEXT
-                            Center(
-                              child: AnimatedBuilder(
-                                animation: _shakeController,
-                                builder: (context, child) {
-                                  final offset = _shakeAnimation.value *
-                                      (_shakeController.status ==
-                                          AnimationStatus.forward
-                                          ? 1
-                                          : 0);
-                                  return Transform.translate(
-                                    offset: Offset(offset, 0),
-                                    child: child,
-                                  );
-                                },
-                                child: Text(
-                                  widget.question.questionVariants.first,
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            /// ANSWER AREA
-                            AnswerArea(
-                              question: widget.question,
-                              locked: answerState != AnswerState.unanswered,
-                              answerState: answerState,
-                              onAnswered: _handleAnswer,
-                            ),
-
-                          ],
-                        ),
+                  Center(
+                    child: AnimatedBuilder(
+                      animation: _shakeController,
+                      builder: (context, child) {
+                        final offset = _shakeAnimation.value *
+                            (_shakeController.status == AnimationStatus.forward
+                                ? 1
+                                : 0);
+                        return Transform.translate(
+                          offset: Offset(offset, 0),
+                          child: child,
+                        );
+                      },
+                      child: Text(
+                        widget.question.questionVariants.first,
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-
+                  const SizedBox(height: 20),
+                  AnswerArea(
+                    question: widget.question,
+                    locked: answerState != AnswerState.unanswered,
+                    answerState: answerState,
+                    onAnswered: _handleAnswer,
+                  ),
                 ],
               ),
+            ),
+          ),
 
-              /// CONTINUE BUTTON — overlaid at the bottom, never affects layout
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: MediaQuery.of(context).padding.bottom + 16,
-                child: AnimatedSlide(
-                  offset: showContinue ? Offset.zero : const Offset(0, 0.3),
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                  child: AnimatedOpacity(
-                    opacity: showContinue ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 300),
-                    child: IgnorePointer(
-                      ignoring: !showContinue,
-                      child: ContinueButton(onContinue: _handleContinue),
-                    ),
-                  ),
-                ),
-              ),
-
-              /// CONFETTI OVERLAY
-              Align(
-                alignment: Alignment.bottomCenter,
+          /// CONTINUE BUTTON — overlaid, never affects layout
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 16,
+            child: AnimatedSlide(
+              offset: showContinue ? Offset.zero : const Offset(0, 0.3),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              child: AnimatedOpacity(
+                opacity: showContinue ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
                 child: IgnorePointer(
-                  child: ConfettiWidget(
-                    confettiController: _confettiController,
-                    blastDirectionality: BlastDirectionality.explosive,
-                    shouldLoop: false,
-                    colors: const [
-                      Colors.green,
-                      Colors.blue,
-                      Colors.pink,
-                      Colors.orange,
-                    ],
-                    numberOfParticles: 10,
-                    maxBlastForce: 20,
-                    minBlastForce: 10,
-                  ),
+                  ignoring: !showContinue,
+                  child: ContinueButton(onContinue: _handleContinue),
                 ),
               ),
+            ),
+          ),
 
-            ],
-          );
-        },
+          /// CONFETTI
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: IgnorePointer(
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                colors: const [
+                  Colors.green,
+                  Colors.blue,
+                  Colors.pink,
+                  Colors.orange,
+                ],
+                numberOfParticles: 10,
+                maxBlastForce: 20,
+                minBlastForce: 10,
+              ),
+            ),
+          ),
+
+        ],
       ),
     );
   }
