@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/services/question_service.dart';
+import 'package:med_brew/widgets/image_picker_field.dart';
 import 'manage_questions_screen.dart';
 
 class ManageQuizzesScreen extends StatelessWidget {
@@ -109,71 +110,70 @@ class ManageQuizzesScreen extends StatelessWidget {
   void _showQuizDialog(BuildContext context, {Quiz? existing}) {
     final titleController =
     TextEditingController(text: existing?.title ?? '');
-    final imageController =
-    TextEditingController(text: existing?.imagePath ?? '');
+    String? imagePath = existing?.imagePath;
     final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(existing == null ? 'Add Quiz' : 'Edit Quiz'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v!.trim().isEmpty ? 'Required' : null,
-                autofocus: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(existing == null ? 'Add Quiz' : 'Edit Quiz'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+                    autofocus: true,
+                  ),
+                  const SizedBox(height: 16),
+                  ImagePickerField(
+                    label: 'Quiz image (optional)',
+                    initialPath: imagePath,
+                    onChanged: (path) =>
+                        setDialogState(() => imagePath = path),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: imageController,
-                decoration: const InputDecoration(
-                  labelText: 'Image path (optional)',
-                  hintText: 'assets/images/...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                if (existing == null) {
+                  await db.insertQuiz(QuizzesCompanion.insert(
+                    categoryId: category.id,
+                    title: titleController.text.trim(),
+                    imagePath: Value(imagePath),
+                  ));
+                } else {
+                  await db.updateQuiz(QuizzesCompanion(
+                    id: Value(existing.id),
+                    categoryId: Value(existing.categoryId),
+                    title: Value(titleController.text.trim()),
+                    imagePath: Value(imagePath),
+                    isPermanent: Value(existing.isPermanent),
+                  ));
+                }
+                await QuestionService().refresh();
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: Text(existing == null ? 'Add' : 'Save'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-              final imagePath = imageController.text.trim();
-
-              if (existing == null) {
-                await db.insertQuiz(QuizzesCompanion.insert(
-                  categoryId: category.id,
-                  title: titleController.text.trim(),
-                  imagePath: Value(imagePath.isEmpty ? null : imagePath),
-                ));
-              } else {
-                await db.updateQuiz(QuizzesCompanion(
-                  id: Value(existing.id),
-                  categoryId: Value(existing.categoryId),
-                  title: Value(titleController.text.trim()),
-                  imagePath: Value(imagePath.isEmpty ? null : imagePath),
-                  isPermanent: Value(existing.isPermanent),
-                ));
-              }
-              await QuestionService().refresh();
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: Text(existing == null ? 'Add' : 'Save'),
-          ),
-        ],
       ),
     );
   }

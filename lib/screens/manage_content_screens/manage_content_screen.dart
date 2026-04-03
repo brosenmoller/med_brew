@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/services/question_service.dart';
+import 'package:med_brew/widgets/image_picker_field.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -224,72 +225,69 @@ class ManageContentScreen extends StatelessWidget {
   }
 
   // ── Category dialog ────────────────────────────────────────────
-
   void _showCategoryDialog(BuildContext context, {Category? existing}) {
-    final titleController =
-    TextEditingController(text: existing?.title ?? '');
-    final imageController =
-    TextEditingController(text: existing?.imagePath ?? '');
+    final titleController = TextEditingController(text: existing?.title ?? '');
+    String? imagePath = existing?.imagePath;
     final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(existing == null ? 'Add Category' : 'Edit Category'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v!.trim().isEmpty ? 'Required' : null,
-                autofocus: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(existing == null ? 'Add Category' : 'Edit Category'),
+          content: SingleChildScrollView(   // needed because picker adds height
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+                    autofocus: true,
+                  ),
+                  const SizedBox(height: 16),
+                  ImagePickerField(
+                    label: 'Category image (optional)',
+                    initialPath: imagePath,
+                    onChanged: (path) => setDialogState(() => imagePath = path),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: imageController,
-                decoration: const InputDecoration(
-                  labelText: 'Image path (optional)',
-                  hintText: 'assets/images/...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                if (existing == null) {
+                  await db.insertCategory(CategoriesCompanion.insert(
+                    title: titleController.text.trim(),
+                    imagePath: Value(imagePath),
+                  ));
+                } else {
+                  await db.updateCategory(CategoriesCompanion(
+                    id: Value(existing.id),
+                    title: Value(titleController.text.trim()),
+                    imagePath: Value(imagePath),
+                    isPermanent: Value(existing.isPermanent),
+                  ));
+                }
+                await QuestionService().refresh();
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: Text(existing == null ? 'Add' : 'Save'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-              final imagePath = imageController.text.trim();
-              if (existing == null) {
-                await db.insertCategory(CategoriesCompanion.insert(
-                  title: titleController.text.trim(),
-                  imagePath: Value(imagePath.isEmpty ? null : imagePath),
-                ));
-              } else {
-                await db.updateCategory(CategoriesCompanion(
-                  id: Value(existing.id),
-                  title: Value(titleController.text.trim()),
-                  imagePath: Value(imagePath.isEmpty ? null : imagePath),
-                  isPermanent: Value(existing.isPermanent),
-                ));
-              }
-              await QuestionService().refresh();
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: Text(existing == null ? 'Add' : 'Save'),
-          ),
-        ],
       ),
     );
   }

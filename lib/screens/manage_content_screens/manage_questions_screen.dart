@@ -33,7 +33,10 @@ class ManageQuestionsScreen extends StatelessWidget {
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => AddQuestionScreen(db: db, quizId: quiz.id),
+            builder: (_) => AddQuestionScreen(
+              quizId: quiz.id,
+              db: db,
+            ),
           ),
         ),
       ),
@@ -79,19 +82,32 @@ class ManageQuestionsScreen extends StatelessWidget {
                   ],
                 ),
                 trailing: canEdit
-                    ? const Icon(Icons.drag_handle, color: Colors.grey)
-                    : Row(
+                    ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.delete_outline,
-                          color: Colors.red),
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Edit',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddQuestionScreen(
+                            quizId: quiz.id,
+                            db: db,
+                            question: question,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
                       tooltip: 'Delete',
                       onPressed: () => _confirmDelete(context, question),
                     ),
                     const Icon(Icons.drag_handle),
                   ],
-                ),
+                )
+                    : const Icon(Icons.drag_handle, color: Colors.grey),
               );
             },
           );
