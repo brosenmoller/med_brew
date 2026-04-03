@@ -54,7 +54,12 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         TextEditingController(text: q?.explanation ?? '');
 
     if (q != null) {
-      final config = jsonDecode(q.answerConfig) as Map<String, dynamic>;
+      Map<String, dynamic> config;
+      try {
+        config = jsonDecode(q.answerConfig) as Map<String, dynamic>;
+      } catch (_) {
+        config = {};
+      }
 
       if (_answerType == 'multipleChoice') {
         final mc = MultipleChoiceConfig.fromJson(config);
@@ -236,7 +241,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                           icon: const Icon(Icons.remove_circle,
                               color: Colors.red),
                           onPressed: () => setState(() =>
-                              _acceptedAnswerControllers.removeAt(e.key)),
+                              _acceptedAnswerControllers.removeAt(e.key).dispose()),
                         ),
                     ],
                   ),

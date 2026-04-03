@@ -30,6 +30,7 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
   late final ConfettiController _confettiController;
+  late final FocusNode _continueFocusNode;
 
   @override
   void initState() {
@@ -41,18 +42,26 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
         .animate(_shakeController);
     _confettiController =
         ConfettiController(duration: const Duration(seconds: 1));
+    _continueFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
     _shakeController.dispose();
     _confettiController.dispose();
+    _continueFocusNode.dispose();
     super.dispose();
   }
 
   void _handleAnswer(bool isCorrect) {
     setState(() {
       answerState = isCorrect ? AnswerState.correct : AnswerState.incorrect;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _continueFocusNode.requestFocus();
+      }
     });
 
     if (!isCorrect) {
@@ -169,7 +178,7 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
                 duration: const Duration(milliseconds: 300),
                 child: IgnorePointer(
                   ignoring: !showContinue,
-                  child: ContinueButton(onContinue: _handleContinue),
+                  child: ContinueButton(onContinue: _handleContinue, focusNode: _continueFocusNode),
                 ),
               ),
             ),

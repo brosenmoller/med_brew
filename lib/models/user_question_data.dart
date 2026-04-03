@@ -50,6 +50,8 @@ class UserQuestionData extends HiveObject {
 
   Duration get intervalDuration => Duration(seconds: intervalSeconds.round());
 
+  static const double _maxIntervalSeconds = 180 * 24 * 3600; // 180 days
+
   void _adjustEase(double adjustment) {
     easeFactor = (easeFactor + adjustment).clamp(1.1, 3.0);
   }
@@ -97,7 +99,7 @@ class UserQuestionData extends HiveObject {
         default:
           break;
       }
-      intervalSeconds = intervalSeconds * easeFactor;
+      intervalSeconds = (intervalSeconds * easeFactor).clamp(0, _maxIntervalSeconds);
     }
 
     nextReview = now.add(intervalDuration);

@@ -113,6 +113,7 @@ class AppDatabase extends _$AppDatabase {
 
 // Import from the combined JSON format — merges into existing data
   Future<void> importFromJson(Map<String, dynamic> data) async {
+    await transaction(() async {
     final questionsRaw = data['questions'] as List;
     final quizzesRaw = data['quizzes'] as List;
     final categoriesRaw = data['categories'] as List;
@@ -191,6 +192,7 @@ class AppDatabase extends _$AppDatabase {
         ));
       }
     }
+    }); // end transaction
   }
 
   // ─── Categories ───────────────────────────────────────────────

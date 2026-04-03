@@ -25,7 +25,6 @@ class QuestionService {
   }
 
   Future<void> refresh() async {
-    _initialized = false;
     await _load();
   }
 
@@ -45,19 +44,36 @@ class QuestionService {
 
         for (final question in questions) {
           final questionId = question.id.toString();
+
+          AnswerType answerType;
+          try {
+            answerType = AnswerType.values.firstWhere(
+              (e) => e.toString().split('.').last == question.answerType,
+            );
+          } catch (_) {
+            continue; // unknown answerType — skip
+          }
+
+          Map<String, dynamic> config;
+          try {
+            config = jsonDecode(question.answerConfig) as Map<String, dynamic>;
+          } catch (_) {
+            continue; // skip malformed records
+          }
+
           questionIds.add(questionId);
-
-          final answerType = AnswerType.values.firstWhere(
-                (e) => e.toString().split('.').last == question.answerType,
-          );
-
-          final config = jsonDecode(question.answerConfig) as Map<String, dynamic>;
+          List<String> questionVariants;
+          try {
+            questionVariants = question.questionVariants != null
+                ? List<String>.from(jsonDecode(question.questionVariants!))
+                : [question.questionText];
+          } catch (_) {
+            questionVariants = [question.questionText];
+          }
 
           _questions[questionId] = QuestionData(
             id: questionId,
-            questionVariants: question.questionVariants != null
-                ? List<String>.from(jsonDecode(question.questionVariants!))
-                : [question.questionText],
+            questionVariants: questionVariants,
             imagePath: question.imagePath,
             answerType: answerType,
             explanation: question.explanation,

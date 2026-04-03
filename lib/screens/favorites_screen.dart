@@ -26,16 +26,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _loadFavorites() async {
-    await favoritesService.init();
+    try {
+      await favoritesService.init();
 
-    final favoriteIds = favoritesService.allFavorites;
+      final favoriteIds = favoritesService.allFavorites;
 
-    _favoriteQuizzes = favoriteIds
-        .map((id) => questionService.getQuiz(id))
-        .whereType<QuizData>()
-        .toList();
+      _favoriteQuizzes = favoriteIds
+          .map((id) => questionService.getQuiz(id))
+          .whereType<QuizData>()
+          .toList();
+    } catch (_) {
+      _favoriteQuizzes = [];
+    }
 
-    setState(() => _initialized = true);
+    if (mounted) setState(() => _initialized = true);
   }
 
   @override

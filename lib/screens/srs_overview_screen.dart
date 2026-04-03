@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
-import 'package:med_brew/models/user_question_data.dart' show SrsQuality;
 import 'package:med_brew/screens/srs_session_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
-import 'package:med_brew/screens/question_display/question_display_screen.dart';
 
 class SrsOverviewScreen extends StatelessWidget {
   SrsOverviewScreen({super.key});
@@ -79,17 +77,12 @@ class SrsOverviewScreen extends StatelessWidget {
                   String timingText;
 
                   if (hasDue) {
-                    final oldestDue = dueQuestions
-                        .map((q) => srsService.getUserData(q).nextReview)
-                        .reduce((a, b) => a.isBefore(b) ? a : b);
-
+                    final dueDates = dueQuestions.map((q) => srsService.getUserData(q).nextReview);
+                    final oldestDue = dueDates.fold(dueDates.first, (a, b) => a.isBefore(b) ? a : b);
                     timingText = "oldest due: ${_formatDuration(DateTime.now().difference(oldestDue))} ago";
-                  }
-                  else {
-                    final nextUpcoming = questions
-                        .map((q) => srsService.getUserData(q).nextReview)
-                        .reduce((a, b) => a.isBefore(b) ? a : b);
-
+                  } else {
+                    final upcomingDates = questions.map((q) => srsService.getUserData(q).nextReview);
+                    final nextUpcoming = upcomingDates.fold(upcomingDates.first, (a, b) => a.isBefore(b) ? a : b);
                     timingText = "next due: ${_formatDuration(nextUpcoming.difference(DateTime.now()))}";
                   }
 

@@ -34,21 +34,23 @@ class _QuizTileState extends State<QuizTile> {
   }
 
   Future<void> _initState() async {
-    await _favoritesService.init();
-    await _srsService.init();
+    try {
+      await _favoritesService.init();
+      await _srsService.init();
 
-    // Initialize favorite
-    _isFavorite = _favoritesService.isFavorite(widget.quiz.id);
+      // Initialize favorite
+      _isFavorite = _favoritesService.isFavorite(widget.quiz.id);
 
-    // Initialize SRS based on first question
-    final questions = _srsService.getQuestionsForQuiz(quiz: widget.quiz);
-    _isSrsEnabled = questions.isNotEmpty
-        ? _srsService.getUserData(questions.first).spacedRepetitionEnabled
-        : false;
+      // Initialize SRS based on first question
+      final questions = _srsService.getQuestionsForQuiz(quiz: widget.quiz);
+      _isSrsEnabled = questions.isNotEmpty
+          ? _srsService.getUserData(questions.first).spacedRepetitionEnabled
+          : false;
+    } catch (_) {
+      // Leave defaults (false) on failure
+    }
 
-    setState(() {
-      _initialized = true;
-    });
+    if (mounted) setState(() => _initialized = true);
   }
 
   void _toggleFavorite() async {

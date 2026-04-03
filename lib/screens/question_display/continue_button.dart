@@ -3,13 +3,18 @@ import 'package:flutter/services.dart';
 
 class ContinueButton extends StatelessWidget {
   final VoidCallback onContinue;
+  final FocusNode focusNode;
 
-  const ContinueButton({super.key, required this.onContinue});
+  const ContinueButton({
+    super.key,
+    required this.onContinue,
+    required this.focusNode,
+  });
 
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
-      focusNode: FocusNode()..requestFocus(),
+      focusNode: focusNode,
       onKeyEvent: (KeyEvent event) {
         if (event is KeyDownEvent &&
             (event.logicalKey == LogicalKeyboardKey.enter ||
