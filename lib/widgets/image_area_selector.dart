@@ -42,6 +42,22 @@ class _ImageAreaSelectorState extends State<ImageAreaSelector> {
         ),
         const SizedBox(height: 8),
         LayoutBuilder(builder: (context, constraints) {
+          // constraints.maxHeight is unbounded inside a Column, so derive
+          // the actual rendered height from the fixed 16:9 AspectRatio.
+          final actualHeight = constraints.maxWidth / (16 / 9);
+
+          // Convert the saved normalised rect back to pixel coords so we can
+          // display it before the user makes a new selection.
+          final ir = widget.initialRect;
+          final initialPixelRect = (_start == null && ir != null)
+              ? Rect.fromLTRB(
+                  ir.left * constraints.maxWidth,
+                  ir.top * actualHeight,
+                  ir.right * constraints.maxWidth,
+                  ir.bottom * actualHeight,
+                )
+              : null;
+
           return GestureDetector(
             onTapDown: (details) {
               final pos = details.localPosition;
@@ -53,12 +69,11 @@ class _ImageAreaSelectorState extends State<ImageAreaSelector> {
                 } else {
                   _end = pos;
                   final rect = Rect.fromPoints(_start!, _end!);
-                  // Normalize to 0.0–1.0
                   final normalized = Rect.fromLTRB(
                     rect.left / constraints.maxWidth,
-                    rect.top / constraints.maxHeight,
+                    rect.top / actualHeight,
                     rect.right / constraints.maxWidth,
-                    rect.bottom / constraints.maxHeight,
+                    rect.bottom / actualHeight,
                   );
                   widget.onRectSelected(normalized);
                 }
@@ -74,6 +89,17 @@ class _ImageAreaSelectorState extends State<ImageAreaSelector> {
                     fit: BoxFit.contain,
                     width: constraints.maxWidth,
                   ),
+                  // Show saved area in blue before the user draws a new one
+                  if (initialPixelRect != null && _selectedRect == null)
+                    Positioned.fromRect(
+                      rect: initialPixelRect,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blue, width: 2),
+                          color: Colors.blue.withOpacity(0.15),
+                        ),
+                      ),
+                    ),
                   if (_start != null && _end == null)
                     Positioned(
                       left: _start!.dx - 10,

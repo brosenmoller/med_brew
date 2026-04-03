@@ -60,21 +60,22 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
     final answered = widget.answerState != AnswerState.unanswered;
     final isCorrect = widget.answerState == AnswerState.correct;
 
-    return SizedBox(
-      height: MediaQuery
-          .of(context)
-          .size
-          .height * 0.6,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
+      child: AspectRatio(
+      aspectRatio: 16 / 9,
       child: LayoutBuilder(
           builder: (context, constraints) {
             return GestureDetector(
               onTapUp: (details) => _handleTap(details, constraints),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
                   AppImage(
                     path: imagePath,
                     fit: BoxFit.contain,
-                    width: constraints.maxWidth,
                   ),
                   if (answered)
                     Positioned.fill(
@@ -98,6 +99,7 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
             );
           },
       ),
+    ),
     );
   }
 }
