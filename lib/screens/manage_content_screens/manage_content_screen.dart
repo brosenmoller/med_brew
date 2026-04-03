@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
+import 'package:med_brew/screens/manage_content_screens/edit_category_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 import 'package:path/path.dart' as path;
@@ -48,7 +49,12 @@ class ManageContentScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: const Text('Add Category'),
-        onPressed: () => _showCategoryDialog(context),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EditCategoryScreen(db: db),
+          ),
+        ),
       ),
       body: StreamBuilder<List<Category>>(
         stream: db.watchAllCategories(),
@@ -102,8 +108,12 @@ class ManageContentScreen extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.edit_outlined),
                         tooltip: 'Edit',
-                        onPressed: () =>
-                            _showCategoryDialog(context, existing: category),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditCategoryScreen(db: db, existing: category),
+                          ),
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline,

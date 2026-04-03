@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
+import 'package:med_brew/screens/manage_content_screens/edit_quiz_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 import 'manage_questions_screen.dart';
@@ -33,7 +34,12 @@ class ManageQuizzesScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
         label: const Text('Add Quiz'),
-        onPressed: () => _showQuizDialog(context),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EditQuizScreen(db: db, categoryId: category.id),
+          ),
+        ),
       ),
       body: StreamBuilder<List<Quiz>>(
         stream: db.watchQuizzesForCategory(category.id),
@@ -79,8 +85,16 @@ class ManageQuizzesScreen extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.edit_outlined),
                         tooltip: 'Edit',
-                        onPressed: () =>
-                            _showQuizDialog(context, existing: quiz),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditQuizScreen(
+                              db: db,
+                              categoryId: category.id,
+                              existing: quiz,
+                            ),
+                          ),
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline,

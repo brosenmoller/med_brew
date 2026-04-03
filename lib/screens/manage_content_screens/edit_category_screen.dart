@@ -1,0 +1,94 @@
+import 'package:flutter/material.dart';
+import 'package:med_brew/data/database/app_database.dart';
+import 'package:drift/drift.dart' show Value;
+import 'package:med_brew/services/question_service.dart';
+import 'package:med_brew/widgets/image_picker_field.dart';
+
+class EditCategoryScreen extends StatefulWidget {
+  final AppDatabase db;
+  final Category? existing;
+
+  const EditCategoryScreen({super.key, required this.db, this.existing});
+
+  @override
+  State<EditCategoryScreen> createState() => _EditCategoryScreenState();
+}
+
+class _EditCategoryScreenState extends State<EditCategoryScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleController;
+  String? _imagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController =
+        TextEditingController(text: widget.existing?.title ?? '');
+    _imagePath = widget.existing?.imagePath;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = widget.existing != null;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isEditing ? 'Edit Category' : 'Add Category'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            TextFormField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'Title',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: !isEditing,
+              validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+            ),
+            const SizedBox(height: 20),
+            ImagePickerField(
+              label: 'Category image (optional)',
+              initialPath: _imagePath,
+              onChanged: (path) => setState(() => _imagePath = path),
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: _save,
+              icon: const Icon(Icons.save),
+              label: Text(isEditing ? 'Save Changes' : 'Add Category'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    final existing = widget.existing;
+    if (existing == null) {
+      await widget.db.insertCategory(CategoriesCompanion.insert(
+        title: _titleController.text.trim(),
+        imagePath: Value(_imagePath),
+      ));
+    } else {
+      await widget.db.updateCategory(CategoriesCompanion(
+        id: Value(existing.id),
+        title: Value(_titleController.text.trim()),
+        imagePath: Value(_imagePath),
+        isPermanent: Value(existing.isPermanent),
+      ));
+    }
+    await QuestionService().refresh();
+    if (mounted) Navigator.pop(context);
+  }
+}
