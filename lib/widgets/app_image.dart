@@ -1,5 +1,24 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+
+Future<double> resolveImageAspectRatio(String path) {
+  final completer = Completer<double>();
+  final ImageProvider provider = path.startsWith('assets/')
+      ? AssetImage(path) as ImageProvider
+      : FileImage(File(path));
+  final stream = provider.resolve(ImageConfiguration.empty);
+  late ImageStreamListener listener;
+  listener = ImageStreamListener((info, _) {
+    completer.complete(info.image.width / info.image.height);
+    stream.removeListener(listener);
+  }, onError: (_, __) {
+    if (!completer.isCompleted) completer.complete(16 / 9);
+    stream.removeListener(listener);
+  });
+  stream.addListener(listener);
+  return completer.future;
+}
 
 class AppImage extends StatelessWidget {
   final String? path;

@@ -20,10 +20,14 @@ class ImageAreaSelector extends StatefulWidget {
 class _ImageAreaSelectorState extends State<ImageAreaSelector> {
   Offset? _start;
   Offset? _end;
+  double? _aspectRatio;
 
   @override
   void initState() {
     super.initState();
+    resolveImageAspectRatio(widget.imagePath).then((ratio) {
+      if (mounted) setState(() => _aspectRatio = ratio);
+    });
   }
 
   Rect? get _selectedRect {
@@ -41,10 +45,13 @@ class _ImageAreaSelectorState extends State<ImageAreaSelector> {
           style: TextStyle(fontSize: 12, color: Colors.grey),
         ),
         const SizedBox(height: 8),
+        if (_aspectRatio == null)
+          const SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
+        if (_aspectRatio != null)
         LayoutBuilder(builder: (context, constraints) {
           // constraints.maxHeight is unbounded inside a Column, so derive
-          // the actual rendered height from the fixed 16:9 AspectRatio.
-          final actualHeight = constraints.maxWidth / (16 / 9);
+          // the actual rendered height from the AspectRatio widget below.
+          final actualHeight = constraints.maxWidth / _aspectRatio!;
 
           // Convert the saved normalised rect back to pixel coords so we can
           // display it before the user makes a new selection.
@@ -80,7 +87,7 @@ class _ImageAreaSelectorState extends State<ImageAreaSelector> {
               });
             },
             child: AspectRatio(
-              aspectRatio: 16 / 9,
+              aspectRatio: _aspectRatio!,
               child: Stack(
                 fit: StackFit.expand,
                 children: [

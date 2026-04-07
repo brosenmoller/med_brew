@@ -119,56 +119,42 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        title: AnimatedBuilder(
+          animation: _shakeController,
+          builder: (context, child) {
+            final offset = _shakeAnimation.value *
+                (_shakeController.status == AnimationStatus.forward ? 1 : 0);
+            return Transform.translate(
+              offset: Offset(offset, 0),
+              child: child,
+            );
+          },
+          child: Text(
+            widget.question.questionVariants.first,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: Stack(
         children: [
 
-          /// SCROLLABLE CONTENT
+          /// MAIN CONTENT
           SafeArea(
             top: false,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: AnimatedBuilder(
-                      animation: _shakeController,
-                      builder: (context, child) {
-                        final offset = _shakeAnimation.value *
-                            (_shakeController.status == AnimationStatus.forward
-                                ? 1
-                                : 0);
-                        return Transform.translate(
-                          offset: Offset(offset, 0),
-                          child: child,
-                        );
-                      },
-                      child: Text(
-                        widget.question.questionVariants.first,
-                        style: Theme.of(context).textTheme.titleLarge,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  AnswerArea(
-                    question: widget.question,
-                    locked: answerState != AnswerState.unanswered,
-                    answerState: answerState,
-                    onAnswered: _handleAnswer,
-                  ),
-                ],
-              ),
+            child: AnswerArea(
+              question: widget.question,
+              locked: answerState != AnswerState.unanswered,
+              answerState: answerState,
+              onAnswered: _handleAnswer,
             ),
           ),
 
           /// CONTINUE BUTTON — overlaid, never affects layout
           Positioned(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).padding.bottom + 16,
+            right: 0,
+            bottom: MediaQuery.of(context).padding.bottom,
             child: AnimatedSlide(
               offset: showContinue ? Offset.zero : const Offset(0, 0.3),
               duration: const Duration(milliseconds: 300),

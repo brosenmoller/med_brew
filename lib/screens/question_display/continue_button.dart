@@ -22,14 +22,16 @@ class ContinueButton extends StatelessWidget {
           onContinue();
         }
       },
-      child: Align(
-        alignment: Alignment.bottomRight,
+      child: SizedBox(
+        width: 60,
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: IconButton(
-            iconSize: 36,
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: onContinue,
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Center(
+            child: IconButton(
+              iconSize: 36,
+              icon: const Icon(Icons.arrow_forward),
+              onPressed: onContinue,
+            ),
           ),
         ),
       ),

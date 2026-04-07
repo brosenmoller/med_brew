@@ -100,67 +100,112 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Widget buttons = IntrinsicWidth(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: List.generate(options.length, (index) {
-          final bgColor = _buttonColor(index);
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: ElevatedButton(
-              onPressed: widget.locked ? null : () => _selectOption(index),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 24,
-                ),
-                backgroundColor: bgColor,
-                disabledBackgroundColor: bgColor,
-                disabledForegroundColor: _textColor(index),
-                foregroundColor: _textColor(index),
-              ),
-              child: Row(
-                children: [
-                  if (isDesktop)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: SizedBox(
-                        width: 28,
-                        child: _ShortcutBadge(
-                          number: index + 1,
-                          overrideColor: _textColor(index),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      options[index],
-                      textAlign: TextAlign.left,
+    final buttonItems = List.generate(options.length, (index) {
+      final bgColor = _buttonColor(index);
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: ElevatedButton(
+          onPressed: widget.locked ? null : () => _selectOption(index),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 24,
+            ),
+            backgroundColor: bgColor,
+            disabledBackgroundColor: bgColor,
+            disabledForegroundColor: _textColor(index),
+            foregroundColor: _textColor(index),
+          ),
+          child: Row(
+            children: [
+              if (isDesktop)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: 28,
+                    child: _ShortcutBadge(
+                      number: index + 1,
+                      overrideColor: _textColor(index),
                     ),
                   ),
-                ],
+                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  options[index],
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+
+    Widget content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (widget.question.imagePath != null)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: QuestionImage(
+                path: widget.question.imagePath!,
+                maxHeight: double.infinity,
               ),
             ),
-          );
-        }),
-      ),
-    );
-
-    Widget content = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (widget.question.imagePath != null) ...[
-            QuestionImage(path: widget.question.imagePath!),
-            const SizedBox(height: 16),
-          ],
-          Center(child: buttons),
-        ],
-      ),
+          )
+        else
+          const Spacer(),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final half = (options.length / 2).ceil();
+                  if (constraints.maxWidth > 500) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(width: 60),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: buttonItems.sublist(0, half),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: buttonItems.sublist(half),
+                          ),
+                        ),
+                        const SizedBox(width: 60),
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      const SizedBox(width: 60),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: buttonItems,
+                        ),
+                      ),
+                      const SizedBox(width: 60),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
     );
 
     if (!isDesktop) return content;

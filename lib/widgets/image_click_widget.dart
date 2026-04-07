@@ -23,6 +23,18 @@ class ImageClickWidget extends StatefulWidget {
 
 class _ImageClickWidgetState extends State<ImageClickWidget> {
   Offset? _tapPosition;
+  double? _aspectRatio;
+
+  @override
+  void initState() {
+    super.initState();
+    final path = widget.question.imagePath;
+    if (path != null) {
+      resolveImageAspectRatio(path).then((ratio) {
+        if (mounted) setState(() => _aspectRatio = ratio);
+      });
+    }
+  }
 
   void _handleTap(TapUpDetails details, BoxConstraints constraints) {
     if (widget.locked) return;
@@ -60,12 +72,22 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
     final answered = widget.answerState != AnswerState.unanswered;
     final isCorrect = widget.answerState == AnswerState.correct;
 
-    return ConstrainedBox(
+    if (_aspectRatio == null) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Center(
+      child: Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
       child: AspectRatio(
-      aspectRatio: 16 / 9,
+      aspectRatio: _aspectRatio!,
       child: LayoutBuilder(
           builder: (context, constraints) {
             return GestureDetector(
@@ -100,6 +122,8 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
           },
       ),
     ),
+      ),
+      ),
     );
   }
 }

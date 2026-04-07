@@ -62,20 +62,31 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
             ? constraints.maxWidth * 0.5
             : constraints.maxWidth;
 
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: contentWidth),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (widget.question.imagePath != null) ...[
-                    QuestionImage(path: widget.question.imagePath!),
-                    const SizedBox(height: 16),
-                  ],
-                  TextField(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.question.imagePath != null)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: QuestionImage(
+                    path: widget.question.imagePath!,
+                    maxHeight: double.infinity,
+                  ),
+                ),
+              )
+            else
+              const Spacer(),
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: contentWidth),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
                     controller: _controller,
                     focusNode: _focusNode,
                     enabled: !widget.locked,
@@ -129,10 +140,12 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                     onPressed: widget.locked ? null : _submit,
                     child: const Text('Submit'),
                   ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         );
       },
     );
