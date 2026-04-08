@@ -24,6 +24,7 @@ class ImageClickWidget extends StatefulWidget {
 class _ImageClickWidgetState extends State<ImageClickWidget> {
   Offset? _tapPosition;
   double? _aspectRatio;
+  final TransformationController _transformController = TransformationController();
 
   @override
   void initState() {
@@ -36,22 +37,33 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
     }
   }
 
+  @override
+  void dispose() {
+    _transformController.dispose();
+    super.dispose();
+  }
+
   void _handleTap(TapUpDetails details, BoxConstraints constraints) {
     if (widget.locked) return;
 
-    final localPosition = details.localPosition;
-    final size = Size(constraints.maxWidth, constraints.maxHeight);
+    // toScene converts viewport coords → scene (image) coords, accounting for zoom/pan
+    final scenePoint = _transformController.toScene(details.localPosition);
 
-    // Normalize the tap to 0.0–1.0 to match the stored correctArea
+    final size = Size(constraints.maxWidth, constraints.maxHeight);
     final normalizedTap = Offset(
-      localPosition.dx / size.width,
-      localPosition.dy / size.height,
+      scenePoint.dx / size.width,
+      scenePoint.dy / size.height,
     );
 
     final isCorrect =
-    widget.question.imageClickConfig!.isCorrect(normalizedTap);
+        widget.question.imageClickConfig!.isCorrect(normalizedTap);
 
-    setState(() => _tapPosition = localPosition);
+    setState(() {
+      _tapPosition = normalizedTap;
+      // Zoom out fully to show the result
+      _transformController.value = Matrix4.identity();
+    });
+
     widget.onAnswered(isCorrect);
   }
 
@@ -81,48 +93,60 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
 
     return Center(
       child: Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      child: AspectRatio(
-      aspectRatio: _aspectRatio!,
-      child: LayoutBuilder(
-          builder: (context, constraints) {
-            return GestureDetector(
-              onTapUp: (details) => _handleTap(details, constraints),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  AppImage(
-                    path: imagePath,
-                    fit: BoxFit.contain,
-                  ),
-                  if (answered)
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _ClickOverlayPainter(
-                          // Pass normalized rect — painter will scale to canvas
-                          correctArea: config.correctArea,
-                          // Normalize tap position for the painter too
-                          tapPosition: _tapPosition != null
-                              ? Offset(
-                            _tapPosition!.dx / constraints.maxWidth,
-                            _tapPosition!.dy / constraints.maxHeight,
-                          )
-                              : null,
-                          wasCorrect: isCorrect,
-                        ),
+        padding: const EdgeInsets.only(bottom: 16),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          child: AspectRatio(
+            aspectRatio: _aspectRatio!,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // InteractiveViewer handles pinch-to-zoom and scroll-wheel zoom.
+                    // clipBehavior clips zoomed content to the widget bounds.
+                    InteractiveViewer(
+                      transformationController: _transformController,
+                      clipBehavior: Clip.hardEdge,
+                      minScale: 1.0,
+                      maxScale: 8.0,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          AppImage(
+                            path: imagePath,
+                            fit: BoxFit.contain,
+                          ),
+                          // Overlay zooms with the image so the correct area
+                          // and tap marker stay perfectly aligned at any zoom level.
+                          if (answered)
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: _ClickOverlayPainter(
+                                  correctArea: config.correctArea,
+                                  tapPosition: _tapPosition,
+                                  wasCorrect: isCorrect,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                ],
-              ),
-            );
-          },
-      ),
-    ),
-      ),
+                    // Transparent tap detector sitting on top of the viewer.
+                    // HitTestBehavior.translucent lets pan/zoom events pass
+                    // through to the InteractiveViewer below.
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTapUp: (details) => _handleTap(details, constraints),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
