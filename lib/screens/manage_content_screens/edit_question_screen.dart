@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/models/answer_configs.dart';
+import 'package:med_brew/screens/manage_content_screens/image_area_selector_screen.dart';
 import 'package:med_brew/services/question_service.dart';
-import 'package:med_brew/widgets/image_area_selector.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 
 class EditQuestionScreen extends StatefulWidget {
@@ -40,8 +40,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   // Typed
   late final List<TextEditingController> _acceptedAnswerControllers;
 
-  // Image click
-  Rect? _selectedImageRect;
+  // Image click — list of polygons in normalized (0–1) coordinates
+  List<List<Offset>> _selectedImageAreas = [];
 
   @override
   void initState() {
@@ -88,7 +88,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
       if (_answerType == 'imageClick') {
         final ic = ImageClickConfig.fromJson(config);
-        _selectedImageRect = ic.correctArea;
+        _selectedImageAreas = ic.correctAreas;
       }
     } else {
       // Add mode defaults
@@ -197,22 +197,40 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 initialPath: _imagePath,
                 onChanged: (path) => setState(() {
                   _imagePath = path;
-                  _selectedImageRect = null;
+                  _selectedImageAreas = [];
                 }),
               ),
               const SizedBox(height: 12),
               if (_imagePath != null && _imagePath!.isNotEmpty)
-                ImageAreaSelector(
-                  imagePath: _imagePath!,
-                  initialRect: _selectedImageRect,
-                  onRectSelected: (rect) =>
-                      setState(() => _selectedImageRect = rect),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.push<List<List<Offset>>>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ImageAreaSelectorScreen(
+                          imagePath: _imagePath!,
+                          initialAreas: _selectedImageAreas,
+                        ),
+                      ),
+                    );
+                    if (result != null) {
+                      setState(() => _selectedImageAreas = result);
+                    }
+                  },
+                  icon: const Icon(Icons.edit_location_alt_outlined),
+                  label: Text(
+                    _selectedImageAreas.isEmpty
+                        ? 'Define Click Areas'
+                        : 'Edit Click Areas (${_selectedImageAreas.length} area${_selectedImageAreas.length == 1 ? '' : 's'})',
+                  ),
                 ),
-              if (_selectedImageRect != null)
+              if (_selectedImageAreas.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text('Area selected ✓',
-                      style: const TextStyle(color: Colors.green)),
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    '${_selectedImageAreas.length} area${_selectedImageAreas.length == 1 ? '' : 's'} defined ✓',
+                    style: const TextStyle(color: Colors.green),
+                  ),
                 ),
             ],
 
@@ -303,13 +321,13 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         'scrambleOptions': true,
       });
     } else if (_answerType == 'imageClick') {
-      if (_selectedImageRect == null) {
+      if (_selectedImageAreas.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Please select an area on the image')));
+            content: Text('Please define at least one click area')));
         return;
       }
       answerConfig = jsonEncode(
-          ImageClickConfig(correctArea: _selectedImageRect!).toJson());
+          ImageClickConfig(correctAreas: _selectedImageAreas).toJson());
     } else {
       answerConfig = jsonEncode({
         'acceptedAnswers': _acceptedAnswerControllers

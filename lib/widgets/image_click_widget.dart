@@ -60,7 +60,7 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
 
     setState(() {
       _tapPosition = normalizedTap;
-      // Zoom out fully to show the result
+      // Zoom out fully to reveal the result overlay
       _transformController.value = Matrix4.identity();
     });
 
@@ -105,8 +105,9 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    // InteractiveViewer handles pinch-to-zoom and scroll-wheel zoom.
-                    // clipBehavior clips zoomed content to the widget bounds.
+                    // InteractiveViewer handles pinch-to-zoom and scroll-wheel
+                    // zoom on desktop. clipBehavior keeps zoomed content within
+                    // the original widget bounds.
                     InteractiveViewer(
                       transformationController: _transformController,
                       clipBehavior: Clip.hardEdge,
@@ -119,13 +120,14 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
                             path: imagePath,
                             fit: BoxFit.contain,
                           ),
-                          // Overlay zooms with the image so the correct area
-                          // and tap marker stay perfectly aligned at any zoom level.
+                          // Overlay lives inside the viewer so it zooms and
+                          // pans with the image — polygons stay perfectly
+                          // aligned at any zoom level.
                           if (answered)
                             Positioned.fill(
                               child: CustomPaint(
                                 painter: _ClickOverlayPainter(
-                                  correctArea: config.correctArea,
+                                  correctAreas: config.correctAreas,
                                   tapPosition: _tapPosition,
                                   wasCorrect: isCorrect,
                                 ),
@@ -134,9 +136,8 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
                         ],
                       ),
                     ),
-                    // Transparent tap detector sitting on top of the viewer.
-                    // HitTestBehavior.translucent lets pan/zoom events pass
-                    // through to the InteractiveViewer below.
+                    // Transparent tap detector on top. HitTestBehavior.translucent
+                    // lets pan/zoom events pass through to the InteractiveViewer.
                     GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onTapUp: (details) => _handleTap(details, constraints),
@@ -154,41 +155,43 @@ class _ImageClickWidgetState extends State<ImageClickWidget> {
 
 
 class _ClickOverlayPainter extends CustomPainter {
-  final Rect correctArea;     // normalized 0.0–1.0
-  final Offset? tapPosition;  // normalized 0.0–1.0
+  final List<List<Offset>> correctAreas; // normalized 0.0–1.0 polygons
+  final Offset? tapPosition;             // normalized 0.0–1.0
   final bool wasCorrect;
 
   _ClickOverlayPainter({
-    required this.correctArea,
+    required this.correctAreas,
     required this.tapPosition,
     required this.wasCorrect,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Scale the normalized rect to canvas pixels
-    final scaledRect = Rect.fromLTRB(
-      correctArea.left * size.width,
-      correctArea.top * size.height,
-      correctArea.right * size.width,
-      correctArea.bottom * size.height,
-    );
+    for (final polygon in correctAreas) {
+      if (polygon.length < 3) continue;
 
-    canvas.drawRect(
-      scaledRect,
-      Paint()
-        ..color = Colors.green.withOpacity(0.25)
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawRect(
-      scaledRect,
-      Paint()
-        ..color = Colors.green.shade600
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
-    );
+      final pts =
+          polygon.map((p) => Offset(p.dx * size.width, p.dy * size.height)).toList();
+      final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+      for (final p in pts.skip(1)) { path.lineTo(p.dx, p.dy); }
+      path.close();
 
-    // Red cross at the tap position if wrong
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.green.withValues(alpha: 0.25)
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.green.shade600
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5,
+      );
+    }
+
+    // Red cross at the tap position if the answer was wrong
     if (!wasCorrect && tapPosition != null) {
       final scaledTap = Offset(
         tapPosition!.dx * size.width,
@@ -207,8 +210,5 @@ class _ClickOverlayPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ClickOverlayPainter old) =>
-      old.wasCorrect != wasCorrect ||
-          old.tapPosition != tapPosition ||
-          old.correctArea != correctArea;
+  bool shouldRepaint(_ClickOverlayPainter old) => true;
 }

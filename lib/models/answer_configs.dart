@@ -1,36 +1,67 @@
 import 'package:flutter/material.dart';
 
 class ImageClickConfig {
-  final Rect correctArea;
+  /// List of polygons. Each polygon is a list of normalized (0.0–1.0) points.
+  final List<List<Offset>> correctAreas;
 
-  ImageClickConfig({
-    required this.correctArea,
-  });
+  ImageClickConfig({required this.correctAreas});
 
   bool isCorrect(Offset tapPosition) {
-    return correctArea.contains(tapPosition);
+    return correctAreas.any(
+      (polygon) => polygon.length >= 3 && _containsPoint(polygon, tapPosition),
+    );
+  }
+
+  /// Ray-casting point-in-polygon test (normalized coordinates).
+  static bool _containsPoint(List<Offset> polygon, Offset point) {
+    bool inside = false;
+    int j = polygon.length - 1;
+    for (int i = 0; i < polygon.length; i++) {
+      if ((polygon[i].dy > point.dy) != (polygon[j].dy > point.dy) &&
+          point.dx <
+              (polygon[j].dx - polygon[i].dx) *
+                      (point.dy - polygon[i].dy) /
+                      (polygon[j].dy - polygon[i].dy) +
+                  polygon[i].dx) {
+        inside = !inside;
+      }
+      j = i;
+    }
+    return inside;
   }
 
   factory ImageClickConfig.fromJson(Map<String, dynamic> json) {
-    final area = json['correctArea'];
+    // Backward compatibility: old format stored a single rect as 'correctArea'.
+    if (json.containsKey('correctArea') && !json.containsKey('correctAreas')) {
+      final area = json['correctArea'] as Map<String, dynamic>;
+      final l = (area['left'] as num).toDouble();
+      final t = (area['top'] as num).toDouble();
+      final r = (area['right'] as num).toDouble();
+      final b = (area['bottom'] as num).toDouble();
+      return ImageClickConfig(correctAreas: [
+        [Offset(l, t), Offset(r, t), Offset(r, b), Offset(l, b)],
+      ]);
+    }
+
+    final areas = json['correctAreas'] as List<dynamic>;
     return ImageClickConfig(
-      correctArea: Rect.fromLTRB(
-        (area['left'] as num).toDouble(),
-        (area['top'] as num).toDouble(),
-        (area['right'] as num).toDouble(),
-        (area['bottom'] as num).toDouble(),
-      ),
+      correctAreas: areas.map((polygon) {
+        return (polygon as List<dynamic>)
+            .map((p) => Offset(
+                  (p['x'] as num).toDouble(),
+                  (p['y'] as num).toDouble(),
+                ))
+            .toList();
+      }).toList(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'correctArea': {
-      'left': correctArea.left,
-      'top': correctArea.top,
-      'right': correctArea.right,
-      'bottom': correctArea.bottom,
-    },
-  };
+        'correctAreas': correctAreas
+            .map((polygon) =>
+                polygon.map((p) => {'x': p.dx, 'y': p.dy}).toList())
+            .toList(),
+      };
 }
 
 class MultipleChoiceConfig {
