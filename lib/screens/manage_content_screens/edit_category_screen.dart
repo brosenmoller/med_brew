@@ -16,6 +16,7 @@ class EditCategoryScreen extends StatefulWidget {
 
 class _EditCategoryScreenState extends State<EditCategoryScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _pickerKey = GlobalKey<ImagePickerFieldState>();
   late final TextEditingController _titleController;
   String? _imagePath;
 
@@ -56,6 +57,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
             ),
             const SizedBox(height: 20),
             ImagePickerField(
+              key: _pickerKey,
               label: 'Category image (optional)',
               initialPath: _imagePath,
               onChanged: (path) => setState(() => _imagePath = path),
@@ -74,17 +76,20 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final title = _titleController.text.trim();
+    final imagePath = await _pickerKey.currentState
+        ?.applyAutoName('category_$title') ?? _imagePath;
     final existing = widget.existing;
     if (existing == null) {
       await widget.db.insertCategory(CategoriesCompanion.insert(
-        title: _titleController.text.trim(),
-        imagePath: Value(_imagePath),
+        title: title,
+        imagePath: Value(imagePath),
       ));
     } else {
       await widget.db.updateCategory(CategoriesCompanion(
         id: Value(existing.id),
-        title: Value(_titleController.text.trim()),
-        imagePath: Value(_imagePath),
+        title: Value(title),
+        imagePath: Value(imagePath),
         isPermanent: Value(existing.isPermanent),
       ));
     }

@@ -22,6 +22,7 @@ class EditQuizScreen extends StatefulWidget {
 
 class _EditQuizScreenState extends State<EditQuizScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _pickerKey = GlobalKey<ImagePickerFieldState>();
   late final TextEditingController _titleController;
   String? _imagePath;
 
@@ -62,6 +63,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
             ),
             const SizedBox(height: 20),
             ImagePickerField(
+              key: _pickerKey,
               label: 'Quiz image (optional)',
               initialPath: _imagePath,
               onChanged: (path) => setState(() => _imagePath = path),
@@ -80,19 +82,22 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final title = _titleController.text.trim();
+    final imagePath = await _pickerKey.currentState
+        ?.applyAutoName('quiz_$title') ?? _imagePath;
     final existing = widget.existing;
     if (existing == null) {
       await widget.db.insertQuiz(QuizzesCompanion.insert(
         categoryId: widget.categoryId,
-        title: _titleController.text.trim(),
-        imagePath: Value(_imagePath),
+        title: title,
+        imagePath: Value(imagePath),
       ));
     } else {
       await widget.db.updateQuiz(QuizzesCompanion(
         id: Value(existing.id),
         categoryId: Value(existing.categoryId),
-        title: Value(_titleController.text.trim()),
-        imagePath: Value(_imagePath),
+        title: Value(title),
+        imagePath: Value(imagePath),
         isPermanent: Value(existing.isPermanent),
       ));
     }

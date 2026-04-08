@@ -8,6 +8,14 @@ import 'package:path_provider/path_provider.dart';
 import 'app_image.dart';
 import 'image_browser_dialog.dart';
 
+String _toSlug(String text, {int maxLength = 40}) {
+  final slug = text
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+  return slug.length > maxLength ? slug.substring(0, maxLength) : slug;
+}
+
 class ImagePickerField extends StatefulWidget {
   final String? initialPath;
   final ValueChanged<String?> onChanged;
@@ -21,12 +29,16 @@ class ImagePickerField extends StatefulWidget {
   });
 
   @override
-  State<ImagePickerField> createState() => _ImagePickerFieldState();
+  State<ImagePickerField> createState() => ImagePickerFieldState();
 }
 
-class _ImagePickerFieldState extends State<ImagePickerField> {
+class ImagePickerFieldState extends State<ImagePickerField> {
   String? _currentPath;
   bool _dragging = false;
+  bool _autoName = true;
+  // True only when the user picked/dropped a new file in this session;
+  // false for the initial path or images chosen from the existing browser.
+  bool _needsRename = false;
 
   @override
   void initState() {
@@ -34,8 +46,10 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
     _currentPath = widget.initialPath;
   }
 
+  /// Copy a new file into the app images directory using its original filename.
   Future<String> _saveImage(String sourcePath) async {
     final fileName = p.basename(sourcePath);
+
     if (kDebugMode) {
       final dest = Directory(
           p.join(Directory.current.path, 'assets', 'images'));
@@ -52,13 +66,59 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
     }
   }
 
-  // In image_picker_field.dart — all three pick methods
+  /// Called from the parent's save method.
+  /// If auto-naming is enabled and the user picked a new file this session,
+  /// renames the stored file to match [suggestedName] and returns the new path.
+  /// Otherwise returns the current path unchanged.
+  Future<String?> applyAutoName(String suggestedName) async {
+    if (!_autoName || !_needsRename || _currentPath == null) {
+      return _currentPath;
+    }
+
+    final path = _currentPath!;
+    final ext = p.extension(path);
+    final slug = _toSlug(suggestedName);
+    if (slug.isEmpty) return path;
+
+    final newFileName = '$slug$ext';
+    String newPath;
+
+    if (kDebugMode) {
+      final destDir = Directory(
+          p.join(Directory.current.path, 'assets', 'images'));
+      final srcFile = File(p.join(destDir.path, p.basename(path)));
+      newPath = 'assets/images/$newFileName';
+      final dstFile = File(p.join(destDir.path, newFileName));
+      if (srcFile.existsSync() && srcFile.path != dstFile.path) {
+        await srcFile.rename(dstFile.path);
+      }
+    } else {
+      final dir = await getApplicationDocumentsDirectory();
+      final imgDir = Directory(p.join(dir.path, 'images'));
+      newPath = p.join(imgDir.path, newFileName);
+      final srcFile = File(path);
+      if (srcFile.existsSync() && path != newPath) {
+        await srcFile.rename(newPath);
+      }
+    }
+
+    setState(() {
+      _currentPath = newPath;
+      _needsRename = false;
+    });
+    widget.onChanged(newPath);
+    return newPath;
+  }
+
   Future<void> _pickFromExisting() async {
     final picked = await ImageBrowserDialog.show(context);
     if (picked == null) return;
     await Future.delayed(const Duration(milliseconds: 250));
     if (mounted) {
-      setState(() => _currentPath = picked);
+      setState(() {
+        _currentPath = picked;
+        _needsRename = false; // existing image — don't rename
+      });
       widget.onChanged(picked);
     }
   }
@@ -69,7 +129,10 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
     final saved = await _saveImage(result!.files.single.path!);
     await Future.delayed(const Duration(milliseconds: 250));
     if (mounted) {
-      setState(() => _currentPath = saved);
+      setState(() {
+        _currentPath = saved;
+        _needsRename = true;
+      });
       widget.onChanged(saved);
     }
   }
@@ -81,7 +144,10 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
     final saved = await _saveImage(sourcePath);
     await Future.delayed(const Duration(milliseconds: 250));
     if (mounted) {
-      setState(() => _currentPath = saved);
+      setState(() {
+        _currentPath = saved;
+        _needsRename = true;
+      });
       widget.onChanged(saved);
     }
   }
@@ -179,11 +245,31 @@ class _ImagePickerFieldState extends State<ImagePickerField> {
                 icon: const Icon(Icons.clear, color: Colors.red),
                 tooltip: 'Remove image',
                 onPressed: () {
-                  setState(() => _currentPath = null);
+                  setState(() {
+                    _currentPath = null;
+                    _needsRename = false;
+                  });
                   widget.onChanged(null);
                 },
               ),
             ],
+          ],
+        ),
+
+        // ── Auto-name toggle ──────────────────────────────────────
+        Row(
+          children: [
+            Checkbox(
+              value: _autoName,
+              onChanged: (v) => setState(() => _autoName = v ?? true),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Auto-name image from title on save',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
           ],
         ),
 

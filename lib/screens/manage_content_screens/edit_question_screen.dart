@@ -27,6 +27,7 @@ class EditQuestionScreen extends StatefulWidget {
 
 class _EditQuestionScreenState extends State<EditQuestionScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _pickerKey = GlobalKey<ImagePickerFieldState>();
   late final TextEditingController _questionController;
   late final TextEditingController _explanationController;
   late String _answerType;
@@ -191,6 +192,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
             if (_answerType == 'imageClick') ...[
               ImagePickerField(
+                key: _pickerKey,
                 label: 'Click area image',
                 initialPath: _imagePath,
                 onChanged: (path) => setState(() {
@@ -258,6 +260,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
             if (_answerType != 'imageClick') ...[
               const SizedBox(height: 8),
               ImagePickerField(
+                key: _pickerKey,
                 label: 'Question image (optional)',
                 initialPath: _imagePath,
                 onChanged: (path) => setState(() => _imagePath = path),
@@ -288,6 +291,10 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final questionText = _questionController.text.trim();
+    final imagePath = await _pickerKey.currentState
+        ?.applyAutoName('question_$questionText') ?? _imagePath;
+
     final String answerConfig;
     if (_answerType == 'multipleChoice') {
       answerConfig = jsonEncode({
@@ -312,14 +319,13 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       });
     }
 
+    final explanation = _explanationController.text.trim();
     final companion = QuestionsCompanion(
-      questionText: Value(_questionController.text.trim()),
+      questionText: Value(questionText),
       answerType: Value(_answerType),
       answerConfig: Value(answerConfig),
-      explanation: Value(_explanationController.text.trim().isEmpty
-          ? null
-          : _explanationController.text.trim()),
-      imagePath: Value(_imagePath),
+      explanation: Value(explanation.isEmpty ? null : explanation),
+      imagePath: Value(imagePath),
     );
 
     if (widget.isEditing) {
@@ -330,13 +336,11 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       await widget.db.insertQuestionIntoQuiz(
         quizId: widget.quizId,
         question: QuestionsCompanion.insert(
-          questionText: _questionController.text.trim(),
+          questionText: questionText,
           answerType: _answerType,
           answerConfig: answerConfig,
-          explanation: Value(_explanationController.text.trim().isEmpty
-              ? null
-              : _explanationController.text.trim()),
-          imagePath: Value(_imagePath),
+          explanation: Value(explanation.isEmpty ? null : explanation),
+          imagePath: Value(imagePath),
         ),
       );
     }
