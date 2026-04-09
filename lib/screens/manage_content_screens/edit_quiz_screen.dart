@@ -6,13 +6,14 @@ import 'package:med_brew/widgets/image_picker_field.dart';
 
 class EditQuizScreen extends StatefulWidget {
   final AppDatabase db;
-  final int categoryId;
+  /// The folder this quiz belongs to; null means root level.
+  final int? folderId;
   final Quiz? existing;
 
   const EditQuizScreen({
     super.key,
     required this.db,
-    required this.categoryId,
+    this.folderId,
     this.existing,
   });
 
@@ -83,19 +84,20 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final title = _titleController.text.trim();
-    final imagePath = await _pickerKey.currentState
-        ?.applyAutoName('quiz_$title') ?? _imagePath;
+    final imagePath =
+        await _pickerKey.currentState?.applyAutoName('quiz_$title') ??
+            _imagePath;
     final existing = widget.existing;
     if (existing == null) {
       await widget.db.insertQuiz(QuizzesCompanion.insert(
-        categoryId: widget.categoryId,
+        folderId: Value(widget.folderId),
         title: title,
         imagePath: Value(imagePath),
       ));
     } else {
       await widget.db.updateQuiz(QuizzesCompanion(
         id: Value(existing.id),
-        categoryId: Value(existing.categoryId),
+        folderId: Value(existing.folderId),
         title: Value(title),
         imagePath: Value(imagePath),
         isPermanent: Value(existing.isPermanent),

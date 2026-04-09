@@ -3,12 +3,11 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $CategoriesTable extends Categories
-    with TableInfo<$CategoriesTable, Category> {
+class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $CategoriesTable(this.attachedDatabase, [this._alias]);
+  $FoldersTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -18,6 +17,12 @@ class $CategoriesTable extends Categories
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _parentFolderIdMeta =
+      const VerificationMeta('parentFolderId');
+  @override
+  late final GeneratedColumn<int> parentFolderId = GeneratedColumn<int>(
+      'parent_folder_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -49,19 +54,25 @@ class $CategoriesTable extends Categories
       defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, title, imagePath, isPermanent, createdAt];
+      [id, parentFolderId, title, imagePath, isPermanent, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'categories';
+  static const String $name = 'folders';
   @override
-  VerificationContext validateIntegrity(Insertable<Category> instance,
+  VerificationContext validateIntegrity(Insertable<Folder> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('parent_folder_id')) {
+      context.handle(
+          _parentFolderIdMeta,
+          parentFolderId.isAcceptableOrUnknown(
+              data['parent_folder_id']!, _parentFolderIdMeta));
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -89,11 +100,13 @@ class $CategoriesTable extends Categories
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Category map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Folder map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Category(
+    return Folder(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      parentFolderId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}parent_folder_id']),
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       imagePath: attachedDatabase.typeMapping
@@ -106,19 +119,21 @@ class $CategoriesTable extends Categories
   }
 
   @override
-  $CategoriesTable createAlias(String alias) {
-    return $CategoriesTable(attachedDatabase, alias);
+  $FoldersTable createAlias(String alias) {
+    return $FoldersTable(attachedDatabase, alias);
   }
 }
 
-class Category extends DataClass implements Insertable<Category> {
+class Folder extends DataClass implements Insertable<Folder> {
   final int id;
+  final int? parentFolderId;
   final String title;
   final String? imagePath;
   final bool isPermanent;
   final DateTime createdAt;
-  const Category(
+  const Folder(
       {required this.id,
+      this.parentFolderId,
       required this.title,
       this.imagePath,
       required this.isPermanent,
@@ -127,6 +142,9 @@ class Category extends DataClass implements Insertable<Category> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || parentFolderId != null) {
+      map['parent_folder_id'] = Variable<int>(parentFolderId);
+    }
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || imagePath != null) {
       map['image_path'] = Variable<String>(imagePath);
@@ -136,9 +154,12 @@ class Category extends DataClass implements Insertable<Category> {
     return map;
   }
 
-  CategoriesCompanion toCompanion(bool nullToAbsent) {
-    return CategoriesCompanion(
+  FoldersCompanion toCompanion(bool nullToAbsent) {
+    return FoldersCompanion(
       id: Value(id),
+      parentFolderId: parentFolderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(parentFolderId),
       title: Value(title),
       imagePath: imagePath == null && nullToAbsent
           ? const Value.absent()
@@ -148,11 +169,12 @@ class Category extends DataClass implements Insertable<Category> {
     );
   }
 
-  factory Category.fromJson(Map<String, dynamic> json,
+  factory Folder.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Category(
+    return Folder(
       id: serializer.fromJson<int>(json['id']),
+      parentFolderId: serializer.fromJson<int?>(json['parentFolderId']),
       title: serializer.fromJson<String>(json['title']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       isPermanent: serializer.fromJson<bool>(json['isPermanent']),
@@ -164,6 +186,7 @@ class Category extends DataClass implements Insertable<Category> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'parentFolderId': serializer.toJson<int?>(parentFolderId),
       'title': serializer.toJson<String>(title),
       'imagePath': serializer.toJson<String?>(imagePath),
       'isPermanent': serializer.toJson<bool>(isPermanent),
@@ -171,22 +194,28 @@ class Category extends DataClass implements Insertable<Category> {
     };
   }
 
-  Category copyWith(
+  Folder copyWith(
           {int? id,
+          Value<int?> parentFolderId = const Value.absent(),
           String? title,
           Value<String?> imagePath = const Value.absent(),
           bool? isPermanent,
           DateTime? createdAt}) =>
-      Category(
+      Folder(
         id: id ?? this.id,
+        parentFolderId:
+            parentFolderId.present ? parentFolderId.value : this.parentFolderId,
         title: title ?? this.title,
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
         isPermanent: isPermanent ?? this.isPermanent,
         createdAt: createdAt ?? this.createdAt,
       );
-  Category copyWithCompanion(CategoriesCompanion data) {
-    return Category(
+  Folder copyWithCompanion(FoldersCompanion data) {
+    return Folder(
       id: data.id.present ? data.id.value : this.id,
+      parentFolderId: data.parentFolderId.present
+          ? data.parentFolderId.value
+          : this.parentFolderId,
       title: data.title.present ? data.title.value : this.title,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       isPermanent:
@@ -197,8 +226,9 @@ class Category extends DataClass implements Insertable<Category> {
 
   @override
   String toString() {
-    return (StringBuffer('Category(')
+    return (StringBuffer('Folder(')
           ..write('id: $id, ')
+          ..write('parentFolderId: $parentFolderId, ')
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
           ..write('isPermanent: $isPermanent, ')
@@ -208,40 +238,46 @@ class Category extends DataClass implements Insertable<Category> {
   }
 
   @override
-  int get hashCode => Object.hash(id, title, imagePath, isPermanent, createdAt);
+  int get hashCode =>
+      Object.hash(id, parentFolderId, title, imagePath, isPermanent, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Category &&
+      (other is Folder &&
           other.id == this.id &&
+          other.parentFolderId == this.parentFolderId &&
           other.title == this.title &&
           other.imagePath == this.imagePath &&
           other.isPermanent == this.isPermanent &&
           other.createdAt == this.createdAt);
 }
 
-class CategoriesCompanion extends UpdateCompanion<Category> {
+class FoldersCompanion extends UpdateCompanion<Folder> {
   final Value<int> id;
+  final Value<int?> parentFolderId;
   final Value<String> title;
   final Value<String?> imagePath;
   final Value<bool> isPermanent;
   final Value<DateTime> createdAt;
-  const CategoriesCompanion({
+  const FoldersCompanion({
     this.id = const Value.absent(),
+    this.parentFolderId = const Value.absent(),
     this.title = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.isPermanent = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-  CategoriesCompanion.insert({
+  FoldersCompanion.insert({
     this.id = const Value.absent(),
+    this.parentFolderId = const Value.absent(),
     required String title,
     this.imagePath = const Value.absent(),
     this.isPermanent = const Value.absent(),
     this.createdAt = const Value.absent(),
   }) : title = Value(title);
-  static Insertable<Category> custom({
+  static Insertable<Folder> custom({
     Expression<int>? id,
+    Expression<int>? parentFolderId,
     Expression<String>? title,
     Expression<String>? imagePath,
     Expression<bool>? isPermanent,
@@ -249,6 +285,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (parentFolderId != null) 'parent_folder_id': parentFolderId,
       if (title != null) 'title': title,
       if (imagePath != null) 'image_path': imagePath,
       if (isPermanent != null) 'is_permanent': isPermanent,
@@ -256,14 +293,16 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     });
   }
 
-  CategoriesCompanion copyWith(
+  FoldersCompanion copyWith(
       {Value<int>? id,
+      Value<int?>? parentFolderId,
       Value<String>? title,
       Value<String?>? imagePath,
       Value<bool>? isPermanent,
       Value<DateTime>? createdAt}) {
-    return CategoriesCompanion(
+    return FoldersCompanion(
       id: id ?? this.id,
+      parentFolderId: parentFolderId ?? this.parentFolderId,
       title: title ?? this.title,
       imagePath: imagePath ?? this.imagePath,
       isPermanent: isPermanent ?? this.isPermanent,
@@ -276,6 +315,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (parentFolderId.present) {
+      map['parent_folder_id'] = Variable<int>(parentFolderId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -294,8 +336,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
 
   @override
   String toString() {
-    return (StringBuffer('CategoriesCompanion(')
+    return (StringBuffer('FoldersCompanion(')
           ..write('id: $id, ')
+          ..write('parentFolderId: $parentFolderId, ')
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
           ..write('isPermanent: $isPermanent, ')
@@ -319,15 +362,12 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _categoryIdMeta =
-      const VerificationMeta('categoryId');
+  static const VerificationMeta _folderIdMeta =
+      const VerificationMeta('folderId');
   @override
-  late final GeneratedColumn<int> categoryId = GeneratedColumn<int>(
-      'category_id', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES categories (id)'));
+  late final GeneratedColumn<int> folderId = GeneratedColumn<int>(
+      'folder_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -359,7 +399,7 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
       defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, categoryId, title, imagePath, isPermanent, createdAt];
+      [id, folderId, title, imagePath, isPermanent, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -373,13 +413,9 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('category_id')) {
-      context.handle(
-          _categoryIdMeta,
-          categoryId.isAcceptableOrUnknown(
-              data['category_id']!, _categoryIdMeta));
-    } else if (isInserting) {
-      context.missing(_categoryIdMeta);
+    if (data.containsKey('folder_id')) {
+      context.handle(_folderIdMeta,
+          folderId.isAcceptableOrUnknown(data['folder_id']!, _folderIdMeta));
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -412,8 +448,8 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
     return Quiz(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      categoryId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}category_id'])!,
+      folderId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}folder_id']),
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       imagePath: attachedDatabase.typeMapping
@@ -433,14 +469,14 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
 
 class Quiz extends DataClass implements Insertable<Quiz> {
   final int id;
-  final int categoryId;
+  final int? folderId;
   final String title;
   final String? imagePath;
   final bool isPermanent;
   final DateTime createdAt;
   const Quiz(
       {required this.id,
-      required this.categoryId,
+      this.folderId,
       required this.title,
       this.imagePath,
       required this.isPermanent,
@@ -449,7 +485,9 @@ class Quiz extends DataClass implements Insertable<Quiz> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['category_id'] = Variable<int>(categoryId);
+    if (!nullToAbsent || folderId != null) {
+      map['folder_id'] = Variable<int>(folderId);
+    }
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || imagePath != null) {
       map['image_path'] = Variable<String>(imagePath);
@@ -462,7 +500,9 @@ class Quiz extends DataClass implements Insertable<Quiz> {
   QuizzesCompanion toCompanion(bool nullToAbsent) {
     return QuizzesCompanion(
       id: Value(id),
-      categoryId: Value(categoryId),
+      folderId: folderId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(folderId),
       title: Value(title),
       imagePath: imagePath == null && nullToAbsent
           ? const Value.absent()
@@ -477,7 +517,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Quiz(
       id: serializer.fromJson<int>(json['id']),
-      categoryId: serializer.fromJson<int>(json['categoryId']),
+      folderId: serializer.fromJson<int?>(json['folderId']),
       title: serializer.fromJson<String>(json['title']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       isPermanent: serializer.fromJson<bool>(json['isPermanent']),
@@ -489,7 +529,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'categoryId': serializer.toJson<int>(categoryId),
+      'folderId': serializer.toJson<int?>(folderId),
       'title': serializer.toJson<String>(title),
       'imagePath': serializer.toJson<String?>(imagePath),
       'isPermanent': serializer.toJson<bool>(isPermanent),
@@ -499,14 +539,14 @@ class Quiz extends DataClass implements Insertable<Quiz> {
 
   Quiz copyWith(
           {int? id,
-          int? categoryId,
+          Value<int?> folderId = const Value.absent(),
           String? title,
           Value<String?> imagePath = const Value.absent(),
           bool? isPermanent,
           DateTime? createdAt}) =>
       Quiz(
         id: id ?? this.id,
-        categoryId: categoryId ?? this.categoryId,
+        folderId: folderId.present ? folderId.value : this.folderId,
         title: title ?? this.title,
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
         isPermanent: isPermanent ?? this.isPermanent,
@@ -515,8 +555,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
   Quiz copyWithCompanion(QuizzesCompanion data) {
     return Quiz(
       id: data.id.present ? data.id.value : this.id,
-      categoryId:
-          data.categoryId.present ? data.categoryId.value : this.categoryId,
+      folderId: data.folderId.present ? data.folderId.value : this.folderId,
       title: data.title.present ? data.title.value : this.title,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       isPermanent:
@@ -529,7 +568,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
   String toString() {
     return (StringBuffer('Quiz(')
           ..write('id: $id, ')
-          ..write('categoryId: $categoryId, ')
+          ..write('folderId: $folderId, ')
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
           ..write('isPermanent: $isPermanent, ')
@@ -540,13 +579,13 @@ class Quiz extends DataClass implements Insertable<Quiz> {
 
   @override
   int get hashCode =>
-      Object.hash(id, categoryId, title, imagePath, isPermanent, createdAt);
+      Object.hash(id, folderId, title, imagePath, isPermanent, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Quiz &&
           other.id == this.id &&
-          other.categoryId == this.categoryId &&
+          other.folderId == this.folderId &&
           other.title == this.title &&
           other.imagePath == this.imagePath &&
           other.isPermanent == this.isPermanent &&
@@ -555,14 +594,14 @@ class Quiz extends DataClass implements Insertable<Quiz> {
 
 class QuizzesCompanion extends UpdateCompanion<Quiz> {
   final Value<int> id;
-  final Value<int> categoryId;
+  final Value<int?> folderId;
   final Value<String> title;
   final Value<String?> imagePath;
   final Value<bool> isPermanent;
   final Value<DateTime> createdAt;
   const QuizzesCompanion({
     this.id = const Value.absent(),
-    this.categoryId = const Value.absent(),
+    this.folderId = const Value.absent(),
     this.title = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.isPermanent = const Value.absent(),
@@ -570,16 +609,15 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
   });
   QuizzesCompanion.insert({
     this.id = const Value.absent(),
-    required int categoryId,
+    this.folderId = const Value.absent(),
     required String title,
     this.imagePath = const Value.absent(),
     this.isPermanent = const Value.absent(),
     this.createdAt = const Value.absent(),
-  })  : categoryId = Value(categoryId),
-        title = Value(title);
+  }) : title = Value(title);
   static Insertable<Quiz> custom({
     Expression<int>? id,
-    Expression<int>? categoryId,
+    Expression<int>? folderId,
     Expression<String>? title,
     Expression<String>? imagePath,
     Expression<bool>? isPermanent,
@@ -587,7 +625,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (categoryId != null) 'category_id': categoryId,
+      if (folderId != null) 'folder_id': folderId,
       if (title != null) 'title': title,
       if (imagePath != null) 'image_path': imagePath,
       if (isPermanent != null) 'is_permanent': isPermanent,
@@ -597,14 +635,14 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
 
   QuizzesCompanion copyWith(
       {Value<int>? id,
-      Value<int>? categoryId,
+      Value<int?>? folderId,
       Value<String>? title,
       Value<String?>? imagePath,
       Value<bool>? isPermanent,
       Value<DateTime>? createdAt}) {
     return QuizzesCompanion(
       id: id ?? this.id,
-      categoryId: categoryId ?? this.categoryId,
+      folderId: folderId ?? this.folderId,
       title: title ?? this.title,
       imagePath: imagePath ?? this.imagePath,
       isPermanent: isPermanent ?? this.isPermanent,
@@ -618,8 +656,8 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (categoryId.present) {
-      map['category_id'] = Variable<int>(categoryId.value);
+    if (folderId.present) {
+      map['folder_id'] = Variable<int>(folderId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -640,7 +678,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
   String toString() {
     return (StringBuffer('QuizzesCompanion(')
           ..write('id: $id, ')
-          ..write('categoryId: $categoryId, ')
+          ..write('folderId: $folderId, ')
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
           ..write('isPermanent: $isPermanent, ')
@@ -1339,7 +1377,7 @@ class QuizQuestionsCompanion extends UpdateCompanion<QuizQuestion> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $CategoriesTable categories = $CategoriesTable(this);
+  late final $FoldersTable folders = $FoldersTable(this);
   late final $QuizzesTable quizzes = $QuizzesTable(this);
   late final $QuestionsTable questions = $QuestionsTable(this);
   late final $QuizQuestionsTable quizQuestions = $QuizQuestionsTable(this);
@@ -1348,47 +1386,29 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [categories, quizzes, questions, quizQuestions];
+      [folders, quizzes, questions, quizQuestions];
 }
 
-typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
+typedef $$FoldersTableCreateCompanionBuilder = FoldersCompanion Function({
   Value<int> id,
+  Value<int?> parentFolderId,
   required String title,
   Value<String?> imagePath,
   Value<bool> isPermanent,
   Value<DateTime> createdAt,
 });
-typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
+typedef $$FoldersTableUpdateCompanionBuilder = FoldersCompanion Function({
   Value<int> id,
+  Value<int?> parentFolderId,
   Value<String> title,
   Value<String?> imagePath,
   Value<bool> isPermanent,
   Value<DateTime> createdAt,
 });
 
-final class $$CategoriesTableReferences
-    extends BaseReferences<_$AppDatabase, $CategoriesTable, Category> {
-  $$CategoriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static MultiTypedResultKey<$QuizzesTable, List<Quiz>> _quizzesRefsTable(
-          _$AppDatabase db) =>
-      MultiTypedResultKey.fromTable(db.quizzes,
-          aliasName:
-              $_aliasNameGenerator(db.categories.id, db.quizzes.categoryId));
-
-  $$QuizzesTableProcessedTableManager get quizzesRefs {
-    final manager = $$QuizzesTableTableManager($_db, $_db.quizzes)
-        .filter((f) => f.categoryId.id($_item.id));
-
-    final cache = $_typedResult.readTableOrNull(_quizzesRefsTable($_db));
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
-  }
-}
-
-class $$CategoriesTableFilterComposer
-    extends Composer<_$AppDatabase, $CategoriesTable> {
-  $$CategoriesTableFilterComposer({
+class $$FoldersTableFilterComposer
+    extends Composer<_$AppDatabase, $FoldersTable> {
+  $$FoldersTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1397,6 +1417,10 @@ class $$CategoriesTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get parentFolderId => $composableBuilder(
+      column: $table.parentFolderId,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnFilters(column));
@@ -1409,32 +1433,11 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  Expression<bool> quizzesRefs(
-      Expression<bool> Function($$QuizzesTableFilterComposer f) f) {
-    final $$QuizzesTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.quizzes,
-        getReferencedColumn: (t) => t.categoryId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$QuizzesTableFilterComposer(
-              $db: $db,
-              $table: $db.quizzes,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
 }
 
-class $$CategoriesTableOrderingComposer
-    extends Composer<_$AppDatabase, $CategoriesTable> {
-  $$CategoriesTableOrderingComposer({
+class $$FoldersTableOrderingComposer
+    extends Composer<_$AppDatabase, $FoldersTable> {
+  $$FoldersTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1443,6 +1446,10 @@ class $$CategoriesTableOrderingComposer
   });
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get parentFolderId => $composableBuilder(
+      column: $table.parentFolderId,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnOrderings(column));
@@ -1457,9 +1464,9 @@ class $$CategoriesTableOrderingComposer
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
-class $$CategoriesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $CategoriesTable> {
-  $$CategoriesTableAnnotationComposer({
+class $$FoldersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FoldersTable> {
+  $$FoldersTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1468,6 +1475,9 @@ class $$CategoriesTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get parentFolderId => $composableBuilder(
+      column: $table.parentFolderId, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -1480,60 +1490,41 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  Expression<T> quizzesRefs<T extends Object>(
-      Expression<T> Function($$QuizzesTableAnnotationComposer a) f) {
-    final $$QuizzesTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.id,
-        referencedTable: $db.quizzes,
-        getReferencedColumn: (t) => t.categoryId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$QuizzesTableAnnotationComposer(
-              $db: $db,
-              $table: $db.quizzes,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
 }
 
-class $$CategoriesTableTableManager extends RootTableManager<
+class $$FoldersTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $CategoriesTable,
-    Category,
-    $$CategoriesTableFilterComposer,
-    $$CategoriesTableOrderingComposer,
-    $$CategoriesTableAnnotationComposer,
-    $$CategoriesTableCreateCompanionBuilder,
-    $$CategoriesTableUpdateCompanionBuilder,
-    (Category, $$CategoriesTableReferences),
-    Category,
-    PrefetchHooks Function({bool quizzesRefs})> {
-  $$CategoriesTableTableManager(_$AppDatabase db, $CategoriesTable table)
+    $FoldersTable,
+    Folder,
+    $$FoldersTableFilterComposer,
+    $$FoldersTableOrderingComposer,
+    $$FoldersTableAnnotationComposer,
+    $$FoldersTableCreateCompanionBuilder,
+    $$FoldersTableUpdateCompanionBuilder,
+    (Folder, BaseReferences<_$AppDatabase, $FoldersTable, Folder>),
+    Folder,
+    PrefetchHooks Function()> {
+  $$FoldersTableTableManager(_$AppDatabase db, $FoldersTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$CategoriesTableFilterComposer($db: db, $table: table),
+              $$FoldersTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$CategoriesTableOrderingComposer($db: db, $table: table),
+              $$FoldersTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$CategoriesTableAnnotationComposer($db: db, $table: table),
+              $$FoldersTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
+            Value<int?> parentFolderId = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
             Value<bool> isPermanent = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
-              CategoriesCompanion(
+              FoldersCompanion(
             id: id,
+            parentFolderId: parentFolderId,
             title: title,
             imagePath: imagePath,
             isPermanent: isPermanent,
@@ -1541,65 +1532,42 @@ class $$CategoriesTableTableManager extends RootTableManager<
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
+            Value<int?> parentFolderId = const Value.absent(),
             required String title,
             Value<String?> imagePath = const Value.absent(),
             Value<bool> isPermanent = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
-              CategoriesCompanion.insert(
+              FoldersCompanion.insert(
             id: id,
+            parentFolderId: parentFolderId,
             title: title,
             imagePath: imagePath,
             isPermanent: isPermanent,
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $$CategoriesTableReferences(db, table, e)
-                  ))
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({quizzesRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (quizzesRefs) db.quizzes],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (quizzesRefs)
-                    await $_getPrefetchedData(
-                        currentTable: table,
-                        referencedTable:
-                            $$CategoriesTableReferences._quizzesRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $$CategoriesTableReferences(db, table, p0)
-                                .quizzesRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.categoryId == item.id),
-                        typedResults: items)
-                ];
-              },
-            );
-          },
+          prefetchHooksCallback: null,
         ));
 }
 
-typedef $$CategoriesTableProcessedTableManager = ProcessedTableManager<
+typedef $$FoldersTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $CategoriesTable,
-    Category,
-    $$CategoriesTableFilterComposer,
-    $$CategoriesTableOrderingComposer,
-    $$CategoriesTableAnnotationComposer,
-    $$CategoriesTableCreateCompanionBuilder,
-    $$CategoriesTableUpdateCompanionBuilder,
-    (Category, $$CategoriesTableReferences),
-    Category,
-    PrefetchHooks Function({bool quizzesRefs})>;
+    $FoldersTable,
+    Folder,
+    $$FoldersTableFilterComposer,
+    $$FoldersTableOrderingComposer,
+    $$FoldersTableAnnotationComposer,
+    $$FoldersTableCreateCompanionBuilder,
+    $$FoldersTableUpdateCompanionBuilder,
+    (Folder, BaseReferences<_$AppDatabase, $FoldersTable, Folder>),
+    Folder,
+    PrefetchHooks Function()>;
 typedef $$QuizzesTableCreateCompanionBuilder = QuizzesCompanion Function({
   Value<int> id,
-  required int categoryId,
+  Value<int?> folderId,
   required String title,
   Value<String?> imagePath,
   Value<bool> isPermanent,
@@ -1607,7 +1575,7 @@ typedef $$QuizzesTableCreateCompanionBuilder = QuizzesCompanion Function({
 });
 typedef $$QuizzesTableUpdateCompanionBuilder = QuizzesCompanion Function({
   Value<int> id,
-  Value<int> categoryId,
+  Value<int?> folderId,
   Value<String> title,
   Value<String?> imagePath,
   Value<bool> isPermanent,
@@ -1617,20 +1585,6 @@ typedef $$QuizzesTableUpdateCompanionBuilder = QuizzesCompanion Function({
 final class $$QuizzesTableReferences
     extends BaseReferences<_$AppDatabase, $QuizzesTable, Quiz> {
   $$QuizzesTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
-      db.categories.createAlias(
-          $_aliasNameGenerator(db.quizzes.categoryId, db.categories.id));
-
-  $$CategoriesTableProcessedTableManager? get categoryId {
-    if ($_item.categoryId == null) return null;
-    final manager = $$CategoriesTableTableManager($_db, $_db.categories)
-        .filter((f) => f.id($_item.categoryId!));
-    final item = $_typedResult.readTableOrNull(_categoryIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
-  }
 
   static MultiTypedResultKey<$QuizQuestionsTable, List<QuizQuestion>>
       _quizQuestionsRefsTable(_$AppDatabase db) =>
@@ -1660,6 +1614,9 @@ class $$QuizzesTableFilterComposer
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<int> get folderId => $composableBuilder(
+      column: $table.folderId, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnFilters(column));
 
@@ -1671,26 +1628,6 @@ class $$QuizzesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  $$CategoriesTableFilterComposer get categoryId {
-    final $$CategoriesTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.categoryId,
-        referencedTable: $db.categories,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$CategoriesTableFilterComposer(
-              $db: $db,
-              $table: $db.categories,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 
   Expression<bool> quizQuestionsRefs(
       Expression<bool> Function($$QuizQuestionsTableFilterComposer f) f) {
@@ -1726,6 +1663,9 @@ class $$QuizzesTableOrderingComposer
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get folderId => $composableBuilder(
+      column: $table.folderId, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnOrderings(column));
 
@@ -1737,26 +1677,6 @@ class $$QuizzesTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  $$CategoriesTableOrderingComposer get categoryId {
-    final $$CategoriesTableOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.categoryId,
-        referencedTable: $db.categories,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$CategoriesTableOrderingComposer(
-              $db: $db,
-              $table: $db.categories,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 }
 
 class $$QuizzesTableAnnotationComposer
@@ -1771,6 +1691,9 @@ class $$QuizzesTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumn<int> get folderId =>
+      $composableBuilder(column: $table.folderId, builder: (column) => column);
+
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
 
@@ -1782,26 +1705,6 @@ class $$QuizzesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  $$CategoriesTableAnnotationComposer get categoryId {
-    final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.categoryId,
-        referencedTable: $db.categories,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$CategoriesTableAnnotationComposer(
-              $db: $db,
-              $table: $db.categories,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 
   Expression<T> quizQuestionsRefs<T extends Object>(
       Expression<T> Function($$QuizQuestionsTableAnnotationComposer a) f) {
@@ -1836,7 +1739,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
     $$QuizzesTableUpdateCompanionBuilder,
     (Quiz, $$QuizzesTableReferences),
     Quiz,
-    PrefetchHooks Function({bool categoryId, bool quizQuestionsRefs})> {
+    PrefetchHooks Function({bool quizQuestionsRefs})> {
   $$QuizzesTableTableManager(_$AppDatabase db, $QuizzesTable table)
       : super(TableManagerState(
           db: db,
@@ -1849,7 +1752,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
               $$QuizzesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            Value<int> categoryId = const Value.absent(),
+            Value<int?> folderId = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
             Value<bool> isPermanent = const Value.absent(),
@@ -1857,7 +1760,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
           }) =>
               QuizzesCompanion(
             id: id,
-            categoryId: categoryId,
+            folderId: folderId,
             title: title,
             imagePath: imagePath,
             isPermanent: isPermanent,
@@ -1865,7 +1768,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            required int categoryId,
+            Value<int?> folderId = const Value.absent(),
             required String title,
             Value<String?> imagePath = const Value.absent(),
             Value<bool> isPermanent = const Value.absent(),
@@ -1873,7 +1776,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
           }) =>
               QuizzesCompanion.insert(
             id: id,
-            categoryId: categoryId,
+            folderId: folderId,
             title: title,
             imagePath: imagePath,
             isPermanent: isPermanent,
@@ -1883,39 +1786,13 @@ class $$QuizzesTableTableManager extends RootTableManager<
               .map((e) =>
                   (e.readTable(table), $$QuizzesTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: (
-              {categoryId = false, quizQuestionsRefs = false}) {
+          prefetchHooksCallback: ({quizQuestionsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (quizQuestionsRefs) db.quizQuestions
               ],
-              addJoins: <
-                  T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic>>(state) {
-                if (categoryId) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.categoryId,
-                    referencedTable:
-                        $$QuizzesTableReferences._categoryIdTable(db),
-                    referencedColumn:
-                        $$QuizzesTableReferences._categoryIdTable(db).id,
-                  ) as T;
-                }
-
-                return state;
-              },
+              addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (quizQuestionsRefs)
@@ -1948,7 +1825,7 @@ typedef $$QuizzesTableProcessedTableManager = ProcessedTableManager<
     $$QuizzesTableUpdateCompanionBuilder,
     (Quiz, $$QuizzesTableReferences),
     Quiz,
-    PrefetchHooks Function({bool categoryId, bool quizQuestionsRefs})>;
+    PrefetchHooks Function({bool quizQuestionsRefs})>;
 typedef $$QuestionsTableCreateCompanionBuilder = QuestionsCompanion Function({
   Value<int> id,
   required String questionText,
@@ -2569,8 +2446,8 @@ typedef $$QuizQuestionsTableProcessedTableManager = ProcessedTableManager<
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$CategoriesTableTableManager get categories =>
-      $$CategoriesTableTableManager(_db, _db.categories);
+  $$FoldersTableTableManager get folders =>
+      $$FoldersTableTableManager(_db, _db.folders);
   $$QuizzesTableTableManager get quizzes =>
       $$QuizzesTableTableManager(_db, _db.quizzes);
   $$QuestionsTableTableManager get questions =>

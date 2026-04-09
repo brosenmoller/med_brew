@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/models/question_data.dart';
-import 'package:med_brew/models/category_data.dart';
+import 'package:med_brew/models/folder_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/models/answer_configs.dart';
 import 'package:med_brew/models/answer_type.dart';
@@ -15,7 +15,7 @@ class QuestionService {
   late AppDatabase _db;
 
   final Map<String, QuestionData> _questions = {};
-  final Map<String, CategoryData> _categories = {};
+  final Map<String, FolderData> _folders = {};
   final Map<String, QuizData> _quizzes = {};
 
   Future<void> init(AppDatabase db) async {
@@ -25,90 +25,101 @@ class QuestionService {
   }
 
   Future<void> refresh() async {
+    _initialized = false;
     await _load();
   }
 
   Future<void> _load() async {
     _questions.clear();
-    _categories.clear();
+    _folders.clear();
     _quizzes.clear();
 
-    final categories = await _db.getAllCategories();
-    for (final cat in categories) {
-      final quizzes = await _db.getQuizzesForCategory(cat.id);
-      final quizIds = <String>[];
+    // ── Folders ──────────────────────────────────────────────────
+    final allFolderRows = await _db.getAllFolders();
+    for (final row in allFolderRows) {
+      _folders[row.id.toString()] = FolderData(
+        id: row.id.toString(),
+        parentFolderId: row.parentFolderId?.toString(),
+        title: row.title,
+        imagePath: row.imagePath,
+        subfolderIds: [],
+        quizIds: [],
+      );
+    }
+    // Wire up parent → child relationships
+    for (final row in allFolderRows) {
+      if (row.parentFolderId != null) {
+        _folders[row.parentFolderId.toString()]
+            ?.subfolderIds.add(row.id.toString());
+      }
+    }
 
-      for (final quiz in quizzes) {
-        final questions = await _db.getQuestionsForQuiz(quiz.id);
-        final questionIds = <String>[];
+    // ── Quizzes + Questions ───────────────────────────────────────
+    final allQuizRows = await _db.getAllQuizzes();
+    for (final quizRow in allQuizRows) {
+      final quizId = quizRow.id.toString();
+      final questionRows = await _db.getQuestionsForQuiz(quizRow.id);
+      final questionIds = <String>[];
 
-        for (final question in questions) {
-          final questionId = question.id.toString();
+      for (final qRow in questionRows) {
+        final questionId = qRow.id.toString();
 
-          AnswerType answerType;
-          try {
-            answerType = AnswerType.values.firstWhere(
-              (e) => e.toString().split('.').last == question.answerType,
-            );
-          } catch (_) {
-            continue; // unknown answerType — skip
-          }
-
-          Map<String, dynamic> config;
-          try {
-            config = jsonDecode(question.answerConfig) as Map<String, dynamic>;
-          } catch (_) {
-            continue; // skip malformed records
-          }
-
-          questionIds.add(questionId);
-          List<String> questionVariants;
-          try {
-            questionVariants = question.questionVariants != null
-                ? List<String>.from(jsonDecode(question.questionVariants!))
-                : [question.questionText];
-          } catch (_) {
-            questionVariants = [question.questionText];
-          }
-
-          _questions[questionId] = QuestionData(
-            id: questionId,
-            questionVariants: questionVariants,
-            imagePath: question.imagePath,
-            answerType: answerType,
-            explanation: question.explanation,
-            multipleChoiceConfig: answerType == AnswerType.multipleChoice
-                ? MultipleChoiceConfig.fromJson(config)
-                : null,
-            typedAnswerConfig: answerType == AnswerType.typed
-                ? TypedAnswerConfig.fromJson(config)
-                : null,
-            imageClickConfig: answerType == AnswerType.imageClick
-                ? ImageClickConfig.fromJson(config)
-                : null,
-            flashcardConfig: answerType == AnswerType.flashcard
-                ? FlashcardConfig.fromJson(config)
-                : null,
+        AnswerType answerType;
+        try {
+          answerType = AnswerType.values.firstWhere(
+            (e) => e.toString().split('.').last == qRow.answerType,
           );
+        } catch (_) {
+          continue;
         }
 
-        final quizId = quiz.id.toString();
-        quizIds.add(quizId);
-        _quizzes[quizId] = QuizData(
-          id: quizId,
-          title: quiz.title,
-          imagePath: quiz.imagePath,
-          questionIds: questionIds,
+        Map<String, dynamic> config;
+        try {
+          config = jsonDecode(qRow.answerConfig) as Map<String, dynamic>;
+        } catch (_) {
+          continue;
+        }
+
+        List<String> questionVariants;
+        try {
+          questionVariants = qRow.questionVariants != null
+              ? List<String>.from(jsonDecode(qRow.questionVariants!))
+              : [qRow.questionText];
+        } catch (_) {
+          questionVariants = [qRow.questionText];
+        }
+
+        questionIds.add(questionId);
+        _questions[questionId] = QuestionData(
+          id: questionId,
+          questionVariants: questionVariants,
+          imagePath: qRow.imagePath,
+          answerType: answerType,
+          explanation: qRow.explanation,
+          multipleChoiceConfig: answerType == AnswerType.multipleChoice
+              ? MultipleChoiceConfig.fromJson(config) : null,
+          typedAnswerConfig: answerType == AnswerType.typed
+              ? TypedAnswerConfig.fromJson(config) : null,
+          imageClickConfig: answerType == AnswerType.imageClick
+              ? ImageClickConfig.fromJson(config) : null,
+          flashcardConfig: answerType == AnswerType.flashcard
+              ? FlashcardConfig.fromJson(config) : null,
         );
       }
 
-      final categoryId = cat.id.toString();
-      _categories[categoryId] = CategoryData(
-        id: categoryId,
-        title: cat.title,
-        imagePath: cat.imagePath,
-        quizIds: quizIds,
+      final folderId = quizRow.folderId?.toString();
+      _quizzes[quizId] = QuizData(
+        id: quizId,
+        parentFolderId: folderId,
+        title: quizRow.title,
+        imagePath: quizRow.imagePath,
+        questionIds: questionIds,
       );
+
+      // Wire quiz into its folder
+      if (folderId != null) {
+        _folders[folderId]?.quizIds.add(quizId);
+      }
     }
 
     _initialized = true;
@@ -118,25 +129,47 @@ class QuestionService {
     if (!_initialized) throw Exception('QuestionService not initialized');
   }
 
+  // ── Folder queries ────────────────────────────────────────────
+
+  List<FolderData> getRootFolders() {
+    _ensureInitialized();
+    return _folders.values.where((f) => f.parentFolderId == null).toList();
+  }
+
+  List<FolderData> getSubfolders(String folderId) {
+    _ensureInitialized();
+    return _folders.values
+        .where((f) => f.parentFolderId == folderId)
+        .toList();
+  }
+
+  FolderData? getFolder(String id) => _folders[id];
+
+  // ── Quiz queries ──────────────────────────────────────────────
+
+  /// Quizzes directly inside [folderId]; pass null for root-level quizzes.
+  List<QuizData> getQuizzesInFolder(String? folderId) {
+    _ensureInitialized();
+    return _quizzes.values
+        .where((q) => q.parentFolderId == folderId)
+        .toList();
+  }
+
+  List<QuizData> getAllQuizzes() {
+    _ensureInitialized();
+    return _quizzes.values.toList();
+  }
+
+  QuizData? getQuiz(String id) => _quizzes[id];
+
+  // ── Question queries ──────────────────────────────────────────
+
   List<QuestionData> getAllQuestions() {
     _ensureInitialized();
     return _questions.values.toList();
   }
 
-  List<CategoryData> getCategories() {
-    _ensureInitialized();
-    return _categories.values.toList();
-  }
-
-  List<QuizData> getQuizzesForCategory(String categoryId) {
-    _ensureInitialized();
-    final category = _categories[categoryId];
-    if (category == null) return [];
-    return category.quizIds
-        .map((id) => _quizzes[id])
-        .whereType<QuizData>()
-        .toList();
-  }
+  QuestionData? getQuestion(String id) => _questions[id];
 
   List<QuestionData> getQuestionsForQuiz(String quizId) {
     _ensureInitialized();
@@ -147,8 +180,4 @@ class QuestionService {
         .whereType<QuestionData>()
         .toList();
   }
-
-  QuestionData? getQuestion(String id) => _questions[id];
-  QuizData? getQuiz(String id) => _quizzes[id];
-  CategoryData? getCategory(String id) => _categories[id];
 }

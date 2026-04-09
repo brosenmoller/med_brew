@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
-import 'package:med_brew/screens/category_overview_screen.dart';
+import 'package:med_brew/screens/folder_browser_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/manage_content_screen.dart';
 import 'package:med_brew/screens/settings_screen.dart';
 import 'package:med_brew/screens/favorites_screen.dart';
@@ -40,9 +40,9 @@ class HomeScreen extends StatelessWidget {
               ),
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => CategoryOverviewScreen()),
+                MaterialPageRoute(builder: (_) => FolderBrowserScreen()),
               ),
-              child: const Text("Categories"),
+              child: const Text("Browse"),
             ),
             const SizedBox(height: 30),
             ElevatedButton(

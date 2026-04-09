@@ -4,17 +4,24 @@ import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 
-class EditCategoryScreen extends StatefulWidget {
+class EditFolderScreen extends StatefulWidget {
   final AppDatabase db;
-  final Category? existing;
+  final Folder? existing;
+  /// The parent folder to create inside; null means root level.
+  final int? parentFolderId;
 
-  const EditCategoryScreen({super.key, required this.db, this.existing});
+  const EditFolderScreen({
+    super.key,
+    required this.db,
+    this.existing,
+    this.parentFolderId,
+  });
 
   @override
-  State<EditCategoryScreen> createState() => _EditCategoryScreenState();
+  State<EditFolderScreen> createState() => _EditFolderScreenState();
 }
 
-class _EditCategoryScreenState extends State<EditCategoryScreen> {
+class _EditFolderScreenState extends State<EditFolderScreen> {
   final _formKey = GlobalKey<FormState>();
   final _pickerKey = GlobalKey<ImagePickerFieldState>();
   late final TextEditingController _titleController;
@@ -39,7 +46,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
     final isEditing = widget.existing != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Category' : 'Add Category'),
+        title: Text(isEditing ? 'Edit Folder' : 'Add Folder'),
       ),
       body: Form(
         key: _formKey,
@@ -49,7 +56,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
             TextFormField(
               controller: _titleController,
               decoration: const InputDecoration(
-                labelText: 'Title',
+                labelText: 'Folder name',
                 border: OutlineInputBorder(),
               ),
               autofocus: !isEditing,
@@ -58,7 +65,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
             const SizedBox(height: 20),
             ImagePickerField(
               key: _pickerKey,
-              label: 'Category image (optional)',
+              label: 'Folder image (optional)',
               initialPath: _imagePath,
               onChanged: (path) => setState(() => _imagePath = path),
             ),
@@ -66,7 +73,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save),
-              label: Text(isEditing ? 'Save Changes' : 'Add Category'),
+              label: Text(isEditing ? 'Save Changes' : 'Add Folder'),
             ),
           ],
         ),
@@ -77,17 +84,20 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final title = _titleController.text.trim();
-    final imagePath = await _pickerKey.currentState
-        ?.applyAutoName('category_$title') ?? _imagePath;
+    final imagePath =
+        await _pickerKey.currentState?.applyAutoName('folder_$title') ??
+            _imagePath;
     final existing = widget.existing;
     if (existing == null) {
-      await widget.db.insertCategory(CategoriesCompanion.insert(
+      await widget.db.insertFolder(FoldersCompanion.insert(
         title: title,
         imagePath: Value(imagePath),
+        parentFolderId: Value(widget.parentFolderId),
       ));
     } else {
-      await widget.db.updateCategory(CategoriesCompanion(
+      await widget.db.updateFolder(FoldersCompanion(
         id: Value(existing.id),
+        parentFolderId: Value(existing.parentFolderId),
         title: Value(title),
         imagePath: Value(imagePath),
         isPermanent: Value(existing.isPermanent),
