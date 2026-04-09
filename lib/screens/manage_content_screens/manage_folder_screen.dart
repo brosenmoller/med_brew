@@ -32,62 +32,37 @@ class ManageFolderScreen extends StatelessWidget {
               )
             : null,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddMenu(context),
-        tooltip: 'Add',
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'add_folder_${folder?.id}',
+            icon: const Icon(Icons.create_new_folder_outlined),
+            label: const Text('Add Folder'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    EditFolderScreen(db: db, parentFolderId: folder?.id),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'add_quiz_${folder?.id}',
+            icon: const Icon(Icons.quiz_outlined),
+            label: const Text('Add Quiz'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EditQuizScreen(db: db, folderId: folder?.id),
+              ),
+            ),
+          ),
+        ],
       ),
       body: FolderContentsBody(db: db, folder: folder),
-    );
-  }
-
-  void _showAddMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.create_new_folder_outlined),
-              title: const Text('Add Folder'),
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditFolderScreen(
-                      db: db,
-                      parentFolderId: folder?.id,
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.quiz_outlined),
-              title: const Text('Add Quiz'),
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditQuizScreen(
-                      db: db,
-                      folderId: folder?.id,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
     );
   }
 }

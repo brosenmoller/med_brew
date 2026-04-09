@@ -179,28 +179,10 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
               ),
               const SizedBox(height: 16),
 
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                      value: 'multipleChoice',
-                      label: Text('Multiple\nChoice'),
-                      icon: Icon(Icons.list)),
-                  ButtonSegment(
-                      value: 'typed',
-                      label: Text('Typed'),
-                      icon: Icon(Icons.keyboard)),
-                  ButtonSegment(
-                      value: 'imageClick',
-                      label: Text('Image\nClick'),
-                      icon: Icon(Icons.mouse_rounded)),
-                  ButtonSegment(
-                      value: 'flashcard',
-                      label: Text('Flashcard'),
-                      icon: Icon(Icons.style_outlined)),
-                ],
-                selected: {_answerType},
-                onSelectionChanged: (s) => setState(() {
-                  _answerType = s.first;
+              _AnswerTypeSelector(
+                selected: _answerType,
+                onChanged: (v) => setState(() {
+                  _answerType = v;
                   _isDirty = true;
                 }),
               ),
@@ -507,6 +489,72 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
     await QuestionService().refresh();
     if (mounted) Navigator.pop(context);
+  }
+}
+
+// ── Answer type selector ──────────────────────────────────────────────────────
+
+const _answerTypes = [
+  (value: 'multipleChoice', label: 'Multiple Choice', icon: Icons.list),
+  (value: 'typed',          label: 'Typed',           icon: Icons.keyboard),
+  (value: 'imageClick',     label: 'Image Click',     icon: Icons.mouse_rounded),
+  (value: 'flashcard',      label: 'Flashcard',       icon: Icons.style_outlined),
+];
+
+class _AnswerTypeSelector extends StatelessWidget {
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  const _AnswerTypeSelector({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 500) {
+          // Wide: segmented button
+          return SegmentedButton<String>(
+            segments: _answerTypes
+                .map((t) => ButtonSegment<String>(
+                      value: t.value,
+                      label: Text(t.label),
+                      icon: Icon(t.icon),
+                    ))
+                .toList(),
+            selected: {selected},
+            onSelectionChanged: (s) => onChanged(s.first),
+          );
+        }
+
+        // Narrow: dropdown
+        return DropdownButtonFormField<String>(
+          value: selected,
+          decoration: const InputDecoration(
+            labelText: 'Answer type',
+            border: OutlineInputBorder(),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            filled: false,
+          ),
+          onChanged: (v) { if (v != null) onChanged(v); },
+          items: _answerTypes
+              .map((t) => DropdownMenuItem(
+                    value: t.value,
+                    child: Row(
+                      children: [
+                        Icon(t.icon, size: 18),
+                        const SizedBox(width: 8),
+                        Text(t.label),
+                      ],
+                    ),
+                  ))
+                  .toList(),
+        );
+      },
+    );
   }
 }
 

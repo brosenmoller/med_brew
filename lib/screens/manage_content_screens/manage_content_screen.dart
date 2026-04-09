@@ -44,57 +44,33 @@ class ManageContentScreen extends StatelessWidget {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddMenu(context),
-        tooltip: 'Add',
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'root_add_folder',
+            icon: const Icon(Icons.create_new_folder_outlined),
+            label: const Text('Add Folder'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => EditFolderScreen(db: db)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'root_add_quiz',
+            icon: const Icon(Icons.quiz_outlined),
+            label: const Text('Add Quiz'),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => EditQuizScreen(db: db)),
+            ),
+          ),
+        ],
       ),
       // Reuse the folder contents view — null folder = root level
       body: FolderContentsBody(db: db, folder: null),
-    );
-  }
-
-  void _showAddMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.create_new_folder_outlined),
-              title: const Text('Add Folder'),
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditFolderScreen(db: db),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.quiz_outlined),
-              title: const Text('Add Quiz (root level)'),
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditQuizScreen(db: db),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
     );
   }
 

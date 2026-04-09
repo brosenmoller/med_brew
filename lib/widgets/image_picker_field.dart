@@ -117,7 +117,8 @@ class ImagePickerFieldState extends State<ImagePickerField> {
     if (mounted) {
       setState(() {
         _currentPath = picked;
-        _needsRename = false; // existing image — don't rename
+        _needsRename = false; // existing image — never rename
+        _autoName = false;    // force off: renaming would affect other content
       });
       widget.onChanged(picked);
     }
@@ -257,18 +258,30 @@ class ImagePickerFieldState extends State<ImagePickerField> {
         ),
 
         // ── Auto-name toggle ──────────────────────────────────────
+        // Only available for newly picked files; disabled for existing images
+        // to prevent renaming a file that other content may depend on.
         Row(
           children: [
             Checkbox(
               value: _autoName,
-              onChanged: (v) => setState(() => _autoName = v ?? true),
+              // Disable when not a new file — the user chose an existing image
+              onChanged: _needsRename
+                  ? (v) => setState(() => _autoName = v ?? true)
+                  : null,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
             ),
             const SizedBox(width: 4),
             Text(
-              'Auto-name image from title on save',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              _needsRename
+                  ? 'Auto-name image from title on save'
+                  : 'Auto-name disabled (existing image)',
+              style: TextStyle(
+                fontSize: 12,
+                color: _needsRename
+                    ? Colors.grey.shade600
+                    : Colors.grey.shade400,
+              ),
             ),
           ],
         ),
