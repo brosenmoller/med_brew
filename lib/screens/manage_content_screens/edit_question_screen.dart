@@ -163,10 +163,14 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         appBar: AppBar(
           title: Text(widget.isEditing ? 'Edit Question' : 'Add Question'),
         ),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+        body: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
             children: [
               TextFormField(
                 controller: _questionController,
@@ -389,6 +393,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 label: Text(widget.isEditing ? 'Save Changes' : 'Save Question'),
               ),
             ],
+          ),
+        ),
           ),
         ),
       ),

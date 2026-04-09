@@ -48,7 +48,11 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Quiz' : 'Add Quiz'),
       ),
-      body: Form(
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -76,6 +80,8 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
               label: Text(isEditing ? 'Save Changes' : 'Add Quiz'),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

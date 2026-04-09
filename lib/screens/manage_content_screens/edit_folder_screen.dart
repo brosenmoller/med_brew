@@ -48,7 +48,11 @@ class _EditFolderScreenState extends State<EditFolderScreen> {
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Folder' : 'Add Folder'),
       ),
-      body: Form(
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -76,6 +80,8 @@ class _EditFolderScreenState extends State<EditFolderScreen> {
               label: Text(isEditing ? 'Save Changes' : 'Add Folder'),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );

@@ -177,6 +177,7 @@ class ImagePickerFieldState extends State<ImagePickerField> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               height: 140,
+              width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
@@ -275,7 +276,9 @@ class ImagePickerFieldState extends State<ImagePickerField> {
             Text(
               _needsRename
                   ? 'Auto-name image from title on save'
-                  : 'Auto-name disabled (existing image)',
+                  : _currentPath != null
+                      ? 'Auto-name disabled (existing image)'
+                      : 'Auto-name (pick a new image to enable)',
               style: TextStyle(
                 fontSize: 12,
                 color: _needsRename
