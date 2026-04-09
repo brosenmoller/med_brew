@@ -1,9 +1,12 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/services/srs_service.dart';
 
-class SrsButtons extends StatelessWidget {
+class SrsButtons extends StatefulWidget {
   final QuestionData question;
   final Function(SrsQuality quality)? onAnswered;
 
@@ -14,8 +17,52 @@ class SrsButtons extends StatelessWidget {
   });
 
   @override
+  State<SrsButtons> createState() => _SrsButtonsState();
+}
+
+class _SrsButtonsState extends State<SrsButtons> {
+  final _focusNode = FocusNode();
+
+  static bool get _isDesktop =>
+      !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isDesktop) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focusNode.requestFocus();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return;
+    final qualities = SrsQuality.values; // [again, hard, good, easy]
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.digit1 || key == LogicalKeyboardKey.numpad1) {
+      widget.onAnswered?.call(qualities[0]);
+    } else if (key == LogicalKeyboardKey.digit2 || key == LogicalKeyboardKey.numpad2) {
+      widget.onAnswered?.call(qualities[1]);
+    } else if (key == LogicalKeyboardKey.digit3 || key == LogicalKeyboardKey.numpad3) {
+      widget.onAnswered?.call(qualities[2]);
+    } else if (key == LogicalKeyboardKey.digit4 || key == LogicalKeyboardKey.numpad4) {
+      widget.onAnswered?.call(qualities[3]);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
+    final qualities = SrsQuality.values;
+    final isDesktop = _isDesktop;
+
+    Widget content = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -26,7 +73,8 @@ class SrsButtons extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Row(
-          children: SrsQuality.values.map((quality) {
+          children: List.generate(qualities.length, (i) {
+            final quality = qualities[i];
             final nextDue = _computeNextReviewForQuality(quality);
             return Expanded(
               child: Padding(
@@ -34,19 +82,30 @@ class SrsButtons extends StatelessWidget {
                 child: _SrsChip(
                   quality: quality,
                   nextReview: _formatDuration(nextDue),
-                  onTap: () => onAnswered?.call(quality),
+                  keyHint: isDesktop ? '${i + 1}' : null,
+                  onTap: () => widget.onAnswered?.call(quality),
                 ),
               ),
             );
-          }).toList(),
+          }),
         ),
         const SizedBox(height: 4),
       ],
     );
+
+    if (isDesktop) {
+      content = KeyboardListener(
+        focusNode: _focusNode,
+        onKeyEvent: _handleKey,
+        child: content,
+      );
+    }
+
+    return content;
   }
 
   DateTime _computeNextReviewForQuality(SrsQuality quality) {
-    final userData = SrsService().getUserData(question);
+    final userData = SrsService().getUserData(widget.question);
     final simulated = userData.copy();
     simulated.updateAfterAnswer(quality);
     return simulated.nextReview;
@@ -63,12 +122,14 @@ class SrsButtons extends StatelessWidget {
 class _SrsChip extends StatelessWidget {
   final SrsQuality quality;
   final String nextReview;
+  final String? keyHint;
   final VoidCallback onTap;
 
   const _SrsChip({
     required this.quality,
     required this.nextReview,
     required this.onTap,
+    this.keyHint,
   });
 
   Color _color() {
@@ -112,8 +173,12 @@ class _SrsChip extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_label(),
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          if (keyHint != null)
+            Text(
+              keyHint!,
+              style: const TextStyle(fontSize: 11, color: Colors.white54),
+            ),
+          Text(_label(), style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(nextReview,
               style: const TextStyle(fontSize: 12, color: Colors.white70)),
         ],

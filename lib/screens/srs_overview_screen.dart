@@ -4,9 +4,14 @@ import 'package:med_brew/screens/srs_session_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
 
-class SrsOverviewScreen extends StatelessWidget {
-  SrsOverviewScreen({super.key});
+class SrsOverviewScreen extends StatefulWidget {
+  const SrsOverviewScreen({super.key});
 
+  @override
+  State<SrsOverviewScreen> createState() => _SrsOverviewScreenState();
+}
+
+class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
   final QuestionService questionService = QuestionService();
   final SrsService srsService = SrsService();
 
@@ -122,7 +127,9 @@ class SrsOverviewScreen extends StatelessWidget {
         builder: (_) =>
             SrsSessionScreen(questions: questions, sessionTitle: title),
       ),
-    );
+    ).then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   String _fmt(Duration d) {

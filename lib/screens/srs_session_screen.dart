@@ -3,7 +3,7 @@ import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/user_question_data.dart' show SrsQuality;
 import 'package:med_brew/services/srs_service.dart';
 import 'package:med_brew/screens/question_display/question_display_screen.dart';
-import 'package:med_brew/screens/quiz_completion_screen.dart';
+import 'package:med_brew/screens/srs_completion_screen.dart';
 
 class SrsSessionScreen extends StatefulWidget {
   final List<QuestionData> questions;
@@ -34,10 +34,9 @@ class _SrsSessionScreenState extends State<SrsSessionScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => QuizCompletionScreen(
-            quizName: widget.sessionTitle,
-            correctAnswers: correctAnswers,
-            totalQuestions: widget.questions.length,
+          builder: (_) => SrsCompletionScreen(
+            completedQuizTitle: widget.sessionTitle,
+            reviewedCount: widget.questions.length,
           ),
         ),
       );

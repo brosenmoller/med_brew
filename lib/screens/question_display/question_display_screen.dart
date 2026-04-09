@@ -58,11 +58,15 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
       answerState = isCorrect ? AnswerState.correct : AnswerState.incorrect;
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _continueFocusNode.requestFocus();
-      }
-    });
+    // Only focus the continue button when it will actually be shown.
+    // In SRS mode after a correct answer the sheet appears instead — focusing
+    // the continue button here would let Enter skip the quality selection.
+    final srsSheetWillAppear = widget.spacedRepetitionMode && isCorrect;
+    if (!srsSheetWillAppear) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _continueFocusNode.requestFocus();
+      });
+    }
 
     if (!isCorrect) {
       _shakeController.forward(from: 0);
@@ -70,8 +74,8 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
       _confettiController.play();
     }
 
-    if (widget.spacedRepetitionMode && isCorrect) {
-      Future.delayed(const Duration(milliseconds: 700), () {
+    if (srsSheetWillAppear) {
+      Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) _showSrsBottomSheet();
       });
     }

@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:med_brew/models/quiz_data.dart';
+import 'package:med_brew/screens/quiz_session_screen.dart';
 
 class QuizCompletionScreen extends StatelessWidget {
   final String quizName;
   final int correctAnswers;
   final int totalQuestions;
+  /// Passed so the Retry button can restart the same quiz.
+  final QuizData? quizData;
 
   const QuizCompletionScreen({
     super.key,
     required this.quizName,
     required this.correctAnswers,
     required this.totalQuestions,
+    this.quizData,
   });
 
   @override
   Widget build(BuildContext context) {
     final percentage =
-    ((correctAnswers / totalQuestions) * 100).toStringAsFixed(1);
+        ((correctAnswers / totalQuestions) * 100).toStringAsFixed(1);
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text("Quiz Completed"),
+        title: const Text('Quiz Completed'),
         centerTitle: true,
       ),
       body: KeyboardListener(
@@ -33,48 +37,67 @@ class QuizCompletionScreen extends StatelessWidget {
             Navigator.pop(context);
           }
         },
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  quizName,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  "$correctAnswers / $totalQuestions",
-                  style: const TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 24),
+                  Text(
+                    quizName,
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "$percentage%",
-                  style: const TextStyle(fontSize: 22),
-                ),
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Back to Quizzes"),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Back to Categories"),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  Text(
+                    '$correctAnswers / $totalQuestions',
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '$percentage%',
+                    style: const TextStyle(fontSize: 22),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+                  if (quizData != null)
+                    FilledButton.icon(
+                      onPressed: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              QuizSessionScreen(quizData: quizData!),
+                        ),
+                      ),
+                      icon: const Icon(Icons.replay),
+                      label: const Text('Retry'),
+                    ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Back'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    onPressed: () =>
+                        Navigator.of(context).popUntil((r) => r.isFirst),
+                    icon: const Icon(Icons.home_outlined),
+                    label: const Text('Home'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

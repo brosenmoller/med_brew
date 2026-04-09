@@ -53,6 +53,7 @@ class _QuizSessionScreenState extends State<QuizSessionScreen> {
             quizName: widget.quizData.title,
             correctAnswers: correctAnswers,
             totalQuestions: totalQuestions,
+            quizData: widget.quizData,
           ),
         ),
       );
