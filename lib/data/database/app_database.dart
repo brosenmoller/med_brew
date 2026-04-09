@@ -29,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -50,6 +50,29 @@ class AppDatabase extends _$AppDatabase {
 
         // Carry the old category_id value forward into folder_id
         await customStatement('UPDATE quizzes SET folder_id = category_id');
+      }
+
+      if (from < 3) {
+        // Rebuild quizzes table to drop the legacy category_id column
+        // (NOT NULL, no default) that caused INSERT failures for new quizzes.
+        // SQLite doesn't support DROP COLUMN, so we use table reconstruction.
+        await customStatement('''
+          CREATE TABLE quizzes_new (
+            "id"           INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            "folder_id"    INTEGER,
+            "title"        TEXT NOT NULL,
+            "image_path"   TEXT,
+            "is_permanent" INTEGER NOT NULL DEFAULT 0,
+            "created_at"   INTEGER NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP))
+          )
+        ''');
+        await customStatement('''
+          INSERT INTO quizzes_new (id, folder_id, title, image_path, is_permanent, created_at)
+          SELECT id, folder_id, title, image_path, is_permanent, created_at
+          FROM quizzes
+        ''');
+        await customStatement('DROP TABLE quizzes');
+        await customStatement('ALTER TABLE quizzes_new RENAME TO quizzes');
       }
     },
   );

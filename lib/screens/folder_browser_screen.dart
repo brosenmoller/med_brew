@@ -24,47 +24,87 @@ class FolderBrowserScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final crossAxisCount = screenWidth < 600 ? 2 : 6;
 
-    final itemCount = subfolders.length + quizzes.length;
+    final isEmpty = subfolders.isEmpty && quizzes.isEmpty;
+
+    final gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: crossAxisCount,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: Text(folder?.title ?? 'Browse'),
       ),
-      body: itemCount == 0
+      body: isEmpty
           ? const Center(child: Text('Nothing here yet.'))
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: itemCount,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemBuilder: (context, index) {
-                // Subfolders first, then quizzes
-                if (index < subfolders.length) {
-                  final sub = subfolders[index];
-                  return FolderTile(
-                    folder: sub,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => FolderBrowserScreen(folder: sub),
+          : CustomScrollView(
+              slivers: [
+                if (subfolders.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        'Folders',
+                        style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
-                  );
-                }
-                final quiz = quizzes[index - subfolders.length];
-                return QuizTile(
-                  quiz: quiz,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => QuizSessionScreen(quizData: quiz),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final sub = subfolders[index];
+                          return FolderTile(
+                            folder: sub,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => FolderBrowserScreen(folder: sub),
+                              ),
+                            ),
+                          );
+                        },
+                        childCount: subfolders.length,
+                      ),
+                      gridDelegate: gridDelegate,
                     ),
                   ),
-                );
-              },
+                ],
+                if (quizzes.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        'Quizzes',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final quiz = quizzes[index];
+                          return QuizTile(
+                            quiz: quiz,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => QuizSessionScreen(quizData: quiz),
+                              ),
+                            ),
+                          );
+                        },
+                        childCount: quizzes.length,
+                      ),
+                      gridDelegate: gridDelegate,
+                    ),
+                  ),
+                ],
+              ],
             ),
     );
   }
