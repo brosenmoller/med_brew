@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/models/quiz_data.dart';
+import 'package:med_brew/screens/home_screen.dart';
 import 'package:med_brew/screens/quiz_session_screen.dart';
 
 class QuizCompletionScreen extends StatelessWidget {
@@ -91,8 +93,13 @@ class QuizCompletionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   TextButton.icon(
-                    onPressed: () =>
-                        Navigator.of(context).popUntil((r) => r.isFirst),
+                    onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            HomeScreen(db: AppDatabase.instance),
+                      ),
+                      (r) => false,
+                    ),
                     icon: const Icon(Icons.home_outlined),
                     label: const Text('Home'),
                   ),

@@ -11,7 +11,12 @@ part 'app_database.g.dart';
 
 @DriftDatabase(tables: [Folders, Quizzes, Questions, QuizQuestions])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  /// The single live instance, set once in main.dart via [AppDatabase()].
+  static late final AppDatabase instance;
+
+  AppDatabase() : super(_openConnection()) {
+    instance = this;
+  }
 
   static QueryExecutor _openConnection() {
     return LazyDatabase(() async {
