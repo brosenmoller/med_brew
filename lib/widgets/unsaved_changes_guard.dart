@@ -1,0 +1,72 @@
+import 'package:flutter/material.dart';
+
+/// Wraps a screen with a [PopScope] that intercepts the back button (and
+/// system back gesture) when [hasChanges] is true and shows a confirmation
+/// dialog before discarding.
+///
+/// Direct [Navigator.pop] calls (e.g. from a Save button) bypass this guard
+/// and always succeed, so only the back-navigation path is protected.
+class UnsavedChangesGuard extends StatefulWidget {
+  final bool hasChanges;
+  final Widget child;
+
+  /// Optional override for the dialog body text.
+  final String? message;
+
+  const UnsavedChangesGuard({
+    super.key,
+    required this.hasChanges,
+    required this.child,
+    this.message,
+  });
+
+  @override
+  State<UnsavedChangesGuard> createState() => _UnsavedChangesGuardState();
+}
+
+class _UnsavedChangesGuardState extends State<UnsavedChangesGuard> {
+  // Set to true after the user confirms discard so the programmatic pop
+  // that follows is not blocked again by canPop: false.
+  bool _allowPop = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope<Object?>(
+      canPop: _allowPop || !widget.hasChanges,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        _promptDiscard(context);
+      },
+      child: widget.child,
+    );
+  }
+
+  Future<void> _promptDiscard(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Discard changes?'),
+        content: Text(
+          widget.message ?? 'You have unsaved changes that will be lost.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Keep editing'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    if ((confirmed ?? false) && mounted) {
+      setState(() => _allowPop = true);
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+}

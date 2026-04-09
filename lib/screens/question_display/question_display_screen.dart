@@ -148,6 +148,7 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
               locked: answerState != AnswerState.unanswered,
               answerState: answerState,
               onAnswered: _handleAnswer,
+              spacedRepetitionMode: widget.spacedRepetitionMode,
             ),
           ),
 

@@ -5,12 +5,14 @@ import 'package:med_brew/models/answer_type.dart';
 import 'package:med_brew/widgets/multiple_choice_widget.dart';
 import 'package:med_brew/widgets/typed_answer_widget.dart';
 import 'package:med_brew/widgets/image_click_widget.dart';
+import 'package:med_brew/widgets/flashcard_widget.dart';
 
 class AnswerArea extends StatelessWidget {
   final QuestionData question;
   final bool locked;
   final AnswerState answerState;
   final Function(bool) onAnswered;
+  final bool spacedRepetitionMode;
 
   const AnswerArea({
     super.key,
@@ -18,6 +20,7 @@ class AnswerArea extends StatelessWidget {
     required this.locked,
     required this.answerState,
     required this.onAnswered,
+    this.spacedRepetitionMode = false,
   });
 
   @override
@@ -43,6 +46,13 @@ class AnswerArea extends StatelessWidget {
           locked: locked,
           answerState: answerState,
           onAnswered: onAnswered,
+        );
+      case AnswerType.flashcard:
+        return FlashcardWidget(
+          question: question,
+          locked: locked,
+          onAnswered: onAnswered,
+          spacedRepetitionMode: spacedRepetitionMode,
         );
     }
   }

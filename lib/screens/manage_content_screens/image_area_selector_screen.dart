@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/widgets/app_image.dart';
+import 'package:med_brew/widgets/unsaved_changes_guard.dart';
 
 enum _Tool { polygon, rectangle }
 
@@ -25,12 +26,15 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
   Offset? _firstRectCorner;
   int? _selectedIndex;
   double? _aspectRatio;
+  bool _isDirty = false;
+  double _currentScale = 1.0;
   final TransformationController _transformController = TransformationController();
 
   @override
   void initState() {
     super.initState();
     _polygons = widget.initialAreas.map((p) => List<Offset>.from(p)).toList();
+    _transformController.addListener(_onTransformChanged);
     resolveImageAspectRatio(widget.imagePath).then((ratio) {
       if (mounted) setState(() => _aspectRatio = ratio);
     });
@@ -38,11 +42,20 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
 
   @override
   void dispose() {
+    _transformController.removeListener(_onTransformChanged);
     _transformController.dispose();
     super.dispose();
   }
 
+  void _onTransformChanged() {
+    final newScale = _transformController.value.getMaxScaleOnAxis();
+    if (newScale != _currentScale) {
+      setState(() => _currentScale = newScale);
+    }
+  }
+
   bool get _isDrawing => _drawingPoints.isNotEmpty || _firstRectCorner != null;
+  bool get _hasChanges => _isDirty || _isDrawing;
 
   static bool _isInsidePolygon(List<Offset> polygon, Offset point) {
     bool inside = false;
@@ -85,13 +98,13 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
             Offset(a.dx, b.dy),
           ]);
           _firstRectCorner = null;
+          _isDirty = true;
         }
         return;
       }
 
       // ── Polygon tool, not currently drawing ─────────────────────────────
       if (_drawingPoints.isEmpty) {
-        // Check if the tap lands inside an existing polygon → select/deselect
         bool tappedPolygon = false;
         for (int i = _polygons.length - 1; i >= 0; i--) {
           if (_polygons[i].length >= 3 &&
@@ -127,6 +140,7 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
         if ((viewportPos - firstViewport).distance < 22.0) {
           _polygons.add(List.from(_drawingPoints));
           _drawingPoints = [];
+          _isDirty = true;
           return;
         }
       }
@@ -139,6 +153,7 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
     setState(() {
       _polygons.add(List.from(_drawingPoints));
       _drawingPoints = [];
+      _isDirty = true;
     });
   }
 
@@ -154,6 +169,7 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
     setState(() {
       _polygons.removeAt(_selectedIndex!);
       _selectedIndex = null;
+      _isDirty = true;
     });
   }
 
@@ -165,7 +181,9 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
     }
     if (_drawingPoints.isEmpty) {
       if (_polygons.isEmpty) return 'Tap anywhere to start drawing a polygon';
-      if (_selectedIndex != null) return 'Shape selected — tap Delete to remove, or tap outside to deselect';
+      if (_selectedIndex != null) {
+        return 'Shape selected — tap Delete to remove, or tap outside to deselect';
+      }
       return 'Tap a shape to select it, or tap an empty area to start a new polygon';
     }
     if (_drawingPoints.length < 3) {
@@ -176,36 +194,41 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Click Areas'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, _polygons),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildToolbar(context),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
-            child: Text(
-              _statusText,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey.shade600),
+    return UnsavedChangesGuard(
+      hasChanges: _hasChanges,
+      message: 'Your area selection changes will be lost.',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Select Click Areas'),
+          actions: [
+            TextButton(
+              // Direct pop bypasses UnsavedChangesGuard — always saves.
+              onPressed: () => Navigator.pop(context, _polygons),
+              child: const Text('Save'),
             ),
-          ),
-          Expanded(
-            child: _aspectRatio == null
-                ? const Center(child: CircularProgressIndicator())
-                : _buildCanvas(),
-          ),
-        ],
+          ],
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildToolbar(context),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
+              child: Text(
+                _statusText,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Colors.grey.shade600),
+              ),
+            ),
+            Expanded(
+              child: _aspectRatio == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildCanvas(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -306,6 +329,7 @@ class _ImageAreaSelectorScreenState extends State<ImageAreaSelectorScreen> {
                           drawingPoints: _drawingPoints,
                           firstRectCorner: _firstRectCorner,
                           selectedIndex: _selectedIndex,
+                          scale: _currentScale,
                         ),
                       ),
                     ],
@@ -333,12 +357,16 @@ class _AreaPainter extends CustomPainter {
   final List<Offset> drawingPoints;
   final Offset? firstRectCorner;
   final int? selectedIndex;
+  /// Current zoom level from InteractiveViewer. All pixel sizes are divided by
+  /// this so they appear the same physical size on screen at any zoom level.
+  final double scale;
 
   _AreaPainter({
     required this.polygons,
     required this.drawingPoints,
     required this.firstRectCorner,
     required this.selectedIndex,
+    required this.scale,
   });
 
   @override
@@ -357,21 +385,21 @@ class _AreaPainter extends CustomPainter {
 
       final strokePaint = Paint()
         ..color = Colors.orange.shade700
-        ..strokeWidth = 2
+        ..strokeWidth = 2 / scale
         ..style = PaintingStyle.stroke;
 
       for (int i = 1; i < pts.length; i++) {
         canvas.drawLine(pts[i - 1], pts[i], strokePaint);
       }
 
-      // Dashed closing-line preview when >= 3 points
+      // Closing-line preview when >= 3 points
       if (pts.length >= 3) {
         canvas.drawLine(
           pts.last,
           pts.first,
           Paint()
             ..color = Colors.orange.shade400
-            ..strokeWidth = 1.5
+            ..strokeWidth = 1.5 / scale
             ..style = PaintingStyle.stroke,
         );
       }
@@ -381,20 +409,20 @@ class _AreaPainter extends CustomPainter {
         ..color = Colors.orange.shade700
         ..style = PaintingStyle.fill;
       for (int i = 1; i < pts.length; i++) {
-        canvas.drawCircle(pts[i], 4, dotPaint);
+        canvas.drawCircle(pts[i], 4 / scale, dotPaint);
       }
 
       // First point: larger ring to signal "tap here to close"
-      canvas.drawCircle(pts.first, 9,
+      canvas.drawCircle(pts.first, 9 / scale,
           Paint()..color = Colors.orange.shade100..style = PaintingStyle.fill);
       canvas.drawCircle(
           pts.first,
-          9,
+          9 / scale,
           Paint()
             ..color = Colors.orange.shade700
-            ..strokeWidth = 2.5
+            ..strokeWidth = 2.5 / scale
             ..style = PaintingStyle.stroke);
-      canvas.drawCircle(pts.first, 3, dotPaint);
+      canvas.drawCircle(pts.first, 3 / scale, dotPaint);
     }
 
     // First rectangle corner marker
@@ -405,21 +433,21 @@ class _AreaPainter extends CustomPainter {
       );
       canvas.drawCircle(
           pt,
-          8,
+          8 / scale,
           Paint()
             ..color = Colors.orange.shade100
             ..style = PaintingStyle.fill);
       canvas.drawCircle(
           pt,
-          8,
+          8 / scale,
           Paint()
             ..color = Colors.orange.shade700
-            ..strokeWidth = 2.5
+            ..strokeWidth = 2.5 / scale
             ..style = PaintingStyle.stroke);
-      const r = 5.0;
+      final r = 5.0 / scale;
       final cross = Paint()
         ..color = Colors.orange.shade700
-        ..strokeWidth = 2;
+        ..strokeWidth = 2 / scale;
       canvas.drawLine(pt.translate(-r, 0), pt.translate(r, 0), cross);
       canvas.drawLine(pt.translate(0, -r), pt.translate(0, r), cross);
     }
@@ -446,13 +474,13 @@ class _AreaPainter extends CustomPainter {
         path,
         Paint()
           ..color = border
-          ..strokeWidth = 2.5
+          ..strokeWidth = 2.5 / scale
           ..style = PaintingStyle.stroke);
 
     // Vertex dots
     for (final p in pts) {
       canvas.drawCircle(
-          p, 4, Paint()..color = border..style = PaintingStyle.fill);
+          p, 4 / scale, Paint()..color = border..style = PaintingStyle.fill);
     }
   }
 

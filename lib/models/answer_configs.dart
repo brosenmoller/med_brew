@@ -64,6 +64,42 @@ class ImageClickConfig {
       };
 }
 
+class FlashcardConfig {
+  final String? frontText;
+  final String? frontImagePath;
+  final String? backText;
+  final String? backImagePath;
+  final bool randomizeSides;
+
+  FlashcardConfig({
+    this.frontText,
+    this.frontImagePath,
+    this.backText,
+    this.backImagePath,
+    this.randomizeSides = false,
+  });
+
+  factory FlashcardConfig.fromJson(Map<String, dynamic> json) {
+    return FlashcardConfig(
+      frontText: json['frontText'] as String?,
+      frontImagePath: json['frontImagePath'] as String?,
+      backText: json['backText'] as String?,
+      backImagePath: json['backImagePath'] as String?,
+      randomizeSides: json['randomizeSides'] as bool? ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    if (frontText != null) map['frontText'] = frontText;
+    if (frontImagePath != null) map['frontImagePath'] = frontImagePath;
+    if (backText != null) map['backText'] = backText;
+    if (backImagePath != null) map['backImagePath'] = backImagePath;
+    if (randomizeSides) map['randomizeSides'] = true;
+    return map;
+  }
+}
+
 class MultipleChoiceConfig {
   final List<String> options;
   final int correctIndex;

@@ -86,6 +86,9 @@ class QuestionService {
             imageClickConfig: answerType == AnswerType.imageClick
                 ? ImageClickConfig.fromJson(config)
                 : null,
+            flashcardConfig: answerType == AnswerType.flashcard
+                ? FlashcardConfig.fromJson(config)
+                : null,
           );
         }
 
