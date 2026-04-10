@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/answer_state.dart';
 import 'package:med_brew/models/question_data.dart';
@@ -35,9 +36,12 @@ class _SortingWidgetState extends State<SortingWidget> {
   // null = not yet checked; per-index bool after checking
   List<bool>? _correctness;
 
+  late final FocusNode _focusNode;
+
   @override
   void initState() {
     super.initState();
+    _focusNode = FocusNode();
     final config = widget.question.sortingConfig!;
     _showPreFilled = config.showPreFilled;
 
@@ -49,10 +53,15 @@ class _SortingWidgetState extends State<SortingWidget> {
       _typeControllers = List.generate(
           config.items.length, (_) => TextEditingController());
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
   }
 
   @override
   void dispose() {
+    _focusNode.dispose();
     for (final c in _typeControllers) {
       c.dispose();
     }
@@ -86,7 +95,19 @@ class _SortingWidgetState extends State<SortingWidget> {
     final l10n = AppLocalizations.of(context);
     final showCheckButton = widget.answerState == AnswerState.unanswered;
 
-    return Column(
+    return Focus(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            !widget.locked &&
+            event.logicalKey == LogicalKeyboardKey.enter) {
+          _checkAnswer();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (widget.question.imagePath != null)
@@ -110,11 +131,12 @@ class _SortingWidgetState extends State<SortingWidget> {
             child: Center(
               child: FilledButton(
                 onPressed: _checkAnswer,
-                child: Text(l10n.checkOrder),
+                child: Text(l10n.confirm),
               ),
             ),
           ),
       ],
+    ),
     );
   }
 

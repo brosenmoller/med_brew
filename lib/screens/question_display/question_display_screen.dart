@@ -123,23 +123,6 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: AnimatedBuilder(
-          animation: _shakeController,
-          builder: (context, child) {
-            final offset = _shakeAnimation.value *
-                (_shakeController.status == AnimationStatus.forward ? 1 : 0);
-            return Transform.translate(
-              offset: Offset(offset, 0),
-              child: child,
-            );
-          },
-          child: Text(
-            widget.question.questionVariants.first,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        centerTitle: true,
       ),
       body: Stack(
         children: [
@@ -147,12 +130,40 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
           /// MAIN CONTENT
           SafeArea(
             top: false,
-            child: AnswerArea(
-              question: widget.question,
-              locked: answerState != AnswerState.unanswered,
-              answerState: answerState,
-              onAnswered: _handleAnswer,
-              spacedRepetitionMode: widget.spacedRepetitionMode,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AnimatedBuilder(
+                  animation: _shakeController,
+                  builder: (context, child) {
+                    final offset = _shakeAnimation.value *
+                        (_shakeController.status == AnimationStatus.forward
+                            ? 1
+                            : 0);
+                    return Transform.translate(
+                      offset: Offset(offset, 0),
+                      child: child,
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: Text(
+                      widget.question.questionVariants.first,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: AnswerArea(
+                    question: widget.question,
+                    locked: answerState != AnswerState.unanswered,
+                    answerState: answerState,
+                    onAnswered: _handleAnswer,
+                    spacedRepetitionMode: widget.spacedRepetitionMode,
+                  ),
+                ),
+              ],
             ),
           ),
 
