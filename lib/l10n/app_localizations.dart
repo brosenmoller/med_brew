@@ -956,6 +956,66 @@ abstract class AppLocalizations {
   /// **'Flashcard'**
   String get answerTypeFlashcardLabel;
 
+  /// No description provided for @answerTypeSortingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorting'**
+  String get answerTypeSortingLabel;
+
+  /// No description provided for @answerTypeSortingChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorting'**
+  String get answerTypeSortingChip;
+
+  /// No description provided for @sortingItemsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Items (correct order, top → bottom)'**
+  String get sortingItemsLabel;
+
+  /// No description provided for @sortingItemN.
+  ///
+  /// In en, this message translates to:
+  /// **'Item {n}'**
+  String sortingItemN(int n);
+
+  /// No description provided for @addItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get addItem;
+
+  /// No description provided for @showPreFilled.
+  ///
+  /// In en, this message translates to:
+  /// **'Show items pre-filled'**
+  String get showPreFilled;
+
+  /// No description provided for @showPreFilledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Students drag items into the correct order; disable to have them type each item'**
+  String get showPreFilledSubtitle;
+
+  /// No description provided for @checkOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Check order'**
+  String get checkOrder;
+
+  /// No description provided for @sortingDragHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get sortingDragHint;
+
+  /// No description provided for @sortingCorrectAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct: {answer}'**
+  String sortingCorrectAnswer(String answer);
+
   /// No description provided for @unsavedChangesQuestion.
   ///
   /// In en, this message translates to:

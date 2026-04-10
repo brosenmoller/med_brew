@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
-import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, TypedAnswerConfig;
+import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SortingConfig, TypedAnswerConfig;
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 import 'package:med_brew/widgets/unsaved_changes_guard.dart';
@@ -12,6 +12,7 @@ import 'edit_question/multiple_choice_section.dart';
 import 'edit_question/typed_answer_section.dart';
 import 'edit_question/image_click_section.dart';
 import 'edit_question/flashcard_section.dart';
+import 'edit_question/sorting_section.dart';
 
 class EditQuestionScreen extends StatefulWidget {
   final int quizId;
@@ -60,6 +61,10 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   String? _flashcardFrontImagePath;
   String? _flashcardBackImagePath;
   bool _flashcardRandomizeSides = false;
+
+  // Sorting
+  late final List<TextEditingController> _sortingControllers;
+  bool _sortingShowPreFilled = true;
 
   bool get _hasChanges => _isDirty;
 
@@ -130,6 +135,19 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         _flashcardFrontTextController = TextEditingController();
         _flashcardBackTextController = TextEditingController();
       }
+
+      if (_answerType == 'sorting') {
+        final sc = SortingConfig.fromJson(config);
+        _sortingControllers =
+            sc.items.map((s) => TextEditingController(text: s)).toList();
+        while (_sortingControllers.length < 2) {
+          _sortingControllers.add(TextEditingController());
+        }
+        _sortingShowPreFilled = sc.showPreFilled;
+      } else {
+        _sortingControllers =
+            List.generate(4, (_) => TextEditingController());
+      }
     } else {
       // Add mode defaults
       _optionControllers =
@@ -138,6 +156,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       _acceptedAnswerControllers = [TextEditingController()];
       _flashcardFrontTextController = TextEditingController();
       _flashcardBackTextController = TextEditingController();
+      _sortingControllers =
+          List.generate(4, (_) => TextEditingController());
     }
 
     _questionController.addListener(_markDirty);
@@ -146,6 +166,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     for (final c in _acceptedAnswerControllers) { c.addListener(_markDirty); }
     _flashcardFrontTextController.addListener(_markDirty);
     _flashcardBackTextController.addListener(_markDirty);
+    for (final c in _sortingControllers) { c.addListener(_markDirty); }
   }
 
   @override
@@ -156,6 +177,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     for (final c in _acceptedAnswerControllers) c.dispose();
     _flashcardFrontTextController.dispose();
     _flashcardBackTextController.dispose();
+    for (final c in _sortingControllers) c.dispose();
     super.dispose();
   }
 
@@ -288,6 +310,25 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                       }),
                     ),
 
+                  if (_answerType == 'sorting')
+                    SortingSection(
+                      itemControllers: _sortingControllers,
+                      showPreFilled: _sortingShowPreFilled,
+                      onShowPreFilledChanged: (v) => setState(() {
+                        _sortingShowPreFilled = v;
+                        _isDirty = true;
+                      }),
+                      onAddItem: () {
+                        final c = TextEditingController();
+                        c.addListener(_markDirty);
+                        setState(() => _sortingControllers.add(c));
+                      },
+                      onRemoveItem: (i) => setState(() {
+                        _sortingControllers.removeAt(i).dispose();
+                        _isDirty = true;
+                      }),
+                    ),
+
                   if (_answerType != 'imageClick' && _answerType != 'flashcard') ...[
                     const SizedBox(height: 8),
                     ImagePickerField(
@@ -387,6 +428,13 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         backText: backText.isEmpty ? null : backText,
         backImagePath: backImagePath,
         randomizeSides: _flashcardRandomizeSides,
+      ).toJson());
+    } else if (_answerType == 'sorting') {
+      savedImagePath = await _pickerKey.currentState
+          ?.applyAutoName('question_$questionText') ?? _imagePath;
+      answerConfig = jsonEncode(SortingConfig(
+        items: _sortingControllers.map((c) => c.text.trim()).toList(),
+        showPreFilled: _sortingShowPreFilled,
       ).toJson());
     } else {
       savedImagePath = await _pickerKey.currentState

@@ -19,6 +19,7 @@ class AnswerTypeSelector extends StatelessWidget {
       (value: 'typed',          label: l10n.answerTypeTypedLabel,       icon: Icons.keyboard),
       (value: 'imageClick',     label: l10n.answerTypeImageClickLabel,  icon: Icons.mouse_rounded),
       (value: 'flashcard',      label: l10n.answerTypeFlashcardLabel,   icon: Icons.style_outlined),
+      (value: 'sorting',        label: l10n.answerTypeSortingLabel,     icon: Icons.sort),
     ];
 
     return LayoutBuilder(

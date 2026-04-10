@@ -3,7 +3,7 @@ import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/folder_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
-import 'package:med_brew/models/answer_configs.dart';
+import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SortingConfig, TypedAnswerConfig;
 import 'package:med_brew/models/answer_type.dart';
 
 class QuestionService {
@@ -104,6 +104,8 @@ class QuestionService {
               ? ImageClickConfig.fromJson(config) : null,
           flashcardConfig: answerType == AnswerType.flashcard
               ? FlashcardConfig.fromJson(config) : null,
+          sortingConfig: answerType == AnswerType.sorting
+              ? SortingConfig.fromJson(config) : null,
         );
       }
 

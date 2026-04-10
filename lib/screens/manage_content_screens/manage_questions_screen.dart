@@ -128,6 +128,9 @@ class ManageQuestionsScreen extends StatelessWidget {
       'imageClick' => const CircleAvatar(
         child: Icon(Icons.touch_app, size: 18),
       ),
+      'sorting' => const CircleAvatar(
+        child: Icon(Icons.sort, size: 18),
+      ),
       _ => const CircleAvatar(child: Icon(Icons.help, size: 18)),
     };
   }
@@ -137,6 +140,7 @@ class ManageQuestionsScreen extends StatelessWidget {
       'multipleChoice' => l10n.answerTypeMultipleChoiceChip,
       'typed'          => l10n.answerTypeTypedChip,
       'imageClick'     => l10n.answerTypeImageClickChip,
+      'sorting'        => l10n.answerTypeSortingChip,
       _                => type,
     };
     return _Chip(label: label, color: Colors.blue);

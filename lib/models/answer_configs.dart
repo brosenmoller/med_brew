@@ -145,6 +145,29 @@ class MultipleChoiceConfig {
   };
 }
 
+class SortingConfig {
+  /// Items in the correct order (top → bottom).
+  final List<String> items;
+
+  /// When true, the quiz shows items scrambled as draggable chips.
+  /// When false, the quiz shows blank text fields the user must fill in.
+  final bool showPreFilled;
+
+  SortingConfig({required this.items, this.showPreFilled = true});
+
+  factory SortingConfig.fromJson(Map<String, dynamic> json) {
+    return SortingConfig(
+      items: List<String>.from(json['items'] ?? []),
+      showPreFilled: json['showPreFilled'] as bool? ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'items': items,
+    'showPreFilled': showPreFilled,
+  };
+}
+
 class TypedAnswerConfig {
   final List<String> acceptedAnswers;
 

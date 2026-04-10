@@ -512,6 +512,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get answerTypeFlashcardLabel => 'Flashcard';
 
   @override
+  String get answerTypeSortingLabel => 'Sorting';
+
+  @override
+  String get answerTypeSortingChip => 'Sorting';
+
+  @override
+  String get sortingItemsLabel => 'Items (correct order, top → bottom)';
+
+  @override
+  String sortingItemN(int n) {
+    return 'Item $n';
+  }
+
+  @override
+  String get addItem => 'Add item';
+
+  @override
+  String get showPreFilled => 'Show items pre-filled';
+
+  @override
+  String get showPreFilledSubtitle =>
+      'Students drag items into the correct order; disable to have them type each item';
+
+  @override
+  String get checkOrder => 'Check order';
+
+  @override
+  String get sortingDragHint => 'Drag to reorder';
+
+  @override
+  String sortingCorrectAnswer(String answer) {
+    return 'Correct: $answer';
+  }
+
+  @override
   String get unsavedChangesQuestion => 'Your question changes will be lost.';
 
   @override

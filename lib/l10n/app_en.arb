@@ -252,6 +252,26 @@
   "answerTypeTypedLabel": "Typed",
   "answerTypeImageClickLabel": "Image Click",
   "answerTypeFlashcardLabel": "Flashcard",
+  "answerTypeSortingLabel": "Sorting",
+  "answerTypeSortingChip": "Sorting",
+  "sortingItemsLabel": "Items (correct order, top → bottom)",
+  "sortingItemN": "Item {n}",
+  "@sortingItemN": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "addItem": "Add item",
+  "showPreFilled": "Show items pre-filled",
+  "showPreFilledSubtitle": "Students drag items into the correct order; disable to have them type each item",
+  "checkOrder": "Check order",
+  "sortingDragHint": "Drag to reorder",
+  "sortingCorrectAnswer": "Correct: {answer}",
+  "@sortingCorrectAnswer": {
+    "placeholders": {
+      "answer": { "type": "String" }
+    }
+  },
   "unsavedChangesQuestion": "Your question changes will be lost.",
 
   "discardChangesTitle": "Discard changes?",
