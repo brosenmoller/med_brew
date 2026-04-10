@@ -13,78 +13,199 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Med Brew",
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: "Settings",
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => SettingsScreen()),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 180,
+            pinned: true,
+            backgroundColor: colorScheme.primary,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.settings, color: colorScheme.onPrimary),
+                tooltip: 'Settings',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => SettingsScreen()),
+                ),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              title: Text(
+                'Med Brew',
+                style: TextStyle(
+                  color: colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 26,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.tertiary,
+                    ],
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 24, bottom: 32),
+                    child: Icon(
+                      Icons.biotech_rounded,
+                      size: 100,
+                      color: colorScheme.onPrimary.withOpacity(0.12),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          )
+          ),
+          SliverToBoxAdapter(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  child: Column(
+                    children: [
+                      _NavTile(
+                        title: 'Browse',
+                        subtitle: 'Explore quizzes & categories',
+                        icon: Icons.folder_open_rounded,
+                        color: colorScheme.primaryContainer,
+                        iconColor: colorScheme.onPrimaryContainer,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => FolderBrowserScreen()),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _NavTile(
+                        title: 'Spaced Repetition',
+                        subtitle: 'Review your due cards',
+                        icon: Icons.auto_awesome_rounded,
+                        color: colorScheme.errorContainer,
+                        iconColor: colorScheme.onErrorContainer,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => SrsOverviewScreen()),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _NavTile(
+                        title: 'Favorites',
+                        subtitle: 'Your saved quizzes',
+                        icon: Icons.star_rounded,
+                        color: colorScheme.secondaryContainer,
+                        iconColor: colorScheme.onSecondaryContainer,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const FavoritesScreen()),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _NavTile(
+                        title: 'Manage Content',
+                        subtitle: 'Create & edit questions',
+                        icon: Icons.edit_note_rounded,
+                        color: colorScheme.tertiaryContainer,
+                        iconColor: colorScheme.onTertiaryContainer,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => ManageContentScreen(db: db)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                textStyle: const TextStyle(fontSize: 22),
+    );
+  }
+}
+
+class _NavTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  const _NavTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: color,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, size: 28, color: iconColor),
               ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => FolderBrowserScreen()),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: iconColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: iconColor.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: const Text("Browse"),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                textStyle: const TextStyle(fontSize: 22),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => SrsOverviewScreen()),
-              ),
-              child: const Text("Spaced Repetition"),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.star),
-              label: const Text("Favorites"),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                textStyle: const TextStyle(fontSize: 22),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const FavoritesScreen()),
-              ),
-            ),
-            const SizedBox(height: 30),
-            // New button — leads to the category/quiz/question management screens
-            ElevatedButton.icon(
-              icon: const Icon(Icons.edit_note),
-              label: const Text("Manage Content"),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                textStyle: const TextStyle(fontSize: 22),
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ManageContentScreen(db: db)),
-              ),
-            ),
-            const SizedBox(height: 30),
-          ],
+              Icon(Icons.chevron_right_rounded, color: iconColor.withOpacity(0.5)),
+            ],
+          ),
         ),
       ),
     );
