@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/screens/srs_session_screen.dart';
@@ -37,11 +38,12 @@ class SrsCompletionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final due = _dueQuizzes();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Session Complete'),
+        title: Text(l10n.srsSessionComplete),
         centerTitle: true,
       ),
       body: KeyboardListener(
@@ -58,82 +60,82 @@ class SrsCompletionScreen extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 680),
             child: ListView(
               padding: const EdgeInsets.all(24),
-          children: [
-            // ── Summary ──────────────────────────────────────────────
-            const Icon(Icons.check_circle_outline,
-                size: 64, color: Colors.green),
-            const SizedBox(height: 16),
-            Text(
-              completedQuizTitle,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$reviewedCount question${reviewedCount == 1 ? '' : 's'} reviewed',
-              style: Theme.of(context).textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
+              children: [
+                // ── Summary ──────────────────────────────────────────────
+                const Icon(Icons.check_circle_outline,
+                    size: 64, color: Colors.green),
+                const SizedBox(height: 16),
+                Text(
+                  completedQuizTitle,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.srsQuestionsReviewed(reviewedCount),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
 
-            // ── Due quizzes / all-caught-up ───────────────────────────
-            if (due.isEmpty) ...[
-              const Divider(),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.star, color: Colors.amber),
-                  const SizedBox(width: 8),
-                  Text(
-                    'All caught up!',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'No more questions due right now.',
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-            ] else ...[
-              Text(
-                'Still due',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(color: Colors.grey),
-              ),
-              const SizedBox(height: 8),
-              ...due.map((entry) => _DueQuizTile(
-                    quizTitle: entry.quiz.title,
-                    dueCount: entry.due.length,
-                    onStart: () => Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SrsSessionScreen(
-                          questions: entry.due,
-                          sessionTitle: entry.quiz.title,
-                        ),
+                // ── Due quizzes / all-caught-up ───────────────────────────
+                if (due.isEmpty) ...[
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.srsAllCaughtUp,
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                    ),
-                  )),
-            ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.srsNoMoreDue,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ] else ...[
+                  Text(
+                    l10n.srsStillDue,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  ...due.map((entry) => _DueQuizTile(
+                        quizTitle: entry.quiz.title,
+                        dueCount: entry.due.length,
+                        onStart: () => Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SrsSessionScreen(
+                              questions: entry.due,
+                              sessionTitle: entry.quiz.title,
+                            ),
+                          ),
+                        ),
+                      )),
+                ],
 
-            const SizedBox(height: 32),
-            const Divider(),
-            const SizedBox(height: 16),
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 16),
 
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Back to Spaced Repetition'),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(l10n.srsBackToSpacedRepetition),
+                ),
+              ],
             ),
-          ],
-        ),
           ),
         ),
       ),
@@ -154,14 +156,15 @@ class _DueQuizTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         title: Text(quizTitle),
-        subtitle: Text('$dueCount question${dueCount == 1 ? '' : 's'} due'),
+        subtitle: Text(l10n.srsQuestionsDue(dueCount)),
         trailing: FilledButton(
           onPressed: onStart,
-          child: const Text('Start'),
+          child: Text(l10n.start),
         ),
       ),
     );

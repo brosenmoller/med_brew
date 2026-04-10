@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/screens/manage_content_screens/edit_folder_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/edit_quiz_screen.dart';
@@ -18,16 +19,17 @@ class ManageFolderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(folder?.title ?? 'Manage Content'),
+        title: Text(folder?.title ?? l10n.manageContentTitle),
         bottom: folder != null
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(20),
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(20),
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: Text('Folder contents',
-                      style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(l10n.folderContents,
+                      style: const TextStyle(color: Colors.grey, fontSize: 13)),
                 ),
               )
             : null,
@@ -39,7 +41,7 @@ class ManageFolderScreen extends StatelessWidget {
           FloatingActionButton.extended(
             heroTag: 'add_folder_${folder?.id}',
             icon: const Icon(Icons.create_new_folder_outlined),
-            label: const Text('Add Folder'),
+            label: Text(l10n.addFolder),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -52,7 +54,7 @@ class ManageFolderScreen extends StatelessWidget {
           FloatingActionButton.extended(
             heroTag: 'add_quiz_${folder?.id}',
             icon: const Icon(Icons.quiz_outlined),
-            label: const Text('Add Quiz'),
+            label: Text(l10n.addQuiz),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -76,6 +78,7 @@ class FolderContentsBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return StreamBuilder<List<Folder>>(
       stream: db.watchSubfolders(folder?.id),
       builder: (context, subSnap) {
@@ -90,21 +93,19 @@ class FolderContentsBody extends StatelessWidget {
             final quizzes = quizSnap.data!;
 
             if (subfolders.isEmpty && quizzes.isEmpty) {
-              return const Center(
-                child: Text('Empty. Tap + to add a folder or quiz.'),
-              );
+              return Center(child: Text(l10n.emptyFolderManage));
             }
 
             return ListView(
               padding: const EdgeInsets.only(bottom: 100),
               children: [
                 if (subfolders.isNotEmpty) ...[
-                  const _SectionHeader(label: 'Folders'),
+                  _SectionHeader(label: l10n.foldersSection),
                   ...subfolders.map((f) => _FolderTile(db: db, f: f)),
                   const Divider(height: 1),
                 ],
                 if (quizzes.isNotEmpty) ...[
-                  const _SectionHeader(label: 'Quizzes'),
+                  _SectionHeader(label: l10n.quizzesSection),
                   ...quizzes.map((q) => _QuizTile(db: db, q: q)),
                 ],
               ],
@@ -142,6 +143,7 @@ class _FolderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final canEdit = !f.isPermanent || kDebugMode;
     return ListTile(
       leading: f.imagePath != null
@@ -159,7 +161,7 @@ class _FolderTile extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: f.isPermanent
           ? Text(
-              kDebugMode ? 'Built-in (editable in debug)' : 'Built-in',
+              kDebugMode ? l10n.builtInDebug : l10n.builtIn,
               style: TextStyle(
                 color: kDebugMode ? Colors.orange : Colors.grey,
                 fontSize: 12,
@@ -172,7 +174,7 @@ class _FolderTile extends StatelessWidget {
           if (canEdit) ...[
             IconButton(
               icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Edit',
+              tooltip: l10n.edit,
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -182,7 +184,7 @@ class _FolderTile extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.red),
-              tooltip: 'Delete',
+              tooltip: l10n.delete,
               onPressed: () => _confirmDeleteFolder(context),
             ),
           ],
@@ -199,16 +201,16 @@ class _FolderTile extends StatelessWidget {
   }
 
   void _confirmDeleteFolder(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Folder?'),
-        content: Text(
-            'This will delete "${f.title}" and everything inside it.'),
+        title: Text(l10n.deleteFolderTitle),
+        content: Text(l10n.deleteFolderContent(f.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
@@ -217,7 +219,7 @@ class _FolderTile extends StatelessWidget {
               await QuestionService().refresh();
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -232,6 +234,7 @@ class _QuizTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final canEdit = !q.isPermanent || kDebugMode;
     return ListTile(
       leading: q.imagePath != null
@@ -249,7 +252,7 @@ class _QuizTile extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: q.isPermanent
           ? Text(
-              kDebugMode ? 'Built-in (editable in debug)' : 'Built-in',
+              kDebugMode ? l10n.builtInDebug : l10n.builtIn,
               style: TextStyle(
                 color: kDebugMode ? Colors.orange : Colors.grey,
                 fontSize: 12,
@@ -262,7 +265,7 @@ class _QuizTile extends StatelessWidget {
           if (canEdit) ...[
             IconButton(
               icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Edit',
+              tooltip: l10n.edit,
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -276,7 +279,7 @@ class _QuizTile extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.red),
-              tooltip: 'Delete',
+              tooltip: l10n.delete,
               onPressed: () => _confirmDeleteQuiz(context),
             ),
           ],
@@ -293,16 +296,16 @@ class _QuizTile extends StatelessWidget {
   }
 
   void _confirmDeleteQuiz(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Quiz?'),
-        content:
-            Text('This will delete "${q.title}" and all its questions.'),
+        title: Text(l10n.deleteQuizTitle),
+        content: Text(l10n.deleteQuizContent(q.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
@@ -311,7 +314,7 @@ class _QuizTile extends StatelessWidget {
               await QuestionService().refresh();
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

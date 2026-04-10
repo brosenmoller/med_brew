@@ -19,6 +19,9 @@ class Quizzes extends Table {
   TextColumn get imagePath => text().nullable()();
   BoolColumn get isPermanent => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  // Optional BCP-47 language tag for the quiz content (e.g. 'en', 'nl', 'de').
+  // Null means the quiz is language-neutral / applicable to all languages.
+  TextColumn get languageCode => text().nullable()();
 }
 
 class Questions extends Table {

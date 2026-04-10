@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/screens/manage_content_screens/edit_question_screen.dart';
 
@@ -15,21 +16,22 @@ class ManageQuestionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(quiz.title),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(20),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(20),
           child: Padding(
-            padding: EdgeInsets.only(bottom: 8),
-            child: Text('Questions',
-                style: TextStyle(color: Colors.grey, fontSize: 13)),
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(l10n.questionsSubtitle,
+                style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
-        label: const Text('Add Question'),
+        label: Text(l10n.addQuestion),
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(
@@ -48,8 +50,7 @@ class ManageQuestionsScreen extends StatelessWidget {
           }
           final questions = snapshot.data!;
           if (questions.isEmpty) {
-            return const Center(
-                child: Text('No questions yet. Add one below.'));
+            return Center(child: Text(l10n.noQuestionsYet));
           }
           return ReorderableListView.builder(
             padding: const EdgeInsets.only(bottom: 100),
@@ -74,10 +75,10 @@ class ManageQuestionsScreen extends StatelessWidget {
                 ),
                 subtitle: Row(
                   children: [
-                    _answerTypeChip(question.answerType),
+                    _answerTypeChip(question.answerType, l10n),
                     if (question.isPermanent) ...[
                       const SizedBox(width: 6),
-                      const _Chip(label: 'Built-in', color: Colors.grey),
+                      _Chip(label: l10n.builtIn, color: Colors.grey),
                     ],
                   ],
                 ),
@@ -87,7 +88,7 @@ class ManageQuestionsScreen extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit_outlined),
-                      tooltip: 'Edit',
+                      tooltip: l10n.edit,
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -101,7 +102,7 @@ class ManageQuestionsScreen extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      tooltip: 'Delete',
+                      tooltip: l10n.delete,
                       onPressed: () => _confirmDelete(context, question),
                     ),
                     const Icon(Icons.drag_handle),
@@ -131,26 +132,27 @@ class ManageQuestionsScreen extends StatelessWidget {
     };
   }
 
-  Widget _answerTypeChip(String type) {
+  Widget _answerTypeChip(String type, AppLocalizations l10n) {
     final label = switch (type) {
-      'multipleChoice' => 'Multiple choice',
-      'typed'          => 'Typed',
-      'imageClick'     => 'Image click',
+      'multipleChoice' => l10n.answerTypeMultipleChoiceChip,
+      'typed'          => l10n.answerTypeTypedChip,
+      'imageClick'     => l10n.answerTypeImageClickChip,
       _                => type,
     };
     return _Chip(label: label, color: Colors.blue);
   }
 
   void _confirmDelete(BuildContext context, Question q) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Question?'),
+        title: Text(l10n.deleteQuestionTitle),
         content: Text('"${q.questionText}"'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
@@ -158,7 +160,7 @@ class ManageQuestionsScreen extends StatelessWidget {
               await db.deleteQuestion(q.id);
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

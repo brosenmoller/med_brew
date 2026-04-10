@@ -113,6 +113,7 @@ class QuestionService {
         parentFolderId: folderId,
         title: quizRow.title,
         imagePath: quizRow.imagePath,
+        languageCode: quizRow.languageCode,
         questionIds: questionIds,
       );
 

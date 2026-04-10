@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/screens/manage_content_screens/edit_folder_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/edit_quiz_screen.dart';
@@ -22,24 +23,25 @@ class ManageContentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Content'),
+        title: Text(l10n.manageContentTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.upload_file),
-            tooltip: 'Import JSON',
+            tooltip: l10n.importJsonTooltip,
             onPressed: () => _importJson(context),
           ),
           IconButton(
             icon: const Icon(Icons.download),
-            tooltip: 'Export JSON',
+            tooltip: l10n.exportJsonTooltip,
             onPressed: () => _exportJson(context),
           ),
           if (kDebugMode)
             IconButton(
               icon: const Icon(Icons.save_alt),
-              tooltip: 'Export seed.db',
+              tooltip: l10n.exportSeedDbTooltip,
               onPressed: () => _exportSeedDb(context),
             ),
         ],
@@ -51,7 +53,7 @@ class ManageContentScreen extends StatelessWidget {
           FloatingActionButton.extended(
             heroTag: 'root_add_folder',
             icon: const Icon(Icons.create_new_folder_outlined),
-            label: const Text('Add Folder'),
+            label: Text(l10n.addFolder),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => EditFolderScreen(db: db)),
@@ -61,7 +63,7 @@ class ManageContentScreen extends StatelessWidget {
           FloatingActionButton.extended(
             heroTag: 'root_add_quiz',
             icon: const Icon(Icons.quiz_outlined),
-            label: const Text('Add Quiz'),
+            label: Text(l10n.addQuiz),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => EditQuizScreen(db: db)),
@@ -96,8 +98,9 @@ class ManageContentScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
+          SnackBar(content: Text(l10n.exportFailed(e))),
         );
       }
     }
@@ -127,8 +130,9 @@ class ManageContentScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
+          SnackBar(content: Text(l10n.exportFailed(e))),
         );
       }
     }
@@ -152,14 +156,16 @@ class ManageContentScreen extends StatelessWidget {
       await QuestionService().refresh();
 
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Import successful')),
+          SnackBar(content: Text(l10n.importSuccess)),
         );
       }
     } catch (e) {
       if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $e')),
+          SnackBar(content: Text(l10n.importFailed(e))),
         );
       }
     }

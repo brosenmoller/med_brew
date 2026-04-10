@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/services/question_service.dart';
@@ -25,6 +26,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   final _formKey = GlobalKey<FormState>();
   final _pickerKey = GlobalKey<ImagePickerFieldState>();
   late final TextEditingController _titleController;
+  late final TextEditingController _languageCodeController;
   String? _imagePath;
 
   @override
@@ -32,21 +34,25 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
     super.initState();
     _titleController =
         TextEditingController(text: widget.existing?.title ?? '');
+    _languageCodeController =
+        TextEditingController(text: widget.existing?.languageCode ?? '');
     _imagePath = widget.existing?.imagePath;
   }
 
   @override
   void dispose() {
     _titleController.dispose();
+    _languageCodeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isEditing = widget.existing != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Quiz' : 'Add Quiz'),
+        title: Text(isEditing ? l10n.editQuizAppBarTitle : l10n.addQuizAppBarTitle),
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -59,17 +65,26 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
           children: [
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.titleLabel,
+                border: const OutlineInputBorder(),
               ),
               autofocus: !isEditing,
-              validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+              validator: (v) => v!.trim().isEmpty ? l10n.required : null,
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _languageCodeController,
+              decoration: InputDecoration(
+                labelText: l10n.languageCodeLabel,
+                hintText: l10n.languageCodeHint,
+                border: const OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
             ImagePickerField(
               key: _pickerKey,
-              label: 'Quiz image (optional)',
+              label: l10n.quizImageOptional,
               initialPath: _imagePath,
               onChanged: (path) => setState(() => _imagePath = path),
             ),
@@ -77,7 +92,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save),
-              label: Text(isEditing ? 'Save Changes' : 'Add Quiz'),
+              label: Text(isEditing ? l10n.saveChanges : l10n.addQuiz),
             ),
           ],
         ),
@@ -90,6 +105,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final title = _titleController.text.trim();
+    final languageCode = _languageCodeController.text.trim();
     final imagePath =
         await _pickerKey.currentState?.applyAutoName('quiz_$title') ??
             _imagePath;
@@ -99,6 +115,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
         folderId: Value(widget.folderId),
         title: title,
         imagePath: Value(imagePath),
+        languageCode: Value(languageCode.isEmpty ? null : languageCode),
       ));
     } else {
       await widget.db.updateQuiz(QuizzesCompanion(
@@ -107,6 +124,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
         title: Value(title),
         imagePath: Value(imagePath),
         isPermanent: Value(existing.isPermanent),
+        languageCode: Value(languageCode.isEmpty ? null : languageCode),
       ));
     }
     await QuestionService().refresh();

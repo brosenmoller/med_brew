@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/screens/quiz_session_screen.dart';
@@ -19,6 +20,7 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final entries = <_QuizEntry>[];
 
     for (final quiz in questionService.getAllQuizzes()) {
@@ -62,9 +64,8 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
 
     if (entries.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Spaced Repetition')),
-        body: const Center(
-            child: Text('No spaced repetition questions available')),
+        appBar: AppBar(title: Text(l10n.srsTitle)),
+        body: Center(child: Text(l10n.srsNoQuestions)),
       );
     }
 
@@ -79,7 +80,7 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Spaced Repetition')),
+      appBar: AppBar(title: Text(l10n.srsTitle)),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -124,25 +125,23 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
   }
 
   Future<void> _removeSrs(BuildContext context, _QuizEntry entry) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Remove from spaced repetition?'),
-        content: Text(
-          'All SRS progress for "${entry.quizTitle}" will be lost. '
-          'This cannot be undone.',
-        ),
+        title: Text(l10n.srsRemoveDialogTitle),
+        content: Text(l10n.srsRemoveDialogContent(entry.quizTitle)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red.shade700,
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove'),
+            child: Text(l10n.remove),
           ),
         ],
       ),
@@ -178,6 +177,7 @@ class _QuizCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final hasDue = entry.dueQuestions.isNotEmpty;
 
     final accentColor =
@@ -186,13 +186,12 @@ class _QuizCard extends StatelessWidget {
     final String timeLabel;
     final Color timeColor;
     if (hasDue) {
-      final overdue =
-          DateTime.now().difference(entry.oldestDue!);
-      timeLabel = 'oldest ${_fmt(overdue)} overdue';
+      final overdue = DateTime.now().difference(entry.oldestDue!);
+      timeLabel = l10n.srsOldestOverdue(_fmt(overdue, l10n));
       timeColor = colorScheme.error;
     } else {
       final until = entry.nextUpcoming.difference(DateTime.now());
-      timeLabel = 'next in ${_fmt(until)}';
+      timeLabel = l10n.srsNextIn(_fmt(until, l10n));
       timeColor = colorScheme.outline;
     }
 
@@ -242,8 +241,8 @@ class _QuizCard extends StatelessWidget {
                                   ),
                                 _Tag(
                                   label: hasDue
-                                      ? '${entry.dueQuestions.length} due'
-                                      : '${entry.allQuestions.length} cards',
+                                      ? l10n.srsDue(entry.dueQuestions.length)
+                                      : l10n.srsCards(entry.allQuestions.length),
                                   icon: hasDue
                                       ? Icons.schedule
                                       : Icons.style_outlined,
@@ -274,7 +273,7 @@ class _QuizCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 10),
                           ),
-                          child: const Text('Start'),
+                          child: Text(l10n.start),
                         ),
                       PopupMenuButton<_CardAction>(
                         icon: const Icon(Icons.more_vert),
@@ -285,23 +284,23 @@ class _QuizCard extends StatelessWidget {
                             onRemoveSrs(context, entry);
                           }
                         },
-                        itemBuilder: (_) => const [
+                        itemBuilder: (_) => [
                           PopupMenuItem(
                             value: _CardAction.startNormal,
                             child: ListTile(
-                              leading: Icon(Icons.play_arrow_outlined),
-                              title: Text('Start normal quiz'),
-                              subtitle: Text('No SRS scheduling'),
+                              leading: const Icon(Icons.play_arrow_outlined),
+                              title: Text(l10n.srsStartNormalQuiz),
+                              subtitle: Text(l10n.srsNoSrsScheduling),
                               contentPadding: EdgeInsets.zero,
                             ),
                           ),
                           PopupMenuItem(
                             value: _CardAction.removeSrs,
                             child: ListTile(
-                              leading: Icon(Icons.remove_circle_outline,
+                              leading: const Icon(Icons.remove_circle_outline,
                                   color: Colors.red),
-                              title: Text('Remove from SRS',
-                                  style: TextStyle(color: Colors.red)),
+                              title: Text(l10n.srsRemoveFromSrs,
+                                  style: const TextStyle(color: Colors.red)),
                               contentPadding: EdgeInsets.zero,
                             ),
                           ),
@@ -318,11 +317,11 @@ class _QuizCard extends StatelessWidget {
     );
   }
 
-  String _fmt(Duration d) {
-    if (d.inDays > 0) return '${d.inDays}d';
-    if (d.inHours > 0) return '${d.inHours}h';
-    if (d.inMinutes > 0) return '${d.inMinutes}m';
-    return 'now';
+  String _fmt(Duration d, AppLocalizations l10n) {
+    if (d.inDays > 0) return l10n.durationDays(d.inDays);
+    if (d.inHours > 0) return l10n.durationHours(d.inHours);
+    if (d.inMinutes > 0) return l10n.durationMinutes(d.inMinutes);
+    return l10n.durationNow;
   }
 }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, TypedAnswerConfig;
@@ -54,8 +55,6 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   String? _flashcardBackImagePath;
   bool _flashcardRandomizeSides = false;
 
-  /// True whenever there is unsaved state — mirrors the _hasChanges pattern
-  /// from ImageAreaSelectorScreen so the guard always reflects real intent.
   bool get _hasChanges => _isDirty;
 
   void _markDirty() {
@@ -133,8 +132,6 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       _flashcardBackTextController = TextEditingController();
     }
 
-    // Attach dirty listeners after initial values are set so they only fire
-    // on actual user edits.
     _questionController.addListener(_markDirty);
     _explanationController.addListener(_markDirty);
     for (final c in _optionControllers) { c.addListener(_markDirty); }
@@ -156,12 +153,13 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return UnsavedChangesGuard(
-      hasChanges: _hasChanges, // ← uses getter, not raw _isDirty
-      message: 'Your question changes will be lost.',
+      hasChanges: _hasChanges,
+      message: l10n.unsavedChangesQuestion,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.isEditing ? 'Edit Question' : 'Add Question'),
+          title: Text(widget.isEditing ? l10n.editQuestionAppBarTitle : l10n.addQuestionAppBarTitle),
         ),
         body: Align(
           alignment: Alignment.topCenter,
@@ -174,12 +172,12 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
             children: [
               TextFormField(
                 controller: _questionController,
-                decoration: const InputDecoration(
-                  labelText: 'Question',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.questionLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 2,
-                validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+                validator: (v) => v!.trim().isEmpty ? l10n.required : null,
               ),
               const SizedBox(height: 16),
 
@@ -193,8 +191,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
               const SizedBox(height: 16),
 
               if (_answerType == 'multipleChoice') ...[
-                const Text('Options',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(l10n.optionsLabel,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 ...List.generate(4, (i) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -212,7 +210,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                         child: TextFormField(
                           controller: _optionControllers[i],
                           decoration: InputDecoration(
-                            labelText: 'Option ${i + 1}',
+                            labelText: l10n.optionN(i + 1),
                             border: const OutlineInputBorder(),
                             fillColor: _correctIndex == i
                                 ? Colors.green.withOpacity(0.1)
@@ -220,13 +218,13 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                             filled: _correctIndex == i,
                           ),
                           validator: (v) =>
-                          v!.trim().isEmpty ? 'Required' : null,
+                          v!.trim().isEmpty ? l10n.required : null,
                         ),
                       ),
                     ],
                   ),
                 )),
-                Text('Radio button = correct answer',
+                Text(l10n.radioCorrectHint,
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
@@ -236,7 +234,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
               if (_answerType == 'imageClick') ...[
                 ImagePickerField(
                   key: _pickerKey,
-                  label: 'Click area image',
+                  label: l10n.clickAreaImageLabel,
                   initialPath: _imagePath,
                   onChanged: (path) => setState(() {
                     _imagePath = path;
@@ -267,23 +265,23 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                     icon: const Icon(Icons.edit_location_alt_outlined),
                     label: Text(
                       _selectedImageAreas.isEmpty
-                          ? 'Define Click Areas'
-                          : 'Edit Click Areas (${_selectedImageAreas.length} area${_selectedImageAreas.length == 1 ? '' : 's'})',
+                          ? l10n.defineClickAreas
+                          : l10n.editClickAreas(_selectedImageAreas.length),
                     ),
                   ),
                 if (_selectedImageAreas.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      '${_selectedImageAreas.length} area${_selectedImageAreas.length == 1 ? '' : 's'} defined ✓',
+                      l10n.areasDefinedCount(_selectedImageAreas.length),
                       style: const TextStyle(color: Colors.green),
                     ),
                   ),
               ],
 
               if (_answerType == 'typed') ...[
-                const Text('Accepted Answers',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(l10n.acceptedAnswersLabel,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 ..._acceptedAnswerControllers.asMap().entries.map(
                       (e) => Padding(
@@ -294,12 +292,12 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                           child: TextFormField(
                             controller: e.value,
                             decoration: InputDecoration(
-                              labelText: 'Accepted answer ${e.key + 1}',
+                              labelText: l10n.acceptedAnswerN(e.key + 1),
                               border: const OutlineInputBorder(),
                             ),
                             validator: (v) =>
                             e.key == 0 && v!.trim().isEmpty
-                                ? 'At least one required'
+                                ? l10n.atLeastOneRequired
                                 : null,
                           ),
                         ),
@@ -323,16 +321,15 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                     setState(() => _acceptedAnswerControllers.add(c));
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('Add variant'),
+                  label: Text(l10n.addVariant),
                 ),
               ],
 
               if (_answerType == 'flashcard') ...[
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Randomize front/back sides'),
-                  subtitle: const Text(
-                      'Each attempt randomly picks which side to show first'),
+                  title: Text(l10n.flashcardRandomize),
+                  subtitle: Text(l10n.flashcardRandomizeSubtitle),
                   value: _flashcardRandomizeSides,
                   onChanged: (v) => setState(() {
                     _flashcardRandomizeSides = v;
@@ -341,7 +338,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 ),
                 const SizedBox(height: 8),
                 _FlashcardSideEditor(
-                  sideLabel: 'Front',
+                  headerLabel: l10n.flashcardFrontSide,
+                  textOptionalLabel: l10n.flashcardFrontTextOptional,
+                  imageOptionalLabel: l10n.flashcardFrontImageOptional,
                   textController: _flashcardFrontTextController,
                   imagePath: _flashcardFrontImagePath,
                   pickerKey: _flashcardFrontPickerKey,
@@ -352,7 +351,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 ),
                 const SizedBox(height: 16),
                 _FlashcardSideEditor(
-                  sideLabel: 'Back',
+                  headerLabel: l10n.flashcardBackSide,
+                  textOptionalLabel: l10n.flashcardBackTextOptional,
+                  imageOptionalLabel: l10n.flashcardBackImageOptional,
                   textController: _flashcardBackTextController,
                   imagePath: _flashcardBackImagePath,
                   pickerKey: _flashcardBackPickerKey,
@@ -368,7 +369,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                 const SizedBox(height: 8),
                 ImagePickerField(
                   key: _pickerKey,
-                  label: 'Question image (optional)',
+                  label: l10n.questionImageOptional,
                   initialPath: _imagePath,
                   onChanged: (path) => setState(() {
                     _imagePath = path;
@@ -380,9 +381,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
               TextFormField(
                 controller: _explanationController,
-                decoration: const InputDecoration(
-                  labelText: 'Explanation (optional)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.explanationOptional,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 24),
@@ -390,7 +391,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
               FilledButton.icon(
                 onPressed: _save,
                 icon: const Icon(Icons.save),
-                label: Text(widget.isEditing ? 'Save Changes' : 'Save Question'),
+                label: Text(widget.isEditing ? l10n.saveChanges : l10n.saveQuestion),
               ),
             ],
           ),
@@ -404,6 +405,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context);
     final questionText = _questionController.text.trim();
 
     final String answerConfig;
@@ -421,8 +423,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       savedImagePath = await _pickerKey.currentState
           ?.applyAutoName('question_$questionText') ?? _imagePath;
       if (_selectedImageAreas.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Please define at least one click area')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.pleaseDefineClickArea)));
         return;
       }
       answerConfig = jsonEncode(
@@ -438,13 +440,13 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
           ?? _flashcardBackImagePath;
 
       if (frontText.isEmpty && (frontImagePath == null || frontImagePath.isEmpty)) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Front side needs at least text or an image')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.flashcardFrontRequired)));
         return;
       }
       if (backText.isEmpty && (backImagePath == null || backImagePath.isEmpty)) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Back side needs at least text or an image')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.flashcardBackRequired)));
         return;
       }
 
@@ -500,13 +502,6 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
 // ── Answer type selector ──────────────────────────────────────────────────────
 
-const _answerTypes = [
-  (value: 'multipleChoice', label: 'Multiple Choice', icon: Icons.list),
-  (value: 'typed',          label: 'Typed',           icon: Icons.keyboard),
-  (value: 'imageClick',     label: 'Image Click',     icon: Icons.mouse_rounded),
-  (value: 'flashcard',      label: 'Flashcard',       icon: Icons.style_outlined),
-];
-
 class _AnswerTypeSelector extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onChanged;
@@ -518,12 +513,19 @@ class _AnswerTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final answerTypes = [
+      (value: 'multipleChoice', label: l10n.answerTypeMCLabel,         icon: Icons.list),
+      (value: 'typed',          label: l10n.answerTypeTypedLabel,       icon: Icons.keyboard),
+      (value: 'imageClick',     label: l10n.answerTypeImageClickLabel,  icon: Icons.mouse_rounded),
+      (value: 'flashcard',      label: l10n.answerTypeFlashcardLabel,   icon: Icons.style_outlined),
+    ];
+
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= 500) {
-          // Wide: segmented button
           return SegmentedButton<String>(
-            segments: _answerTypes
+            segments: answerTypes
                 .map((t) => ButtonSegment<String>(
                       value: t.value,
                       label: Text(t.label),
@@ -535,18 +537,17 @@ class _AnswerTypeSelector extends StatelessWidget {
           );
         }
 
-        // Narrow: dropdown
         return DropdownButtonFormField<String>(
           value: selected,
-          decoration: const InputDecoration(
-            labelText: 'Answer type',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: l10n.answerTypeLabel,
+            border: const OutlineInputBorder(),
             contentPadding:
-                EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             filled: false,
           ),
           onChanged: (v) { if (v != null) onChanged(v); },
-          items: _answerTypes
+          items: answerTypes
               .map((t) => DropdownMenuItem(
                     value: t.value,
                     child: Row(
@@ -565,14 +566,18 @@ class _AnswerTypeSelector extends StatelessWidget {
 }
 
 class _FlashcardSideEditor extends StatelessWidget {
-  final String sideLabel;
+  final String headerLabel;
+  final String textOptionalLabel;
+  final String imageOptionalLabel;
   final TextEditingController textController;
   final String? imagePath;
   final GlobalKey<ImagePickerFieldState> pickerKey;
   final ValueChanged<String?> onImageChanged;
 
   const _FlashcardSideEditor({
-    required this.sideLabel,
+    required this.headerLabel,
+    required this.textOptionalLabel,
+    required this.imageOptionalLabel,
     required this.textController,
     required this.imagePath,
     required this.pickerKey,
@@ -585,14 +590,14 @@ class _FlashcardSideEditor extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '$sideLabel side',
+          headerLabel,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: textController,
           decoration: InputDecoration(
-            labelText: '$sideLabel text (optional)',
+            labelText: textOptionalLabel,
             border: const OutlineInputBorder(),
           ),
           maxLines: 2,
@@ -600,7 +605,7 @@ class _FlashcardSideEditor extends StatelessWidget {
         const SizedBox(height: 8),
         ImagePickerField(
           key: pickerKey,
-          label: '$sideLabel image (optional)',
+          label: imageOptionalLabel,
           initialPath: imagePath,
           onChanged: onImageChanged,
         ),

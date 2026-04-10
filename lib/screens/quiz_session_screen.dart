@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/screens/question_display/question_display_screen.dart';
@@ -63,9 +64,10 @@ class _QuizSessionScreenState extends State<QuizSessionScreen> {
   @override
   Widget build(BuildContext context) {
     if (questions.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text("No questions")),
+        body: Center(child: Text(l10n.noQuestions)),
       );
     }
 

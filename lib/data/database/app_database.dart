@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -79,6 +79,10 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('DROP TABLE quizzes');
         await customStatement('ALTER TABLE quizzes_new RENAME TO quizzes');
       }
+
+      if (from < 4) {
+        await m.addColumn(quizzes, quizzes.languageCode);
+      }
     },
   );
 
@@ -116,6 +120,7 @@ class AppDatabase extends _$AppDatabase {
         'folderId': quiz.folderId?.toString(),
         'title': quiz.title,
         'imagePath': quiz.imagePath,
+        'languageCode': quiz.languageCode,
         'questionIds': questionList.map((q) => q.id.toString()).toList(),
       });
 
@@ -257,6 +262,7 @@ class AppDatabase extends _$AppDatabase {
           folderId: Value(targetFolderId),
           title: quiz['title'] as String,
           imagePath: Value(quiz['imagePath'] as String?),
+          languageCode: Value(quiz['languageCode'] as String?),
         ));
         quizIdMap[quiz['id'] as String] = newQuizId;
 

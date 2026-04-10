@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/screens/folder_browser_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/manage_content_screen.dart';
@@ -14,6 +15,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: CustomScrollView(
@@ -25,7 +27,7 @@ class HomeScreen extends StatelessWidget {
             actions: [
               IconButton(
                 icon: Icon(Icons.settings, color: colorScheme.onPrimary),
-                tooltip: 'Settings',
+                tooltip: l10n.settingsTooltip,
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => SettingsScreen()),
@@ -35,7 +37,7 @@ class HomeScreen extends StatelessWidget {
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               title: Text(
-                'Med Brew',
+                l10n.appTitle,
                 style: TextStyle(
                   color: colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
@@ -78,8 +80,8 @@ class HomeScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       _NavTile(
-                        title: 'Browse',
-                        subtitle: 'Explore quizzes & categories',
+                        title: l10n.navBrowse,
+                        subtitle: l10n.navBrowseSubtitle,
                         icon: Icons.folder_open_rounded,
                         color: colorScheme.primaryContainer,
                         iconColor: colorScheme.onPrimaryContainer,
@@ -91,8 +93,8 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       _NavTile(
-                        title: 'Spaced Repetition',
-                        subtitle: 'Review your due cards',
+                        title: l10n.navSpacedRepetition,
+                        subtitle: l10n.navSpacedRepetitionSubtitle,
                         icon: Icons.auto_awesome_rounded,
                         color: colorScheme.errorContainer,
                         iconColor: colorScheme.onErrorContainer,
@@ -104,8 +106,8 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       _NavTile(
-                        title: 'Favorites',
-                        subtitle: 'Your saved quizzes',
+                        title: l10n.navFavorites,
+                        subtitle: l10n.navFavoritesSubtitle,
                         icon: Icons.star_rounded,
                         color: colorScheme.secondaryContainer,
                         iconColor: colorScheme.onSecondaryContainer,
@@ -117,8 +119,8 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       _NavTile(
-                        title: 'Manage Content',
-                        subtitle: 'Create & edit questions',
+                        title: l10n.navManageContent,
+                        subtitle: l10n.navManageContentSubtitle,
                         icon: Icons.edit_note_rounded,
                         color: colorScheme.tertiaryContainer,
                         iconColor: colorScheme.onTertiaryContainer,

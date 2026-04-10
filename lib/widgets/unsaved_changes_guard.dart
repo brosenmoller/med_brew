@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 
 /// Wraps a screen with a [PopScope] that intercepts the back button (and
 /// system back gesture) when [hasChanges] is true and shows a confirmation
@@ -42,24 +43,23 @@ class _UnsavedChangesGuardState extends State<UnsavedChangesGuard> {
   }
 
   Future<void> _promptDiscard(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Discard changes?'),
-        content: Text(
-          widget.message ?? 'You have unsaved changes that will be lost.',
-        ),
+        title: Text(l10n.discardChangesTitle),
+        content: Text(widget.message ?? l10n.discardChangesDefault),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep editing'),
+            child: Text(l10n.keepEditing),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red.shade700,
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Discard'),
+            child: Text(l10n.discard),
           ),
         ],
       ),

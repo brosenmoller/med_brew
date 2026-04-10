@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/services/srs_service.dart';
@@ -59,15 +60,23 @@ class _SrsButtonsState extends State<SrsButtons> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final qualities = SrsQuality.values;
     final isDesktop = _isDesktop;
+
+    final qualityLabels = {
+      SrsQuality.again: l10n.srsAgain,
+      SrsQuality.hard: l10n.srsHard,
+      SrsQuality.good: l10n.srsGood,
+      SrsQuality.easy: l10n.srsEasy,
+    };
 
     Widget content = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'How well did you know this?',
+          l10n.srsHowWellKnew,
           style: Theme.of(context).textTheme.titleMedium,
           textAlign: TextAlign.center,
         ),
@@ -81,7 +90,8 @@ class _SrsButtonsState extends State<SrsButtons> {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: _SrsChip(
                   quality: quality,
-                  nextReview: _formatDuration(nextDue),
+                  label: qualityLabels[quality]!,
+                  nextReview: _formatDuration(nextDue, l10n),
                   keyHint: isDesktop ? '${i + 1}' : null,
                   onTap: () => widget.onAnswered?.call(quality),
                 ),
@@ -111,22 +121,24 @@ class _SrsButtonsState extends State<SrsButtons> {
     return simulated.nextReview;
   }
 
-  String _formatDuration(DateTime nextReview) {
+  String _formatDuration(DateTime nextReview, AppLocalizations l10n) {
     final diff = nextReview.difference(DateTime.now());
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return '${diff.inDays}d';
+    if (diff.inMinutes < 60) return l10n.durationMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.durationHours(diff.inHours);
+    return l10n.durationDays(diff.inDays);
   }
 }
 
 class _SrsChip extends StatelessWidget {
   final SrsQuality quality;
+  final String label;
   final String nextReview;
   final String? keyHint;
   final VoidCallback onTap;
 
   const _SrsChip({
     required this.quality,
+    required this.label,
     required this.nextReview,
     required this.onTap,
     this.keyHint,
@@ -142,19 +154,6 @@ class _SrsChip extends StatelessWidget {
         return Colors.blue.shade500;
       case SrsQuality.easy:
         return Colors.green.shade500;
-    }
-  }
-
-  String _label() {
-    switch (quality) {
-      case SrsQuality.again:
-        return 'Again';
-      case SrsQuality.hard:
-        return 'Hard';
-      case SrsQuality.good:
-        return 'Good';
-      case SrsQuality.easy:
-        return 'Easy';
     }
   }
 
@@ -178,7 +177,7 @@ class _SrsChip extends StatelessWidget {
               keyHint!,
               style: const TextStyle(fontSize: 11, color: Colors.white54),
             ),
-          Text(_label(), style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
           Text(nextReview,
               style: const TextStyle(fontSize: 12, color: Colors.white70)),
         ],

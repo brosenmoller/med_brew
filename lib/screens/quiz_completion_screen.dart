@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/screens/home_screen.dart';
@@ -22,12 +23,13 @@ class QuizCompletionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final percentage =
         ((correctAnswers / totalQuestions) * 100).toStringAsFixed(1);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quiz Completed'),
+        title: Text(l10n.quizCompleted),
         centerTitle: true,
       ),
       body: KeyboardListener(
@@ -83,13 +85,13 @@ class QuizCompletionScreen extends StatelessWidget {
                         ),
                       ),
                       icon: const Icon(Icons.replay),
-                      label: const Text('Retry'),
+                      label: Text(l10n.retry),
                     ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text('Back'),
+                    label: Text(l10n.back),
                   ),
                   const SizedBox(height: 12),
                   TextButton.icon(
@@ -101,7 +103,7 @@ class QuizCompletionScreen extends StatelessWidget {
                       (r) => false,
                     ),
                     icon: const Icon(Icons.home_outlined),
-                    label: const Text('Home'),
+                    label: Text(l10n.home),
                   ),
                 ],
               ),

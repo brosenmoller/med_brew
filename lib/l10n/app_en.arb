@@ -1,0 +1,246 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Med Brew",
+
+  "settingsTooltip": "Settings",
+
+  "navBrowse": "Browse",
+  "navBrowseSubtitle": "Explore quizzes & categories",
+  "navSpacedRepetition": "Spaced Repetition",
+  "navSpacedRepetitionSubtitle": "Review your due cards",
+  "navFavorites": "Favorites",
+  "navFavoritesSubtitle": "Your saved quizzes",
+  "navManageContent": "Manage Content",
+  "navManageContentSubtitle": "Create & edit questions",
+
+  "settingsTitle": "Settings",
+  "settingsResetSrs": "Reset all SRS data",
+  "settingsResetSrsDialogTitle": "Reset SRS Data",
+  "settingsResetSrsDialogContent": "Are you sure you want to reset all SRS data? This cannot be undone.",
+  "settingsResetSrsSuccess": "All SRS data reset",
+  "settingsLanguage": "Language",
+  "settingsLanguageSystem": "System default",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageDutch": "Dutch",
+
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "save": "Save",
+  "reset": "Reset",
+  "edit": "Edit",
+  "required": "Required",
+  "start": "Start",
+  "retry": "Retry",
+  "back": "Back",
+  "home": "Home",
+  "remove": "Remove",
+  "saveChanges": "Save Changes",
+
+  "foldersSection": "Folders",
+  "quizzesSection": "Quizzes",
+  "emptyFolder": "Nothing here yet.",
+
+  "favoritesTitle": "Favorites",
+  "favoritesEmpty": "No favorite quizzes yet.",
+
+  "srsTitle": "Spaced Repetition",
+  "srsNoQuestions": "No spaced repetition questions available",
+  "srsDue": "{count} due",
+  "@srsDue": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "srsCards": "{count} cards",
+  "@srsCards": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "srsOldestOverdue": "oldest {time} overdue",
+  "@srsOldestOverdue": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "srsNextIn": "next in {time}",
+  "@srsNextIn": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "srsStartNormalQuiz": "Start normal quiz",
+  "srsNoSrsScheduling": "No SRS scheduling",
+  "srsRemoveFromSrs": "Remove from SRS",
+  "srsRemoveDialogTitle": "Remove from spaced repetition?",
+  "srsRemoveDialogContent": "All SRS progress for \"{quizTitle}\" will be lost. This cannot be undone.",
+  "@srsRemoveDialogContent": {
+    "placeholders": {
+      "quizTitle": { "type": "String" }
+    }
+  },
+  "srsNoQuestionsDue": "No questions due",
+  "srsSessionComplete": "Session Complete",
+  "srsQuestionsReviewed": "{count, plural, =1{1 question reviewed} other{{count} questions reviewed}}",
+  "@srsQuestionsReviewed": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "srsAllCaughtUp": "All caught up!",
+  "srsNoMoreDue": "No more questions due right now.",
+  "srsStillDue": "Still due",
+  "srsQuestionsDue": "{count, plural, =1{1 question due} other{{count} questions due}}",
+  "@srsQuestionsDue": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "srsBackToSpacedRepetition": "Back to Spaced Repetition",
+  "srsHowWellKnew": "How well did you know this?",
+  "srsAgain": "Again",
+  "srsHard": "Hard",
+  "srsGood": "Good",
+  "srsEasy": "Easy",
+
+  "durationNow": "now",
+  "durationDays": "{n}d",
+  "@durationDays": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "durationHours": "{n}h",
+  "@durationHours": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "durationMinutes": "{n}m",
+  "@durationMinutes": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+
+  "quizCompleted": "Quiz Completed",
+  "noQuestions": "No questions",
+
+  "manageContentTitle": "Manage Content",
+  "addFolder": "Add Folder",
+  "addQuiz": "Add Quiz",
+  "addQuestion": "Add Question",
+  "importJsonTooltip": "Import JSON",
+  "exportJsonTooltip": "Export JSON",
+  "exportSeedDbTooltip": "Export seed.db",
+  "importSuccess": "Import successful",
+  "importFailed": "Import failed: {error}",
+  "@importFailed": {
+    "placeholders": {
+      "error": { "type": "Object" }
+    }
+  },
+  "exportFailed": "Export failed: {error}",
+  "@exportFailed": {
+    "placeholders": {
+      "error": { "type": "Object" }
+    }
+  },
+  "folderContents": "Folder contents",
+  "emptyFolderManage": "Empty. Tap + to add a folder or quiz.",
+  "builtIn": "Built-in",
+  "builtInDebug": "Built-in (editable in debug)",
+  "deleteFolderTitle": "Delete Folder?",
+  "deleteFolderContent": "This will delete \"{name}\" and everything inside it.",
+  "@deleteFolderContent": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "deleteQuizTitle": "Delete Quiz?",
+  "deleteQuizContent": "This will delete \"{name}\" and all its questions.",
+  "@deleteQuizContent": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "questionsSubtitle": "Questions",
+  "noQuestionsYet": "No questions yet. Add one below.",
+  "deleteQuestionTitle": "Delete Question?",
+  "answerTypeMultipleChoiceChip": "Multiple choice",
+  "answerTypeTypedChip": "Typed",
+  "answerTypeImageClickChip": "Image click",
+
+  "editFolderAppBarTitle": "Edit Folder",
+  "addFolderAppBarTitle": "Add Folder",
+  "folderNameLabel": "Folder name",
+  "folderImageOptional": "Folder image (optional)",
+
+  "editQuizAppBarTitle": "Edit Quiz",
+  "addQuizAppBarTitle": "Add Quiz",
+  "titleLabel": "Title",
+  "quizImageOptional": "Quiz image (optional)",
+  "languageCodeLabel": "Language code",
+  "languageCodeHint": "e.g. en, nl, de, fr",
+
+  "editQuestionAppBarTitle": "Edit Question",
+  "addQuestionAppBarTitle": "Add Question",
+  "questionLabel": "Question",
+  "answerTypeLabel": "Answer type",
+  "optionsLabel": "Options",
+  "optionN": "Option {n}",
+  "@optionN": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "radioCorrectHint": "Radio button = correct answer",
+  "acceptedAnswersLabel": "Accepted Answers",
+  "acceptedAnswerN": "Accepted answer {n}",
+  "@acceptedAnswerN": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "atLeastOneRequired": "At least one required",
+  "addVariant": "Add variant",
+  "clickAreaImageLabel": "Click area image",
+  "defineClickAreas": "Define Click Areas",
+  "editClickAreas": "Edit Click Areas ({count, plural, =1{1 area} other{{count} areas}})",
+  "@editClickAreas": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "areasDefinedCount": "{count, plural, =1{1 area} other{{count} areas}} defined ✓",
+  "@areasDefinedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "pleaseDefineClickArea": "Please define at least one click area",
+  "flashcardRandomize": "Randomize front/back sides",
+  "flashcardRandomizeSubtitle": "Each attempt randomly picks which side to show first",
+  "flashcardFrontSide": "Front side",
+  "flashcardBackSide": "Back side",
+  "flashcardFrontTextOptional": "Front text (optional)",
+  "flashcardBackTextOptional": "Back text (optional)",
+  "flashcardFrontImageOptional": "Front image (optional)",
+  "flashcardBackImageOptional": "Back image (optional)",
+  "flashcardFrontRequired": "Front side needs at least text or an image",
+  "flashcardBackRequired": "Back side needs at least text or an image",
+  "questionImageOptional": "Question image (optional)",
+  "explanationOptional": "Explanation (optional)",
+  "saveQuestion": "Save Question",
+  "answerTypeMCLabel": "Multiple Choice",
+  "answerTypeTypedLabel": "Typed",
+  "answerTypeImageClickLabel": "Image Click",
+  "answerTypeFlashcardLabel": "Flashcard",
+  "unsavedChangesQuestion": "Your question changes will be lost.",
+
+  "discardChangesTitle": "Discard changes?",
+  "discardChangesDefault": "You have unsaved changes that will be lost.",
+  "keepEditing": "Keep editing",
+  "discard": "Discard"
+}

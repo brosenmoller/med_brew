@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/folder_data.dart';
 import 'package:med_brew/screens/quiz_session_screen.dart';
 import 'package:med_brew/services/question_service.dart';
@@ -15,6 +16,7 @@ class FolderBrowserScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final subfolders = folder == null
         ? _service.getRootFolders()
         : _service.getSubfolders(folder!.id);
@@ -34,10 +36,10 @@ class FolderBrowserScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(folder?.title ?? 'Browse'),
+        title: Text(folder?.title ?? l10n.navBrowse),
       ),
       body: isEmpty
-          ? const Center(child: Text('Nothing here yet.'))
+          ? Center(child: Text(l10n.emptyFolder))
           : CustomScrollView(
               slivers: [
                 if (subfolders.isNotEmpty) ...[
@@ -45,7 +47,7 @@ class FolderBrowserScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Text(
-                        'Folders',
+                        l10n.foldersSection,
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
@@ -77,7 +79,7 @@ class FolderBrowserScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                       child: Text(
-                        'Quizzes',
+                        l10n.quizzesSection,
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),

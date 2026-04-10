@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/services/question_service.dart';
@@ -43,10 +44,11 @@ class _EditFolderScreenState extends State<EditFolderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isEditing = widget.existing != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Folder' : 'Add Folder'),
+        title: Text(isEditing ? l10n.editFolderAppBarTitle : l10n.addFolderAppBarTitle),
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -59,17 +61,17 @@ class _EditFolderScreenState extends State<EditFolderScreen> {
           children: [
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Folder name',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.folderNameLabel,
+                border: const OutlineInputBorder(),
               ),
               autofocus: !isEditing,
-              validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+              validator: (v) => v!.trim().isEmpty ? l10n.required : null,
             ),
             const SizedBox(height: 20),
             ImagePickerField(
               key: _pickerKey,
-              label: 'Folder image (optional)',
+              label: l10n.folderImageOptional,
               initialPath: _imagePath,
               onChanged: (path) => setState(() => _imagePath = path),
             ),
@@ -77,7 +79,7 @@ class _EditFolderScreenState extends State<EditFolderScreen> {
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save),
-              label: Text(isEditing ? 'Save Changes' : 'Add Folder'),
+              label: Text(isEditing ? l10n.saveChanges : l10n.addFolder),
             ),
           ],
         ),

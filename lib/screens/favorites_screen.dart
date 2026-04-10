@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/services/favorites_service.dart';
 import 'package:med_brew/services/question_service.dart';
@@ -44,6 +45,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     if (!_initialized) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -52,8 +55,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     if (_favoriteQuizzes.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: Text("Favorites")),
-        body: const Center(child: Text("No favorite quizzes yet.")),
+        appBar: AppBar(title: Text(l10n.favoritesTitle)),
+        body: Center(child: Text(l10n.favoritesEmpty)),
       );
     }
 
@@ -61,7 +64,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final crossAxisCount = screenWidth < 600 ? 2 : 6;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Favorites")),
+      appBar: AppBar(title: Text(l10n.favoritesTitle)),
       body: GridView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _favoriteQuizzes.length,

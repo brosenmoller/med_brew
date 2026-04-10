@@ -1,0 +1,489 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get appTitle => 'Med Brew';
+
+  @override
+  String get settingsTooltip => 'Settings';
+
+  @override
+  String get navBrowse => 'Browse';
+
+  @override
+  String get navBrowseSubtitle => 'Explore quizzes & categories';
+
+  @override
+  String get navSpacedRepetition => 'Spaced Repetition';
+
+  @override
+  String get navSpacedRepetitionSubtitle => 'Review your due cards';
+
+  @override
+  String get navFavorites => 'Favorites';
+
+  @override
+  String get navFavoritesSubtitle => 'Your saved quizzes';
+
+  @override
+  String get navManageContent => 'Manage Content';
+
+  @override
+  String get navManageContentSubtitle => 'Create & edit questions';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsResetSrs => 'Reset all SRS data';
+
+  @override
+  String get settingsResetSrsDialogTitle => 'Reset SRS Data';
+
+  @override
+  String get settingsResetSrsDialogContent =>
+      'Are you sure you want to reset all SRS data? This cannot be undone.';
+
+  @override
+  String get settingsResetSrsSuccess => 'All SRS data reset';
+
+  @override
+  String get settingsLanguage => 'Language';
+
+  @override
+  String get settingsLanguageSystem => 'System default';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageDutch => 'Dutch';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get start => 'Start';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get home => 'Home';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get foldersSection => 'Folders';
+
+  @override
+  String get quizzesSection => 'Quizzes';
+
+  @override
+  String get emptyFolder => 'Nothing here yet.';
+
+  @override
+  String get favoritesTitle => 'Favorites';
+
+  @override
+  String get favoritesEmpty => 'No favorite quizzes yet.';
+
+  @override
+  String get srsTitle => 'Spaced Repetition';
+
+  @override
+  String get srsNoQuestions => 'No spaced repetition questions available';
+
+  @override
+  String srsDue(int count) {
+    return '$count due';
+  }
+
+  @override
+  String srsCards(int count) {
+    return '$count cards';
+  }
+
+  @override
+  String srsOldestOverdue(String time) {
+    return 'oldest $time overdue';
+  }
+
+  @override
+  String srsNextIn(String time) {
+    return 'next in $time';
+  }
+
+  @override
+  String get srsStartNormalQuiz => 'Start normal quiz';
+
+  @override
+  String get srsNoSrsScheduling => 'No SRS scheduling';
+
+  @override
+  String get srsRemoveFromSrs => 'Remove from SRS';
+
+  @override
+  String get srsRemoveDialogTitle => 'Remove from spaced repetition?';
+
+  @override
+  String srsRemoveDialogContent(String quizTitle) {
+    return 'All SRS progress for \"$quizTitle\" will be lost. This cannot be undone.';
+  }
+
+  @override
+  String get srsNoQuestionsDue => 'No questions due';
+
+  @override
+  String get srsSessionComplete => 'Session Complete';
+
+  @override
+  String srsQuestionsReviewed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count questions reviewed',
+      one: '1 question reviewed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get srsAllCaughtUp => 'All caught up!';
+
+  @override
+  String get srsNoMoreDue => 'No more questions due right now.';
+
+  @override
+  String get srsStillDue => 'Still due';
+
+  @override
+  String srsQuestionsDue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count questions due',
+      one: '1 question due',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get srsBackToSpacedRepetition => 'Back to Spaced Repetition';
+
+  @override
+  String get srsHowWellKnew => 'How well did you know this?';
+
+  @override
+  String get srsAgain => 'Again';
+
+  @override
+  String get srsHard => 'Hard';
+
+  @override
+  String get srsGood => 'Good';
+
+  @override
+  String get srsEasy => 'Easy';
+
+  @override
+  String get durationNow => 'now';
+
+  @override
+  String durationDays(int n) {
+    return '${n}d';
+  }
+
+  @override
+  String durationHours(int n) {
+    return '${n}h';
+  }
+
+  @override
+  String durationMinutes(int n) {
+    return '${n}m';
+  }
+
+  @override
+  String get quizCompleted => 'Quiz Completed';
+
+  @override
+  String get noQuestions => 'No questions';
+
+  @override
+  String get manageContentTitle => 'Manage Content';
+
+  @override
+  String get addFolder => 'Add Folder';
+
+  @override
+  String get addQuiz => 'Add Quiz';
+
+  @override
+  String get addQuestion => 'Add Question';
+
+  @override
+  String get importJsonTooltip => 'Import JSON';
+
+  @override
+  String get exportJsonTooltip => 'Export JSON';
+
+  @override
+  String get exportSeedDbTooltip => 'Export seed.db';
+
+  @override
+  String get importSuccess => 'Import successful';
+
+  @override
+  String importFailed(Object error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String exportFailed(Object error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get folderContents => 'Folder contents';
+
+  @override
+  String get emptyFolderManage => 'Empty. Tap + to add a folder or quiz.';
+
+  @override
+  String get builtIn => 'Built-in';
+
+  @override
+  String get builtInDebug => 'Built-in (editable in debug)';
+
+  @override
+  String get deleteFolderTitle => 'Delete Folder?';
+
+  @override
+  String deleteFolderContent(String name) {
+    return 'This will delete \"$name\" and everything inside it.';
+  }
+
+  @override
+  String get deleteQuizTitle => 'Delete Quiz?';
+
+  @override
+  String deleteQuizContent(String name) {
+    return 'This will delete \"$name\" and all its questions.';
+  }
+
+  @override
+  String get questionsSubtitle => 'Questions';
+
+  @override
+  String get noQuestionsYet => 'No questions yet. Add one below.';
+
+  @override
+  String get deleteQuestionTitle => 'Delete Question?';
+
+  @override
+  String get answerTypeMultipleChoiceChip => 'Multiple choice';
+
+  @override
+  String get answerTypeTypedChip => 'Typed';
+
+  @override
+  String get answerTypeImageClickChip => 'Image click';
+
+  @override
+  String get editFolderAppBarTitle => 'Edit Folder';
+
+  @override
+  String get addFolderAppBarTitle => 'Add Folder';
+
+  @override
+  String get folderNameLabel => 'Folder name';
+
+  @override
+  String get folderImageOptional => 'Folder image (optional)';
+
+  @override
+  String get editQuizAppBarTitle => 'Edit Quiz';
+
+  @override
+  String get addQuizAppBarTitle => 'Add Quiz';
+
+  @override
+  String get titleLabel => 'Title';
+
+  @override
+  String get quizImageOptional => 'Quiz image (optional)';
+
+  @override
+  String get languageCodeLabel => 'Language code';
+
+  @override
+  String get languageCodeHint => 'e.g. en, nl, de, fr';
+
+  @override
+  String get editQuestionAppBarTitle => 'Edit Question';
+
+  @override
+  String get addQuestionAppBarTitle => 'Add Question';
+
+  @override
+  String get questionLabel => 'Question';
+
+  @override
+  String get answerTypeLabel => 'Answer type';
+
+  @override
+  String get optionsLabel => 'Options';
+
+  @override
+  String optionN(int n) {
+    return 'Option $n';
+  }
+
+  @override
+  String get radioCorrectHint => 'Radio button = correct answer';
+
+  @override
+  String get acceptedAnswersLabel => 'Accepted Answers';
+
+  @override
+  String acceptedAnswerN(int n) {
+    return 'Accepted answer $n';
+  }
+
+  @override
+  String get atLeastOneRequired => 'At least one required';
+
+  @override
+  String get addVariant => 'Add variant';
+
+  @override
+  String get clickAreaImageLabel => 'Click area image';
+
+  @override
+  String get defineClickAreas => 'Define Click Areas';
+
+  @override
+  String editClickAreas(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count areas',
+      one: '1 area',
+    );
+    return 'Edit Click Areas ($_temp0)';
+  }
+
+  @override
+  String areasDefinedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count areas',
+      one: '1 area',
+    );
+    return '$_temp0 defined ✓';
+  }
+
+  @override
+  String get pleaseDefineClickArea => 'Please define at least one click area';
+
+  @override
+  String get flashcardRandomize => 'Randomize front/back sides';
+
+  @override
+  String get flashcardRandomizeSubtitle =>
+      'Each attempt randomly picks which side to show first';
+
+  @override
+  String get flashcardFrontSide => 'Front side';
+
+  @override
+  String get flashcardBackSide => 'Back side';
+
+  @override
+  String get flashcardFrontTextOptional => 'Front text (optional)';
+
+  @override
+  String get flashcardBackTextOptional => 'Back text (optional)';
+
+  @override
+  String get flashcardFrontImageOptional => 'Front image (optional)';
+
+  @override
+  String get flashcardBackImageOptional => 'Back image (optional)';
+
+  @override
+  String get flashcardFrontRequired =>
+      'Front side needs at least text or an image';
+
+  @override
+  String get flashcardBackRequired =>
+      'Back side needs at least text or an image';
+
+  @override
+  String get questionImageOptional => 'Question image (optional)';
+
+  @override
+  String get explanationOptional => 'Explanation (optional)';
+
+  @override
+  String get saveQuestion => 'Save Question';
+
+  @override
+  String get answerTypeMCLabel => 'Multiple Choice';
+
+  @override
+  String get answerTypeTypedLabel => 'Typed';
+
+  @override
+  String get answerTypeImageClickLabel => 'Image Click';
+
+  @override
+  String get answerTypeFlashcardLabel => 'Flashcard';
+
+  @override
+  String get unsavedChangesQuestion => 'Your question changes will be lost.';
+
+  @override
+  String get discardChangesTitle => 'Discard changes?';
+
+  @override
+  String get discardChangesDefault =>
+      'You have unsaved changes that will be lost.';
+
+  @override
+  String get keepEditing => 'Keep editing';
+
+  @override
+  String get discard => 'Discard';
+}
