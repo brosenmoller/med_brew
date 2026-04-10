@@ -3,57 +3,132 @@ import 'package:med_brew/l10n/app_localizations.dart';
 
 class MultipleChoiceSection extends StatelessWidget {
   final List<TextEditingController> optionControllers;
-  final int correctIndex;
-  final ValueChanged<int> onCorrectIndexChanged;
+  final Set<int> correctIndices;
+  final bool multipleCorrectEnabled;
+  final bool showCorrectCount;
+  final ValueChanged<Set<int>> onCorrectIndicesChanged;
+  final ValueChanged<bool> onMultipleCorrectChanged;
+  final ValueChanged<bool> onShowCorrectCountChanged;
+  final VoidCallback onAddOption;
+  final ValueChanged<int> onRemoveOption;
 
   const MultipleChoiceSection({
     super.key,
     required this.optionControllers,
-    required this.correctIndex,
-    required this.onCorrectIndexChanged,
+    required this.correctIndices,
+    required this.multipleCorrectEnabled,
+    required this.showCorrectCount,
+    required this.onCorrectIndicesChanged,
+    required this.onMultipleCorrectChanged,
+    required this.onShowCorrectCountChanged,
+    required this.onAddOption,
+    required this.onRemoveOption,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final canRemove = optionControllers.length > 2;
+    final canAdd = optionControllers.length < 8;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(l10n.optionsLabel,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        Row(
+          children: [
+            Text(l10n.optionsLabel,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const Spacer(),
+            Text(
+              '${optionControllers.length}/8',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
-        ...List.generate(4, (i) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            children: [
-              Radio<int>(
-                value: i,
-                groupValue: correctIndex,
-                onChanged: (v) => onCorrectIndexChanged(v!),
-              ),
-              Expanded(
-                child: TextFormField(
-                  controller: optionControllers[i],
-                  decoration: InputDecoration(
-                    labelText: l10n.optionN(i + 1),
-                    border: const OutlineInputBorder(),
-                    fillColor: correctIndex == i
-                        ? Colors.green.withOpacity(0.1)
-                        : null,
-                    filled: correctIndex == i,
+
+        ...optionControllers.asMap().entries.map((e) {
+          final i = e.key;
+          final isCorrect = correctIndices.contains(i);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                if (multipleCorrectEnabled)
+                  Checkbox(
+                    value: isCorrect,
+                    onChanged: (checked) {
+                      final updated = Set<int>.from(correctIndices);
+                      if (checked!) {
+                        updated.add(i);
+                      } else if (updated.length > 1) {
+                        updated.remove(i);
+                      }
+                      onCorrectIndicesChanged(updated);
+                    },
+                  )
+                else
+                  Radio<int>(
+                    value: i,
+                    groupValue: correctIndices.isEmpty ? -1 : correctIndices.first,
+                    onChanged: (v) => onCorrectIndicesChanged({v!}),
                   ),
-                  validator: (v) =>
-                      v!.trim().isEmpty ? l10n.required : null,
+                Expanded(
+                  child: TextFormField(
+                    controller: e.value,
+                    decoration: InputDecoration(
+                      labelText: l10n.optionN(i + 1),
+                      border: const OutlineInputBorder(),
+                      fillColor: isCorrect ? Colors.green.withOpacity(0.1) : null,
+                      filled: isCorrect,
+                    ),
+                    validator: (v) => v!.trim().isEmpty ? l10n.required : null,
+                  ),
                 ),
-              ),
-            ],
+                IconButton(
+                  icon: Icon(
+                    Icons.remove_circle_outline,
+                    color: canRemove ? Colors.red : Colors.grey,
+                  ),
+                  onPressed: canRemove ? () => onRemoveOption(i) : null,
+                ),
+              ],
+            ),
+          );
+        }),
+
+        if (canAdd)
+          TextButton.icon(
+            onPressed: onAddOption,
+            icon: const Icon(Icons.add),
+            label: Text(l10n.addOption),
           ),
-        )),
-        Text(l10n.radioCorrectHint,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: Colors.green)),
+        const SizedBox(height: 4),
+
+        Text(
+          multipleCorrectEnabled ? l10n.checkboxCorrectHint : l10n.radioCorrectHint,
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: Colors.green),
+        ),
+        const SizedBox(height: 4),
+
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.multipleCorrectAnswers),
+          value: multipleCorrectEnabled,
+          onChanged: onMultipleCorrectChanged,
+        ),
+
+        if (multipleCorrectEnabled)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.showCorrectCount),
+            subtitle: Text(l10n.showCorrectCountSubtitle),
+            value: showCorrectCount,
+            onChanged: onShowCorrectCountChanged,
+          ),
       ],
     );
   }

@@ -121,6 +121,20 @@
   "optionsLabel": "Opties",
   "optionN": "Optie {n}",
   "radioCorrectHint": "Radioknop = juist antwoord",
+  "checkboxCorrectHint": "Vink alle juiste antwoorden aan",
+  "addOption": "Optie toevoegen",
+  "multipleCorrectAnswers": "Meerdere juiste antwoorden",
+  "showCorrectCount": "Aantal antwoorden tonen",
+  "showCorrectCountSubtitle": "Vertel studenten hoeveel antwoorden ze moeten selecteren",
+  "checkAnswer": "Antwoord controleren",
+  "selectAllThatApply": "Selecteer alles wat van toepassing is",
+  "selectNCorrectAnswers": "{count, plural, =1{Selecteer 1 juist antwoord} other{Selecteer {count} juiste antwoorden}}",
+  "@selectNCorrectAnswers": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "selectAtLeastOneCorrect": "Markeer minimaal één optie als juist",
   "acceptedAnswersLabel": "Geaccepteerde antwoorden",
   "acceptedAnswerN": "Geaccepteerd antwoord {n}",
   "atLeastOneRequired": "Minimaal één vereist",

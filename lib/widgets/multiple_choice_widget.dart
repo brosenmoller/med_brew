@@ -1,9 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/answer_state.dart';
 import 'package:med_brew/models/question_data.dart';
-import 'package:flutter/foundation.dart';
 import 'package:med_brew/widgets/question_image.dart';
 
 class MultipleChoiceWidget extends StatefulWidget {
@@ -26,7 +27,9 @@ class MultipleChoiceWidget extends StatefulWidget {
 
 class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
   late List<String> options;
-  int? selectedIndex;
+  late Set<int> _selectedIndices;
+  late Set<int> _correctDisplayIndices;
+  late bool _isMultipleCorrect;
   late FocusNode _focusNode;
 
   bool get isDesktop {
@@ -36,21 +39,28 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
         defaultTargetPlatform == TargetPlatform.macOS;
   }
 
-  String get _correctAnswer =>
-      widget.question.multipleChoiceConfig!.options[
-      widget.question.multipleChoiceConfig!.correctIndex];
-
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
 
     final config = widget.question.multipleChoiceConfig!;
-    options = List.from(config.options);
+    _isMultipleCorrect = config.multipleCorrect;
 
-    if (config.scrambleOptions) {
-      options.shuffle(Random());
-    }
+    final originalOptions = config.options;
+    final correctTexts =
+        config.correctIndices.map((i) => originalOptions[i]).toSet();
+
+    options = List.from(originalOptions);
+    if (config.scrambleOptions) options.shuffle(Random());
+
+    _selectedIndices = {};
+    _correctDisplayIndices = options
+        .asMap()
+        .entries
+        .where((e) => correctTexts.contains(e.value))
+        .map((e) => e.key)
+        .toSet();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusNode.requestFocus();
@@ -63,58 +73,90 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
     super.dispose();
   }
 
-  void _selectOption(int index) {
-    if (widget.locked || selectedIndex != null) return;
+  void _toggleOption(int index) {
+    if (widget.locked) return;
 
-    setState(() => selectedIndex = index);
-
-    final isCorrect = options[index] == _correctAnswer;
-    widget.onAnswered(isCorrect);
+    if (!_isMultipleCorrect) {
+      // Single-correct: auto-submit on first tap.
+      if (_selectedIndices.isNotEmpty) return;
+      setState(() => _selectedIndices = {index});
+      widget.onAnswered(_correctDisplayIndices.contains(index));
+    } else {
+      // Multi-correct: toggle selection, submit via check button.
+      setState(() {
+        if (_selectedIndices.contains(index)) {
+          _selectedIndices.remove(index);
+        } else {
+          _selectedIndices.add(index);
+        }
+      });
+    }
   }
 
-  /// Returns the background colour an option button should use once answered.
-  Color? _buttonColor(int index) {
-    if (widget.answerState == AnswerState.unanswered) return null;
+  void _checkAnswer() {
+    if (widget.locked || _selectedIndices.isEmpty) return;
+    widget.onAnswered(setEquals(_selectedIndices, _correctDisplayIndices));
+  }
 
-    final isSelected = selectedIndex == index;
-    final isCorrectOption = options[index] == _correctAnswer;
+  /// Background colour for an option button.
+  Color? _buttonColor(int index, BuildContext context) {
+    if (widget.answerState == AnswerState.unanswered) {
+      if (_isMultipleCorrect && _selectedIndices.contains(index)) {
+        return Theme.of(context).colorScheme.primaryContainer;
+      }
+      return null;
+    }
 
-    if (isSelected && widget.answerState == AnswerState.correct) {
-      return Colors.green.shade600;
+    final isSelected = _selectedIndices.contains(index);
+    final isCorrect = _correctDisplayIndices.contains(index);
+
+    if (!_isMultipleCorrect) {
+      if (isSelected && widget.answerState == AnswerState.correct) {
+        return Colors.green.shade600;
+      }
+      if (isSelected && widget.answerState == AnswerState.incorrect) {
+        return Colors.red.shade600;
+      }
+      if (!isSelected &&
+          isCorrect &&
+          widget.answerState == AnswerState.incorrect) {
+        return Colors.green.shade600;
+      }
+      return null;
     }
-    if (isSelected && widget.answerState == AnswerState.incorrect) {
-      return Colors.red.shade600;
-    }
-    // Always reveal the correct answer when the user got it wrong.
-    if (!isSelected &&
-        isCorrectOption &&
-        widget.answerState == AnswerState.incorrect) {
-      return Colors.green.shade600;
-    }
+
+    // Multi-correct post-check: always reveal correct in green, wrong in red.
+    if (isCorrect) return Colors.green.shade600;
+    if (isSelected) return Colors.red.shade600;
     return null;
   }
 
-  Color? _textColor(int index) {
-    return _buttonColor(index) != null ? Colors.white : null;
+  Color? _textColor(int index, BuildContext context) {
+    final bg = _buttonColor(index, context);
+    if (bg == null) return null;
+    if (widget.answerState == AnswerState.unanswered) {
+      return Theme.of(context).colorScheme.onPrimaryContainer;
+    }
+    return Colors.white;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final config = widget.question.multipleChoiceConfig!;
+
     final buttonItems = List.generate(options.length, (index) {
-      final bgColor = _buttonColor(index);
+      final bgColor = _buttonColor(index, context);
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: ElevatedButton(
-          onPressed: widget.locked ? null : () => _selectOption(index),
+          onPressed: widget.locked ? null : () => _toggleOption(index),
           style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 24,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
             backgroundColor: bgColor,
             disabledBackgroundColor: bgColor,
-            disabledForegroundColor: _textColor(index),
-            foregroundColor: _textColor(index),
+            disabledForegroundColor: _textColor(index, context),
+            foregroundColor: _textColor(index, context),
           ),
           child: Row(
             children: [
@@ -125,22 +167,61 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
                     width: 28,
                     child: _ShortcutBadge(
                       number: index + 1,
-                      overrideColor: _textColor(index),
+                      overrideColor: _textColor(index, context),
                     ),
                   ),
                 ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  options[index],
-                  textAlign: TextAlign.left,
-                ),
+                child: Text(options[index], textAlign: TextAlign.left),
               ),
             ],
           ),
         ),
       );
     });
+
+    final half = (options.length / 2).ceil();
+
+    Widget buttonGrid = LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 500) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(width: 60),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: buttonItems.sublist(0, half),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: buttonItems.sublist(half),
+                ),
+              ),
+              const SizedBox(width: 60),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            const SizedBox(width: 60),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: buttonItems,
+              ),
+            ),
+            const SizedBox(width: 60),
+          ],
+        );
+      },
+    );
 
     Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -162,45 +243,36 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 800),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final half = (options.length / 2).ceil();
-                  if (constraints.maxWidth > 500) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(width: 60),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: buttonItems.sublist(0, half),
-                          ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isMultipleCorrect) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Chip(
+                        avatar: const Icon(Icons.check_box_outlined, size: 16),
+                        label: Text(
+                          config.showCorrectCount
+                              ? l10n.selectNCorrectAnswers(
+                                  _correctDisplayIndices.length)
+                              : l10n.selectAllThatApply,
+                          style: const TextStyle(fontSize: 13),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: buttonItems.sublist(half),
-                          ),
-                        ),
-                        const SizedBox(width: 60),
-                      ],
-                    );
-                  }
-                  return Row(
-                    children: [
-                      const SizedBox(width: 60),
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: buttonItems,
-                        ),
+                        visualDensity: VisualDensity.compact,
                       ),
-                      const SizedBox(width: 60),
-                    ],
-                  );
-                },
+                    ),
+                  ],
+                  buttonGrid,
+                  if (_isMultipleCorrect &&
+                      widget.answerState == AnswerState.unanswered) ...[
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed:
+                          _selectedIndices.isNotEmpty ? _checkAnswer : null,
+                      child: Text(l10n.checkAnswer),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -239,12 +311,20 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
       autofocus: true,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent && !widget.locked) {
+          // Number keys: toggle option.
           for (int i = 0; i < options.length && i < 9; i++) {
             if (event.logicalKey == topRowKeys[i] ||
                 event.logicalKey == numpadKeys[i]) {
-              _selectOption(i);
+              _toggleOption(i);
               return KeyEventResult.handled;
             }
+          }
+          // Enter/Space: submit multi-select answer.
+          if (_isMultipleCorrect &&
+              (event.logicalKey == LogicalKeyboardKey.enter ||
+                  event.logicalKey == LogicalKeyboardKey.space)) {
+            _checkAnswer();
+            return KeyEventResult.handled;
           }
         }
         return KeyEventResult.ignored;
@@ -262,8 +342,7 @@ class _ShortcutBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        overrideColor ?? Theme.of(context).colorScheme.primary;
+    final color = overrideColor ?? Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

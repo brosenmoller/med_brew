@@ -373,6 +373,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get radioCorrectHint => 'Radio button = correct answer';
 
   @override
+  String get checkboxCorrectHint => 'Check all correct answers';
+
+  @override
+  String get addOption => 'Add option';
+
+  @override
+  String get multipleCorrectAnswers => 'Multiple correct answers';
+
+  @override
+  String get showCorrectCount => 'Show answer count';
+
+  @override
+  String get showCorrectCountSubtitle =>
+      'Tell students how many answers to select';
+
+  @override
+  String get checkAnswer => 'Check answer';
+
+  @override
+  String get selectAllThatApply => 'Select all that apply';
+
+  @override
+  String selectNCorrectAnswers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Select $count correct answers',
+      one: 'Select 1 correct answer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get selectAtLeastOneCorrect =>
+      'Please mark at least one option as correct';
+
+  @override
   String get acceptedAnswersLabel => 'Accepted Answers';
 
   @override

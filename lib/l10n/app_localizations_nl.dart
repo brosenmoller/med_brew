@@ -374,6 +374,42 @@ class AppLocalizationsNl extends AppLocalizations {
   String get radioCorrectHint => 'Radioknop = juist antwoord';
 
   @override
+  String get checkboxCorrectHint => 'Vink alle juiste antwoorden aan';
+
+  @override
+  String get addOption => 'Optie toevoegen';
+
+  @override
+  String get multipleCorrectAnswers => 'Meerdere juiste antwoorden';
+
+  @override
+  String get showCorrectCount => 'Aantal antwoorden tonen';
+
+  @override
+  String get showCorrectCountSubtitle =>
+      'Vertel studenten hoeveel antwoorden ze moeten selecteren';
+
+  @override
+  String get checkAnswer => 'Antwoord controleren';
+
+  @override
+  String get selectAllThatApply => 'Selecteer alles wat van toepassing is';
+
+  @override
+  String selectNCorrectAnswers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Selecteer $count juiste antwoorden',
+      one: 'Selecteer 1 juist antwoord',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get selectAtLeastOneCorrect => 'Markeer minimaal één optie als juist';
+
+  @override
   String get acceptedAnswersLabel => 'Geaccepteerde antwoorden';
 
   @override

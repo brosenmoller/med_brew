@@ -44,7 +44,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
   // Multiple choice
   late final List<TextEditingController> _optionControllers;
-  late int _correctIndex;
+  late Set<int> _correctIndices;
+  bool _multipleCorrectEnabled = false;
+  bool _showCorrectCount = false;
 
   // Typed
   late final List<TextEditingController> _acceptedAnswerControllers;
@@ -89,14 +91,16 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         _optionControllers = mc.options
             .map((o) => TextEditingController(text: o))
             .toList();
-        while (_optionControllers.length < 4) {
+        while (_optionControllers.length < 2) {
           _optionControllers.add(TextEditingController());
         }
-        _correctIndex = mc.correctIndex;
+        _correctIndices = mc.correctIndices.toSet();
+        _multipleCorrectEnabled = mc.multipleCorrect;
+        _showCorrectCount = mc.showCorrectCount;
       } else {
         _optionControllers =
             List.generate(4, (_) => TextEditingController());
-        _correctIndex = 0;
+        _correctIndices = {0};
       }
 
       if (_answerType == 'typed') {
@@ -130,7 +134,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       // Add mode defaults
       _optionControllers =
           List.generate(4, (_) => TextEditingController());
-      _correctIndex = 0;
+      _correctIndices = {0};
       _acceptedAnswerControllers = [TextEditingController()];
       _flashcardFrontTextController = TextEditingController();
       _flashcardBackTextController = TextEditingController();
@@ -197,9 +201,36 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                   if (_answerType == 'multipleChoice')
                     MultipleChoiceSection(
                       optionControllers: _optionControllers,
-                      correctIndex: _correctIndex,
-                      onCorrectIndexChanged: (v) => setState(() {
-                        _correctIndex = v;
+                      correctIndices: _correctIndices,
+                      multipleCorrectEnabled: _multipleCorrectEnabled,
+                      showCorrectCount: _showCorrectCount,
+                      onCorrectIndicesChanged: (v) => setState(() {
+                        _correctIndices = v;
+                        _isDirty = true;
+                      }),
+                      onMultipleCorrectChanged: (v) => setState(() {
+                        _multipleCorrectEnabled = v;
+                        if (!v && _correctIndices.length > 1) {
+                          _correctIndices = {_correctIndices.first};
+                        }
+                        _isDirty = true;
+                      }),
+                      onShowCorrectCountChanged: (v) => setState(() {
+                        _showCorrectCount = v;
+                        _isDirty = true;
+                      }),
+                      onAddOption: () {
+                        final c = TextEditingController();
+                        c.addListener(_markDirty);
+                        setState(() => _optionControllers.add(c));
+                      },
+                      onRemoveOption: (i) => setState(() {
+                        _optionControllers.removeAt(i).dispose();
+                        _correctIndices = _correctIndices
+                            .where((idx) => idx != i)
+                            .map((idx) => idx > i ? idx - 1 : idx)
+                            .toSet();
+                        if (_correctIndices.isEmpty) _correctIndices = {0};
                         _isDirty = true;
                       }),
                     ),
@@ -304,12 +335,19 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     String? savedImagePath;
 
     if (_answerType == 'multipleChoice') {
+      if (_correctIndices.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.selectAtLeastOneCorrect)));
+        return;
+      }
       savedImagePath = await _pickerKey.currentState
           ?.applyAutoName('question_$questionText') ?? _imagePath;
       answerConfig = jsonEncode({
         'options': _optionControllers.map((c) => c.text.trim()).toList(),
-        'correctIndex': _correctIndex,
+        'correctIndices': _correctIndices.toList(),
         'scrambleOptions': true,
+        if (_multipleCorrectEnabled) 'multipleCorrect': true,
+        if (_showCorrectCount) 'showCorrectCount': true,
       });
     } else if (_answerType == 'imageClick') {
       savedImagePath = await _pickerKey.currentState

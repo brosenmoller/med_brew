@@ -740,6 +740,60 @@ abstract class AppLocalizations {
   /// **'Radio button = correct answer'**
   String get radioCorrectHint;
 
+  /// No description provided for @checkboxCorrectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check all correct answers'**
+  String get checkboxCorrectHint;
+
+  /// No description provided for @addOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Add option'**
+  String get addOption;
+
+  /// No description provided for @multipleCorrectAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'Multiple correct answers'**
+  String get multipleCorrectAnswers;
+
+  /// No description provided for @showCorrectCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Show answer count'**
+  String get showCorrectCount;
+
+  /// No description provided for @showCorrectCountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell students how many answers to select'**
+  String get showCorrectCountSubtitle;
+
+  /// No description provided for @checkAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Check answer'**
+  String get checkAnswer;
+
+  /// No description provided for @selectAllThatApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all that apply'**
+  String get selectAllThatApply;
+
+  /// No description provided for @selectNCorrectAnswers.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Select 1 correct answer} other{Select {count} correct answers}}'**
+  String selectNCorrectAnswers(int count);
+
+  /// No description provided for @selectAtLeastOneCorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Please mark at least one option as correct'**
+  String get selectAtLeastOneCorrect;
+
   /// No description provided for @acceptedAnswersLabel.
   ///
   /// In en, this message translates to:

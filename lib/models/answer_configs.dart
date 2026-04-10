@@ -102,27 +102,46 @@ class FlashcardConfig {
 
 class MultipleChoiceConfig {
   final List<String> options;
-  final int correctIndex;
+  final List<int> correctIndices;
   final bool scrambleOptions;
+  final bool multipleCorrect;
+  final bool showCorrectCount;
 
   MultipleChoiceConfig({
     required this.options,
-    required this.correctIndex,
+    required this.correctIndices,
     this.scrambleOptions = true,
+    this.multipleCorrect = false,
+    this.showCorrectCount = false,
   });
 
+  /// Backward-compat accessor for code that still reads a single index.
+  int get correctIndex => correctIndices.isNotEmpty ? correctIndices.first : 0;
+
   factory MultipleChoiceConfig.fromJson(Map<String, dynamic> json) {
+    List<int> indices;
+    if (json.containsKey('correctIndices')) {
+      indices = List<int>.from(json['correctIndices'] as List);
+    } else if (json.containsKey('correctIndex')) {
+      indices = [json['correctIndex'] as int];
+    } else {
+      indices = [0];
+    }
     return MultipleChoiceConfig(
       options: List<String>.from(json['options'] ?? []),
-      correctIndex: json['correctIndex'] as int,
+      correctIndices: indices,
       scrambleOptions: json['scrambleOptions'] as bool? ?? true,
+      multipleCorrect: json['multipleCorrect'] as bool? ?? false,
+      showCorrectCount: json['showCorrectCount'] as bool? ?? false,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'options': options,
-    'correctIndex': correctIndex,
+    'correctIndices': correctIndices,
     'scrambleOptions': scrambleOptions,
+    if (multipleCorrect) 'multipleCorrect': true,
+    if (showCorrectCount) 'showCorrectCount': true,
   };
 }
 

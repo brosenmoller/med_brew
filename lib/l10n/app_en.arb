@@ -196,6 +196,20 @@
     }
   },
   "radioCorrectHint": "Radio button = correct answer",
+  "checkboxCorrectHint": "Check all correct answers",
+  "addOption": "Add option",
+  "multipleCorrectAnswers": "Multiple correct answers",
+  "showCorrectCount": "Show answer count",
+  "showCorrectCountSubtitle": "Tell students how many answers to select",
+  "checkAnswer": "Check answer",
+  "selectAllThatApply": "Select all that apply",
+  "selectNCorrectAnswers": "{count, plural, =1{Select 1 correct answer} other{Select {count} correct answers}}",
+  "@selectNCorrectAnswers": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "selectAtLeastOneCorrect": "Please mark at least one option as correct",
   "acceptedAnswersLabel": "Accepted Answers",
   "acceptedAnswerN": "Accepted answer {n}",
   "@acceptedAnswerN": {
