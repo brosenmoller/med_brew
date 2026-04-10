@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/screens/manage_content_screens/edit_question_screen.dart';
+import 'package:med_brew/services/question_service.dart';
 
 class ManageQuestionsScreen extends StatelessWidget {
   final AppDatabase db;
@@ -162,6 +163,7 @@ class ManageQuestionsScreen extends StatelessWidget {
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               await db.deleteQuestion(q.id);
+              await QuestionService().refresh();
               if (ctx.mounted) Navigator.pop(ctx);
             },
             child: Text(l10n.delete),

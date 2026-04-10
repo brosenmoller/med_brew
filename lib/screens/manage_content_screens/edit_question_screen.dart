@@ -206,7 +206,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                       labelText: l10n.questionLabel,
                       border: const OutlineInputBorder(),
                     ),
-                    maxLines: 2,
+                    maxLines: null,
                     validator: (v) => v!.trim().isEmpty ? l10n.required : null,
                   ),
                   const SizedBox(height: 16),
