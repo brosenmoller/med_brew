@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/models/question_data.dart';
+import 'package:med_brew/models/quiz_data.dart';
+import 'package:med_brew/screens/quiz_session_screen.dart';
 import 'package:med_brew/screens/srs_session_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
@@ -48,6 +50,7 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
           : null;
 
       entries.add(_QuizEntry(
+        quiz: quiz,
         quizTitle: quiz.title,
         folderTitle: folderTitle,
         dueQuestions: dueQuestions,
@@ -84,8 +87,12 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             itemCount: entries.length,
-            itemBuilder: (context, index) =>
-                _QuizCard(entry: entries[index], onStart: _start),
+            itemBuilder: (context, index) => _QuizCard(
+              entry: entries[index],
+              onStart: _start,
+              onStartNormal: _startNormal,
+              onRemoveSrs: _removeSrs,
+            ),
           ),
         ),
       ),
@@ -104,15 +111,69 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
       if (mounted) setState(() {});
     });
   }
+
+  void _startNormal(BuildContext context, QuizData quiz) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QuizSessionScreen(quizData: quiz),
+      ),
+    ).then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _removeSrs(BuildContext context, _QuizEntry entry) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Remove from spaced repetition?'),
+        content: Text(
+          'All SRS progress for "${entry.quizTitle}" will be lost. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if ((confirmed ?? false) && mounted) {
+      for (final q in entry.allQuestions) {
+        await srsService.setQuestionSrs(q, false);
+      }
+      setState(() {});
+    }
+  }
 }
+
+// ── Popup menu actions ────────────────────────────────────────────────────────
+
+enum _CardAction { startNormal, removeSrs }
 
 // ── Card widget ───────────────────────────────────────────────────────────────
 
 class _QuizCard extends StatelessWidget {
   final _QuizEntry entry;
   final void Function(BuildContext, List<QuestionData>, String) onStart;
+  final void Function(BuildContext, QuizData) onStartNormal;
+  final void Function(BuildContext, _QuizEntry) onRemoveSrs;
 
-  const _QuizCard({required this.entry, required this.onStart});
+  const _QuizCard({
+    required this.entry,
+    required this.onStart,
+    required this.onStartNormal,
+    required this.onRemoveSrs,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -200,9 +261,9 @@ class _QuizCard extends StatelessWidget {
                         ),
                       ),
 
-                      // Right: start button
-                      if (hasDue) ...[
-                        const SizedBox(width: 12),
+                      // Right: start button + overflow menu
+                      const SizedBox(width: 8),
+                      if (hasDue)
                         FilledButton(
                           onPressed: () => onStart(
                               context,
@@ -215,7 +276,37 @@ class _QuizCard extends StatelessWidget {
                           ),
                           child: const Text('Start'),
                         ),
-                      ],
+                      PopupMenuButton<_CardAction>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (action) {
+                          if (action == _CardAction.startNormal) {
+                            onStartNormal(context, entry.quiz);
+                          } else if (action == _CardAction.removeSrs) {
+                            onRemoveSrs(context, entry);
+                          }
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: _CardAction.startNormal,
+                            child: ListTile(
+                              leading: Icon(Icons.play_arrow_outlined),
+                              title: Text('Start normal quiz'),
+                              subtitle: Text('No SRS scheduling'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: _CardAction.removeSrs,
+                            child: ListTile(
+                              leading: Icon(Icons.remove_circle_outline,
+                                  color: Colors.red),
+                              title: Text('Remove from SRS',
+                                  style: TextStyle(color: Colors.red)),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -277,6 +368,7 @@ class _Tag extends StatelessWidget {
 // ── Data class ────────────────────────────────────────────────────────────────
 
 class _QuizEntry {
+  final QuizData quiz;
   final String quizTitle;
   final String? folderTitle;
   final List<QuestionData> dueQuestions;
@@ -285,6 +377,7 @@ class _QuizEntry {
   final DateTime nextUpcoming;
 
   const _QuizEntry({
+    required this.quiz,
     required this.quizTitle,
     required this.folderTitle,
     required this.dueQuestions,
