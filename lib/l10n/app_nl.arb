@@ -135,6 +135,7 @@
     }
   },
   "selectAtLeastOneCorrect": "Markeer minimaal één optie als juist",
+  "duplicateOption": "Opties moeten uniek zijn",
   "acceptedAnswersLabel": "Geaccepteerde antwoorden",
   "acceptedAnswerN": "Geaccepteerd antwoord {n}",
   "atLeastOneRequired": "Minimaal één vereist",

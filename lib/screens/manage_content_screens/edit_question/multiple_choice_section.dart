@@ -82,7 +82,18 @@ class MultipleChoiceSection extends StatelessWidget {
                       fillColor: isCorrect ? Colors.green.withOpacity(0.1) : null,
                       filled: isCorrect,
                     ),
-                    validator: (v) => v!.trim().isEmpty ? l10n.required : null,
+                    validator: (v) {
+                      if (v!.trim().isEmpty) return l10n.required;
+                      final trimmed = v.trim().toLowerCase();
+                      for (int j = 0; j < optionControllers.length; j++) {
+                        if (j != i &&
+                            optionControllers[j].text.trim().toLowerCase() ==
+                                trimmed) {
+                          return l10n.duplicateOption;
+                        }
+                      }
+                      return null;
+                    },
                   ),
                 ),
                 IconButton(

@@ -210,6 +210,7 @@
     }
   },
   "selectAtLeastOneCorrect": "Please mark at least one option as correct",
+  "duplicateOption": "Options must be unique",
   "acceptedAnswersLabel": "Accepted Answers",
   "acceptedAnswerN": "Accepted answer {n}",
   "@acceptedAnswerN": {

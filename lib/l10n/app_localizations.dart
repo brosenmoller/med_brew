@@ -794,6 +794,12 @@ abstract class AppLocalizations {
   /// **'Please mark at least one option as correct'**
   String get selectAtLeastOneCorrect;
 
+  /// No description provided for @duplicateOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Options must be unique'**
+  String get duplicateOption;
+
   /// No description provided for @acceptedAnswersLabel.
   ///
   /// In en, this message translates to:

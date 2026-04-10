@@ -410,6 +410,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please mark at least one option as correct';
 
   @override
+  String get duplicateOption => 'Options must be unique';
+
+  @override
   String get acceptedAnswersLabel => 'Accepted Answers';
 
   @override

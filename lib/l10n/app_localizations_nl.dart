@@ -410,6 +410,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get selectAtLeastOneCorrect => 'Markeer minimaal één optie als juist';
 
   @override
+  String get duplicateOption => 'Opties moeten uniek zijn';
+
+  @override
   String get acceptedAnswersLabel => 'Geaccepteerde antwoorden';
 
   @override

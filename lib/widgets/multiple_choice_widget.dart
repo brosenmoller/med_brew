@@ -131,6 +131,21 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
     return null;
   }
 
+  /// Trailing icon shown on a button after the answer is checked.
+  /// Only appears on options the user actually selected, so green buttons
+  /// without an icon are correct answers the user missed.
+  Widget? _trailingIcon(int index) {
+    if (widget.answerState == AnswerState.unanswered) return null;
+    if (!_selectedIndices.contains(index)) return null;
+
+    final isCorrect = _correctDisplayIndices.contains(index);
+    return Icon(
+      isCorrect ? Icons.check_circle_outline : Icons.cancel_outlined,
+      color: Colors.white,
+      size: 20,
+    );
+  }
+
   Color? _textColor(int index, BuildContext context) {
     final bg = _buttonColor(index, context);
     if (bg == null) return null;
@@ -175,6 +190,10 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
               Expanded(
                 child: Text(options[index], textAlign: TextAlign.left),
               ),
+              if (_trailingIcon(index) case final icon?) ...[
+                const SizedBox(width: 8),
+                icon,
+              ],
             ],
           ),
         ),
