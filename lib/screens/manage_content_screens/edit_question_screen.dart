@@ -4,10 +4,14 @@ import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, TypedAnswerConfig;
-import 'package:med_brew/screens/manage_content_screens/image_area_selector_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 import 'package:med_brew/widgets/unsaved_changes_guard.dart';
+import 'edit_question/answer_type_selector.dart';
+import 'edit_question/multiple_choice_section.dart';
+import 'edit_question/typed_answer_section.dart';
+import 'edit_question/image_click_section.dart';
+import 'edit_question/flashcard_section.dart';
 
 class EditQuestionScreen extends StatefulWidget {
   final int quizId;
@@ -169,233 +173,121 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.all(16),
-            children: [
-              TextFormField(
-                controller: _questionController,
-                decoration: InputDecoration(
-                  labelText: l10n.questionLabel,
-                  border: const OutlineInputBorder(),
-                ),
-                maxLines: 2,
-                validator: (v) => v!.trim().isEmpty ? l10n.required : null,
-              ),
-              const SizedBox(height: 16),
-
-              _AnswerTypeSelector(
-                selected: _answerType,
-                onChanged: (v) => setState(() {
-                  _answerType = v;
-                  _isDirty = true;
-                }),
-              ),
-              const SizedBox(height: 16),
-
-              if (_answerType == 'multipleChoice') ...[
-                Text(l10n.optionsLabel,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                ...List.generate(4, (i) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Radio<int>(
-                        value: i,
-                        groupValue: _correctIndex,
-                        onChanged: (v) => setState(() {
-                          _correctIndex = v!;
-                          _isDirty = true;
-                        }),
-                      ),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _optionControllers[i],
-                          decoration: InputDecoration(
-                            labelText: l10n.optionN(i + 1),
-                            border: const OutlineInputBorder(),
-                            fillColor: _correctIndex == i
-                                ? Colors.green.withOpacity(0.1)
-                                : null,
-                            filled: _correctIndex == i,
-                          ),
-                          validator: (v) =>
-                          v!.trim().isEmpty ? l10n.required : null,
-                        ),
-                      ),
-                    ],
+                children: [
+                  TextFormField(
+                    controller: _questionController,
+                    decoration: InputDecoration(
+                      labelText: l10n.questionLabel,
+                      border: const OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                    validator: (v) => v!.trim().isEmpty ? l10n.required : null,
                   ),
-                )),
-                Text(l10n.radioCorrectHint,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Colors.green)),
-              ],
+                  const SizedBox(height: 16),
 
-              if (_answerType == 'imageClick') ...[
-                ImagePickerField(
-                  key: _pickerKey,
-                  label: l10n.clickAreaImageLabel,
-                  initialPath: _imagePath,
-                  onChanged: (path) => setState(() {
-                    _imagePath = path;
-                    _selectedImageAreas = [];
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                if (_imagePath != null && _imagePath!.isNotEmpty)
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final result = await Navigator.push<List<List<Offset>>>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ImageAreaSelectorScreen(
-                            imagePath: _imagePath!,
-                            initialAreas: _selectedImageAreas,
-                          ),
-                        ),
-                      );
-                      if (result != null) {
-                        setState(() {
-                          _selectedImageAreas = result;
-                          _isDirty = true;
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.edit_location_alt_outlined),
-                    label: Text(
-                      _selectedImageAreas.isEmpty
-                          ? l10n.defineClickAreas
-                          : l10n.editClickAreas(_selectedImageAreas.length),
+                  AnswerTypeSelector(
+                    selected: _answerType,
+                    onChanged: (v) => setState(() {
+                      _answerType = v;
+                      _isDirty = true;
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (_answerType == 'multipleChoice')
+                    MultipleChoiceSection(
+                      optionControllers: _optionControllers,
+                      correctIndex: _correctIndex,
+                      onCorrectIndexChanged: (v) => setState(() {
+                        _correctIndex = v;
+                        _isDirty = true;
+                      }),
+                    ),
+
+                  if (_answerType == 'imageClick')
+                    ImageClickSection(
+                      pickerKey: _pickerKey,
+                      imagePath: _imagePath,
+                      selectedImageAreas: _selectedImageAreas,
+                      onImageChanged: (path) => setState(() {
+                        _imagePath = path;
+                        _selectedImageAreas = [];
+                        _isDirty = true;
+                      }),
+                      onAreasChanged: (areas) => setState(() {
+                        _selectedImageAreas = areas;
+                        _isDirty = true;
+                      }),
+                    ),
+
+                  if (_answerType == 'typed')
+                    TypedAnswerSection(
+                      controllers: _acceptedAnswerControllers,
+                      onAddVariant: () {
+                        final c = TextEditingController();
+                        c.addListener(_markDirty);
+                        setState(() => _acceptedAnswerControllers.add(c));
+                      },
+                      onRemoveVariant: (index) => setState(() {
+                        _acceptedAnswerControllers.removeAt(index).dispose();
+                        _isDirty = true;
+                      }),
+                    ),
+
+                  if (_answerType == 'flashcard')
+                    FlashcardSection(
+                      randomizeSides: _flashcardRandomizeSides,
+                      onRandomizeChanged: (v) => setState(() {
+                        _flashcardRandomizeSides = v;
+                        _isDirty = true;
+                      }),
+                      frontTextController: _flashcardFrontTextController,
+                      backTextController: _flashcardBackTextController,
+                      frontImagePath: _flashcardFrontImagePath,
+                      backImagePath: _flashcardBackImagePath,
+                      frontPickerKey: _flashcardFrontPickerKey,
+                      backPickerKey: _flashcardBackPickerKey,
+                      onFrontImageChanged: (path) => setState(() {
+                        _flashcardFrontImagePath = path;
+                        _isDirty = true;
+                      }),
+                      onBackImageChanged: (path) => setState(() {
+                        _flashcardBackImagePath = path;
+                        _isDirty = true;
+                      }),
+                    ),
+
+                  if (_answerType != 'imageClick' && _answerType != 'flashcard') ...[
+                    const SizedBox(height: 8),
+                    ImagePickerField(
+                      key: _pickerKey,
+                      label: l10n.questionImageOptional,
+                      initialPath: _imagePath,
+                      onChanged: (path) => setState(() {
+                        _imagePath = path;
+                        _isDirty = true;
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  TextFormField(
+                    controller: _explanationController,
+                    decoration: InputDecoration(
+                      labelText: l10n.explanationOptional,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
-                if (_selectedImageAreas.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      l10n.areasDefinedCount(_selectedImageAreas.length),
-                      style: const TextStyle(color: Colors.green),
-                    ),
+                  const SizedBox(height: 24),
+
+                  FilledButton.icon(
+                    onPressed: _save,
+                    icon: const Icon(Icons.save),
+                    label: Text(widget.isEditing ? l10n.saveChanges : l10n.saveQuestion),
                   ),
-              ],
-
-              if (_answerType == 'typed') ...[
-                Text(l10n.acceptedAnswersLabel,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                ..._acceptedAnswerControllers.asMap().entries.map(
-                      (e) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: e.value,
-                            decoration: InputDecoration(
-                              labelText: l10n.acceptedAnswerN(e.key + 1),
-                              border: const OutlineInputBorder(),
-                            ),
-                            validator: (v) =>
-                            e.key == 0 && v!.trim().isEmpty
-                                ? l10n.atLeastOneRequired
-                                : null,
-                          ),
-                        ),
-                        if (e.key > 0)
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle,
-                                color: Colors.red),
-                            onPressed: () => setState(() {
-                              _acceptedAnswerControllers.removeAt(e.key).dispose();
-                              _isDirty = true;
-                            }),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    final c = TextEditingController();
-                    c.addListener(_markDirty);
-                    setState(() => _acceptedAnswerControllers.add(c));
-                  },
-                  icon: const Icon(Icons.add),
-                  label: Text(l10n.addVariant),
-                ),
-              ],
-
-              if (_answerType == 'flashcard') ...[
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.flashcardRandomize),
-                  subtitle: Text(l10n.flashcardRandomizeSubtitle),
-                  value: _flashcardRandomizeSides,
-                  onChanged: (v) => setState(() {
-                    _flashcardRandomizeSides = v;
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 8),
-                _FlashcardSideEditor(
-                  headerLabel: l10n.flashcardFrontSide,
-                  textOptionalLabel: l10n.flashcardFrontTextOptional,
-                  imageOptionalLabel: l10n.flashcardFrontImageOptional,
-                  textController: _flashcardFrontTextController,
-                  imagePath: _flashcardFrontImagePath,
-                  pickerKey: _flashcardFrontPickerKey,
-                  onImageChanged: (path) => setState(() {
-                    _flashcardFrontImagePath = path;
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 16),
-                _FlashcardSideEditor(
-                  headerLabel: l10n.flashcardBackSide,
-                  textOptionalLabel: l10n.flashcardBackTextOptional,
-                  imageOptionalLabel: l10n.flashcardBackImageOptional,
-                  textController: _flashcardBackTextController,
-                  imagePath: _flashcardBackImagePath,
-                  pickerKey: _flashcardBackPickerKey,
-                  onImageChanged: (path) => setState(() {
-                    _flashcardBackImagePath = path;
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              if (_answerType != 'imageClick' && _answerType != 'flashcard') ...[
-                const SizedBox(height: 8),
-                ImagePickerField(
-                  key: _pickerKey,
-                  label: l10n.questionImageOptional,
-                  initialPath: _imagePath,
-                  onChanged: (path) => setState(() {
-                    _imagePath = path;
-                    _isDirty = true;
-                  }),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              TextFormField(
-                controller: _explanationController,
-                decoration: InputDecoration(
-                  labelText: l10n.explanationOptional,
-                  border: const OutlineInputBorder(),
-                ),
+                ],
               ),
-              const SizedBox(height: 24),
-
-              FilledButton.icon(
-                onPressed: _save,
-                icon: const Icon(Icons.save),
-                label: Text(widget.isEditing ? l10n.saveChanges : l10n.saveQuestion),
-              ),
-            ],
-          ),
-        ),
+            ),
           ),
         ),
       ),
@@ -497,119 +389,5 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
     await QuestionService().refresh();
     if (mounted) Navigator.pop(context);
-  }
-}
-
-// ── Answer type selector ──────────────────────────────────────────────────────
-
-class _AnswerTypeSelector extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onChanged;
-
-  const _AnswerTypeSelector({
-    required this.selected,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final answerTypes = [
-      (value: 'multipleChoice', label: l10n.answerTypeMCLabel,         icon: Icons.list),
-      (value: 'typed',          label: l10n.answerTypeTypedLabel,       icon: Icons.keyboard),
-      (value: 'imageClick',     label: l10n.answerTypeImageClickLabel,  icon: Icons.mouse_rounded),
-      (value: 'flashcard',      label: l10n.answerTypeFlashcardLabel,   icon: Icons.style_outlined),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth >= 500) {
-          return SegmentedButton<String>(
-            segments: answerTypes
-                .map((t) => ButtonSegment<String>(
-                      value: t.value,
-                      label: Text(t.label),
-                      icon: Icon(t.icon),
-                    ))
-                .toList(),
-            selected: {selected},
-            onSelectionChanged: (s) => onChanged(s.first),
-          );
-        }
-
-        return DropdownButtonFormField<String>(
-          value: selected,
-          decoration: InputDecoration(
-            labelText: l10n.answerTypeLabel,
-            border: const OutlineInputBorder(),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            filled: false,
-          ),
-          onChanged: (v) { if (v != null) onChanged(v); },
-          items: answerTypes
-              .map((t) => DropdownMenuItem(
-                    value: t.value,
-                    child: Row(
-                      children: [
-                        Icon(t.icon, size: 18),
-                        const SizedBox(width: 8),
-                        Text(t.label),
-                      ],
-                    ),
-                  ))
-                  .toList(),
-        );
-      },
-    );
-  }
-}
-
-class _FlashcardSideEditor extends StatelessWidget {
-  final String headerLabel;
-  final String textOptionalLabel;
-  final String imageOptionalLabel;
-  final TextEditingController textController;
-  final String? imagePath;
-  final GlobalKey<ImagePickerFieldState> pickerKey;
-  final ValueChanged<String?> onImageChanged;
-
-  const _FlashcardSideEditor({
-    required this.headerLabel,
-    required this.textOptionalLabel,
-    required this.imageOptionalLabel,
-    required this.textController,
-    required this.imagePath,
-    required this.pickerKey,
-    required this.onImageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          headerLabel,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: textController,
-          decoration: InputDecoration(
-            labelText: textOptionalLabel,
-            border: const OutlineInputBorder(),
-          ),
-          maxLines: 2,
-        ),
-        const SizedBox(height: 8),
-        ImagePickerField(
-          key: pickerKey,
-          label: imageOptionalLabel,
-          initialPath: imagePath,
-          onChanged: onImageChanged,
-        ),
-      ],
-    );
   }
 }
