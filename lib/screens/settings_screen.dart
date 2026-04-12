@@ -1,10 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
+import 'package:med_brew/screens/sync_screen.dart';
+import 'package:med_brew/services/favorites_service.dart';
+import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/settings_service.dart';
 import 'package:med_brew/services/srs_service.dart';
 
 class SettingsScreen extends StatefulWidget {
-  SettingsScreen({super.key});
+  final AppDatabase db;
+
+  const SettingsScreen({super.key, required this.db});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -13,6 +20,42 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final SrsService _srsService = SrsService();
   final SettingsService _settings = SettingsService();
+
+  Future<void> _confirmWipe(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Wipe all content?'),
+        content: const Text(
+            'This deletes every folder, quiz, question, SRS record, and '
+            'favorite, then re-seeds built-in content from the bundled seed. '
+            'Custom content cannot be recovered.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Wipe'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    await widget.db.wipeAllContent();
+    await SrsService().resetAll();
+    await FavoritesService().clearAll();
+    await widget.db.mergeNewSeedContent();
+    await QuestionService().refresh();
+
+    messenger.showSnackBar(
+      const SnackBar(content: Text('All content wiped and re-seeded.')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +95,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             const SizedBox(height: 20),
+
+            // ── Sync ─────────────────────────────────────────────
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.sync_rounded),
+              title: Text(l10n.navSync),
+              subtitle: Text(l10n.navSyncSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => SyncScreen(db: widget.db)),
+              ),
+            ),
+            const Divider(),
+            const SizedBox(height: 8),
+
+            // ── Dev: wipe all content ────────────────────────────
+            if (kDebugMode) ...[
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.delete_forever),
+                label: const Text('Wipe all content (dev)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontSize: 18),
+                ),
+                onPressed: () => _confirmWipe(context),
+              ),
+              const Divider(),
+            ],
 
             // ── Reset SRS ────────────────────────────────────────
             ElevatedButton.icon(

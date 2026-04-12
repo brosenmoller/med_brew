@@ -178,5 +178,75 @@
   "discardChangesTitle": "Wijzigingen verwerpen?",
   "discardChangesDefault": "Je hebt niet-opgeslagen wijzigingen die verloren gaan.",
   "keepEditing": "Blijf bewerken",
-  "discard": "Verwerpen"
+  "discard": "Verwerpen",
+
+  "navSync": "Synchroniseren",
+  "navSyncSubtitle": "Inhoud delen met apparaten in de buurt",
+
+  "syncTitle": "Synchroniseren",
+  "syncInfo": "Open dit scherm op beide apparaten en zorg ervoor dat ze op hetzelfde Wi-Fi-netwerk zijn.",
+  "syncNearbyDevices": "Apparaten in de buurt",
+  "syncDiscovering": "Zoeken naar apparaten in je netwerk…",
+  "syncRefresh": "Vernieuwen",
+  "syncWaitingForIncoming": "Wachten op inkomende sync",
+  "syncWaitingSubtitle": "Een ander apparaat kan een sync met jou starten",
+  "syncRequestSent": "Wachten tot het andere apparaat accepteert…",
+  "syncConfirmMessage": "Synchroniseren met {deviceName}?",
+  "@syncConfirmMessage": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "syncAcceptTitle": "Inkomend synchronisatieverzoek",
+  "syncAcceptMessage": "{deviceName} wil synchroniseren met jou.",
+  "@syncAcceptMessage": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "syncAccept": "Accepteren",
+  "syncReject": "Weigeren",
+  "syncInProgress": "Synchroniseren…",
+  "syncComplete": "Synchronisatie voltooid",
+  "syncAlreadyUpToDate": "Alles is al up-to-date.",
+  "syncFailed": "Synchronisatie mislukt",
+  "syncSyncAgain": "Opnieuw synchroniseren",
+  "syncResultFolders": "{count, plural, =1{1 map toegevoegd} other{{count} mappen toegevoegd}}",
+  "@syncResultFolders": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultQuizzes": "{count, plural, =1{1 quiz toegevoegd} other{{count} quizzen toegevoegd}}",
+  "@syncResultQuizzes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultQuestions": "{count, plural, =1{1 vraag toegevoegd} other{{count} vragen toegevoegd}}",
+  "@syncResultQuestions": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultSrs": "{count, plural, =1{1 SRS-invoer bijgewerkt} other{{count} SRS-invoeren bijgewerkt}}",
+  "@syncResultSrs": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "syncPermissionTitle": "Netwerktoestemming vereist",
+  "syncPermissionRationale": "Om apparaten op je netwerk te ontdekken heeft Med Brew de toestemming 'Nabijgelegen Wi-Fi-apparaten' nodig.",
+  "syncPermissionGrantButton": "Toestemming geven",
+  "syncPermissionPermanentlyDenied": "Toestemming is permanent geweigerd. Schakel deze in via de app-instellingen.",
+  "syncOpenSettings": "Instellingen openen",
+
+  "syncThisDevice": "Dit apparaat",
+  "syncDiscoverableAs": "Zichtbaar als: {name}",
+  "@syncDiscoverableAs": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  }
 }

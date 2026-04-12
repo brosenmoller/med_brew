@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
                 tooltip: l10n.settingsTooltip,
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => SettingsScreen()),
+                  MaterialPageRoute(builder: (_) => SettingsScreen(db: db)),
                 ),
               ),
             ],

@@ -90,6 +90,14 @@ class SrsService {
     await _box.clear();
   }
 
+  /// Upsert SRS data from sync — keeps the entry with the more recent lastReviewed.
+  Future<void> upsertUserData(UserQuestionData incoming) async {
+    final existing = _box.get(incoming.questionId);
+    if (existing == null || incoming.lastReviewed.isAfter(existing.lastReviewed)) {
+      await _box.put(incoming.questionId, incoming);
+    }
+  }
+
   /// Get next due question in a quiz
   QuestionData? getNextDueQuestionInQuiz(String quizId) {
     final quiz = _questionService.getQuiz(quizId);

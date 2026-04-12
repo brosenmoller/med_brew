@@ -278,5 +278,75 @@
   "discardChangesTitle": "Discard changes?",
   "discardChangesDefault": "You have unsaved changes that will be lost.",
   "keepEditing": "Keep editing",
-  "discard": "Discard"
+  "discard": "Discard",
+
+  "navSync": "Sync",
+  "navSyncSubtitle": "Share content with nearby devices",
+
+  "syncTitle": "Sync",
+  "syncInfo": "Open this screen on both devices and make sure they are on the same Wi-Fi network.",
+  "syncNearbyDevices": "Nearby devices",
+  "syncDiscovering": "Searching for devices on your network…",
+  "syncRefresh": "Refresh",
+  "syncWaitingForIncoming": "Waiting for incoming sync",
+  "syncWaitingSubtitle": "Another device can initiate a sync with you",
+  "syncRequestSent": "Waiting for the other device to accept…",
+  "syncConfirmMessage": "Sync with {deviceName}?",
+  "@syncConfirmMessage": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "syncAcceptTitle": "Incoming sync request",
+  "syncAcceptMessage": "{deviceName} wants to sync with you.",
+  "@syncAcceptMessage": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "syncAccept": "Accept",
+  "syncReject": "Reject",
+  "syncInProgress": "Syncing…",
+  "syncComplete": "Sync complete",
+  "syncAlreadyUpToDate": "Everything is already up to date.",
+  "syncFailed": "Sync failed",
+  "syncSyncAgain": "Sync again",
+  "syncResultFolders": "{count, plural, =1{1 folder added} other{{count} folders added}}",
+  "@syncResultFolders": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultQuizzes": "{count, plural, =1{1 quiz added} other{{count} quizzes added}}",
+  "@syncResultQuizzes": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultQuestions": "{count, plural, =1{1 question added} other{{count} questions added}}",
+  "@syncResultQuestions": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultSrs": "{count, plural, =1{1 SRS entry updated} other{{count} SRS entries updated}}",
+  "@syncResultSrs": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "syncPermissionTitle": "Network permission required",
+  "syncPermissionRationale": "To discover nearby devices on your network, Med Brew needs the Nearby Wi-Fi Devices permission.",
+  "syncPermissionGrantButton": "Grant permission",
+  "syncPermissionPermanentlyDenied": "Permission was permanently denied. Please enable it in app settings.",
+  "syncOpenSettings": "Open settings",
+
+  "syncThisDevice": "This device",
+  "syncDiscoverableAs": "Discoverable as: {name}",
+  "@syncDiscoverableAs": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  }
 }

@@ -8,6 +8,7 @@ class Folders extends Table {
   TextColumn get imagePath => text().nullable()();
   BoolColumn get isPermanent => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  TextColumn get syncId => text().nullable()();
 }
 
 @DataClassName('Quiz')
@@ -22,6 +23,7 @@ class Quizzes extends Table {
   // Optional BCP-47 language tag for the quiz content (e.g. 'en', 'nl', 'de').
   // Null means the quiz is language-neutral / applicable to all languages.
   TextColumn get languageCode => text().nullable()();
+  TextColumn get syncId => text().nullable()();
 }
 
 class Questions extends Table {
@@ -35,6 +37,7 @@ class Questions extends Table {
   TextColumn get explanation => text().nullable()();
   TextColumn get imagePath => text().nullable()();
   BoolColumn get isPermanent => boolean().withDefault(const Constant(false))();
+  TextColumn get syncId => text().nullable()();
 }
 
 // Junction table — a question can belong to multiple quizzes

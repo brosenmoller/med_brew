@@ -42,3 +42,8 @@ android {
 flutter {
     source = "../.."
 }
+
+// Suppress "source/target value 8 is obsolete" warnings from dependency plugins
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf("-Xlint:-options"))
+}

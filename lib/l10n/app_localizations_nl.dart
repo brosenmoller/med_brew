@@ -564,4 +564,139 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get discard => 'Verwerpen';
+
+  @override
+  String get navSync => 'Synchroniseren';
+
+  @override
+  String get navSyncSubtitle => 'Inhoud delen met apparaten in de buurt';
+
+  @override
+  String get syncTitle => 'Synchroniseren';
+
+  @override
+  String get syncInfo =>
+      'Open dit scherm op beide apparaten en zorg ervoor dat ze op hetzelfde Wi-Fi-netwerk zijn.';
+
+  @override
+  String get syncNearbyDevices => 'Apparaten in de buurt';
+
+  @override
+  String get syncDiscovering => 'Zoeken naar apparaten in je netwerk…';
+
+  @override
+  String get syncRefresh => 'Vernieuwen';
+
+  @override
+  String get syncWaitingForIncoming => 'Wachten op inkomende sync';
+
+  @override
+  String get syncWaitingSubtitle =>
+      'Een ander apparaat kan een sync met jou starten';
+
+  @override
+  String get syncRequestSent => 'Wachten tot het andere apparaat accepteert…';
+
+  @override
+  String syncConfirmMessage(String deviceName) {
+    return 'Synchroniseren met $deviceName?';
+  }
+
+  @override
+  String get syncAcceptTitle => 'Inkomend synchronisatieverzoek';
+
+  @override
+  String syncAcceptMessage(String deviceName) {
+    return '$deviceName wil synchroniseren met jou.';
+  }
+
+  @override
+  String get syncAccept => 'Accepteren';
+
+  @override
+  String get syncReject => 'Weigeren';
+
+  @override
+  String get syncInProgress => 'Synchroniseren…';
+
+  @override
+  String get syncComplete => 'Synchronisatie voltooid';
+
+  @override
+  String get syncAlreadyUpToDate => 'Alles is al up-to-date.';
+
+  @override
+  String get syncFailed => 'Synchronisatie mislukt';
+
+  @override
+  String get syncSyncAgain => 'Opnieuw synchroniseren';
+
+  @override
+  String syncResultFolders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mappen toegevoegd',
+      one: '1 map toegevoegd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultQuizzes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count quizzen toegevoegd',
+      one: '1 quiz toegevoegd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultQuestions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count vragen toegevoegd',
+      one: '1 vraag toegevoegd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultSrs(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count SRS-invoeren bijgewerkt',
+      one: '1 SRS-invoer bijgewerkt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncPermissionTitle => 'Netwerktoestemming vereist';
+
+  @override
+  String get syncPermissionRationale =>
+      'Om apparaten op je netwerk te ontdekken heeft Med Brew de toestemming \'Nabijgelegen Wi-Fi-apparaten\' nodig.';
+
+  @override
+  String get syncPermissionGrantButton => 'Toestemming geven';
+
+  @override
+  String get syncPermissionPermanentlyDenied =>
+      'Toestemming is permanent geweigerd. Schakel deze in via de app-instellingen.';
+
+  @override
+  String get syncOpenSettings => 'Instellingen openen';
+
+  @override
+  String get syncThisDevice => 'Dit apparaat';
+
+  @override
+  String syncDiscoverableAs(String name) {
+    return 'Zichtbaar als: $name';
+  }
 }

@@ -52,9 +52,14 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
+  @override
+  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
+      'sync_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, parentFolderId, title, imagePath, isPermanent, createdAt];
+      [id, parentFolderId, title, imagePath, isPermanent, createdAt, syncId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -94,6 +99,10 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
+    if (data.containsKey('sync_id')) {
+      context.handle(_syncIdMeta,
+          syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta));
+    }
     return context;
   }
 
@@ -115,6 +124,8 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
           .read(DriftSqlType.bool, data['${effectivePrefix}is_permanent'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      syncId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_id']),
     );
   }
 
@@ -131,13 +142,15 @@ class Folder extends DataClass implements Insertable<Folder> {
   final String? imagePath;
   final bool isPermanent;
   final DateTime createdAt;
+  final String? syncId;
   const Folder(
       {required this.id,
       this.parentFolderId,
       required this.title,
       this.imagePath,
       required this.isPermanent,
-      required this.createdAt});
+      required this.createdAt,
+      this.syncId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -151,6 +164,9 @@ class Folder extends DataClass implements Insertable<Folder> {
     }
     map['is_permanent'] = Variable<bool>(isPermanent);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || syncId != null) {
+      map['sync_id'] = Variable<String>(syncId);
+    }
     return map;
   }
 
@@ -166,6 +182,8 @@ class Folder extends DataClass implements Insertable<Folder> {
           : Value(imagePath),
       isPermanent: Value(isPermanent),
       createdAt: Value(createdAt),
+      syncId:
+          syncId == null && nullToAbsent ? const Value.absent() : Value(syncId),
     );
   }
 
@@ -179,6 +197,7 @@ class Folder extends DataClass implements Insertable<Folder> {
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       isPermanent: serializer.fromJson<bool>(json['isPermanent']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      syncId: serializer.fromJson<String?>(json['syncId']),
     );
   }
   @override
@@ -191,6 +210,7 @@ class Folder extends DataClass implements Insertable<Folder> {
       'imagePath': serializer.toJson<String?>(imagePath),
       'isPermanent': serializer.toJson<bool>(isPermanent),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'syncId': serializer.toJson<String?>(syncId),
     };
   }
 
@@ -200,7 +220,8 @@ class Folder extends DataClass implements Insertable<Folder> {
           String? title,
           Value<String?> imagePath = const Value.absent(),
           bool? isPermanent,
-          DateTime? createdAt}) =>
+          DateTime? createdAt,
+          Value<String?> syncId = const Value.absent()}) =>
       Folder(
         id: id ?? this.id,
         parentFolderId:
@@ -209,6 +230,7 @@ class Folder extends DataClass implements Insertable<Folder> {
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
         isPermanent: isPermanent ?? this.isPermanent,
         createdAt: createdAt ?? this.createdAt,
+        syncId: syncId.present ? syncId.value : this.syncId,
       );
   Folder copyWithCompanion(FoldersCompanion data) {
     return Folder(
@@ -221,6 +243,7 @@ class Folder extends DataClass implements Insertable<Folder> {
       isPermanent:
           data.isPermanent.present ? data.isPermanent.value : this.isPermanent,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      syncId: data.syncId.present ? data.syncId.value : this.syncId,
     );
   }
 
@@ -232,14 +255,15 @@ class Folder extends DataClass implements Insertable<Folder> {
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
           ..write('isPermanent: $isPermanent, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncId: $syncId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, parentFolderId, title, imagePath, isPermanent, createdAt);
+  int get hashCode => Object.hash(
+      id, parentFolderId, title, imagePath, isPermanent, createdAt, syncId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -249,7 +273,8 @@ class Folder extends DataClass implements Insertable<Folder> {
           other.title == this.title &&
           other.imagePath == this.imagePath &&
           other.isPermanent == this.isPermanent &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.syncId == this.syncId);
 }
 
 class FoldersCompanion extends UpdateCompanion<Folder> {
@@ -259,6 +284,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
   final Value<String?> imagePath;
   final Value<bool> isPermanent;
   final Value<DateTime> createdAt;
+  final Value<String?> syncId;
   const FoldersCompanion({
     this.id = const Value.absent(),
     this.parentFolderId = const Value.absent(),
@@ -266,6 +292,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     this.imagePath = const Value.absent(),
     this.isPermanent = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.syncId = const Value.absent(),
   });
   FoldersCompanion.insert({
     this.id = const Value.absent(),
@@ -274,6 +301,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     this.imagePath = const Value.absent(),
     this.isPermanent = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.syncId = const Value.absent(),
   }) : title = Value(title);
   static Insertable<Folder> custom({
     Expression<int>? id,
@@ -282,6 +310,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     Expression<String>? imagePath,
     Expression<bool>? isPermanent,
     Expression<DateTime>? createdAt,
+    Expression<String>? syncId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -290,6 +319,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
       if (imagePath != null) 'image_path': imagePath,
       if (isPermanent != null) 'is_permanent': isPermanent,
       if (createdAt != null) 'created_at': createdAt,
+      if (syncId != null) 'sync_id': syncId,
     });
   }
 
@@ -299,7 +329,8 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
       Value<String>? title,
       Value<String?>? imagePath,
       Value<bool>? isPermanent,
-      Value<DateTime>? createdAt}) {
+      Value<DateTime>? createdAt,
+      Value<String?>? syncId}) {
     return FoldersCompanion(
       id: id ?? this.id,
       parentFolderId: parentFolderId ?? this.parentFolderId,
@@ -307,6 +338,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
       imagePath: imagePath ?? this.imagePath,
       isPermanent: isPermanent ?? this.isPermanent,
       createdAt: createdAt ?? this.createdAt,
+      syncId: syncId ?? this.syncId,
     );
   }
 
@@ -331,6 +363,9 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (syncId.present) {
+      map['sync_id'] = Variable<String>(syncId.value);
+    }
     return map;
   }
 
@@ -342,7 +377,8 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
           ..write('isPermanent: $isPermanent, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('syncId: $syncId')
           ..write(')'))
         .toString();
   }
@@ -403,9 +439,22 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
   late final GeneratedColumn<String> languageCode = GeneratedColumn<String>(
       'language_code', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, folderId, title, imagePath, isPermanent, createdAt, languageCode];
+  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
+      'sync_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        folderId,
+        title,
+        imagePath,
+        isPermanent,
+        createdAt,
+        languageCode,
+        syncId
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -449,6 +498,10 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
           languageCode.isAcceptableOrUnknown(
               data['language_code']!, _languageCodeMeta));
     }
+    if (data.containsKey('sync_id')) {
+      context.handle(_syncIdMeta,
+          syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta));
+    }
     return context;
   }
 
@@ -472,6 +525,8 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       languageCode: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}language_code']),
+      syncId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_id']),
     );
   }
 
@@ -489,6 +544,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
   final bool isPermanent;
   final DateTime createdAt;
   final String? languageCode;
+  final String? syncId;
   const Quiz(
       {required this.id,
       this.folderId,
@@ -496,7 +552,8 @@ class Quiz extends DataClass implements Insertable<Quiz> {
       this.imagePath,
       required this.isPermanent,
       required this.createdAt,
-      this.languageCode});
+      this.languageCode,
+      this.syncId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -512,6 +569,9 @@ class Quiz extends DataClass implements Insertable<Quiz> {
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || languageCode != null) {
       map['language_code'] = Variable<String>(languageCode);
+    }
+    if (!nullToAbsent || syncId != null) {
+      map['sync_id'] = Variable<String>(syncId);
     }
     return map;
   }
@@ -531,6 +591,8 @@ class Quiz extends DataClass implements Insertable<Quiz> {
       languageCode: languageCode == null && nullToAbsent
           ? const Value.absent()
           : Value(languageCode),
+      syncId:
+          syncId == null && nullToAbsent ? const Value.absent() : Value(syncId),
     );
   }
 
@@ -545,6 +607,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
       isPermanent: serializer.fromJson<bool>(json['isPermanent']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       languageCode: serializer.fromJson<String?>(json['languageCode']),
+      syncId: serializer.fromJson<String?>(json['syncId']),
     );
   }
   @override
@@ -558,6 +621,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
       'isPermanent': serializer.toJson<bool>(isPermanent),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'languageCode': serializer.toJson<String?>(languageCode),
+      'syncId': serializer.toJson<String?>(syncId),
     };
   }
 
@@ -568,7 +632,8 @@ class Quiz extends DataClass implements Insertable<Quiz> {
           Value<String?> imagePath = const Value.absent(),
           bool? isPermanent,
           DateTime? createdAt,
-          Value<String?> languageCode = const Value.absent()}) =>
+          Value<String?> languageCode = const Value.absent(),
+          Value<String?> syncId = const Value.absent()}) =>
       Quiz(
         id: id ?? this.id,
         folderId: folderId.present ? folderId.value : this.folderId,
@@ -578,6 +643,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
         createdAt: createdAt ?? this.createdAt,
         languageCode:
             languageCode.present ? languageCode.value : this.languageCode,
+        syncId: syncId.present ? syncId.value : this.syncId,
       );
   Quiz copyWithCompanion(QuizzesCompanion data) {
     return Quiz(
@@ -591,6 +657,7 @@ class Quiz extends DataClass implements Insertable<Quiz> {
       languageCode: data.languageCode.present
           ? data.languageCode.value
           : this.languageCode,
+      syncId: data.syncId.present ? data.syncId.value : this.syncId,
     );
   }
 
@@ -603,14 +670,15 @@ class Quiz extends DataClass implements Insertable<Quiz> {
           ..write('imagePath: $imagePath, ')
           ..write('isPermanent: $isPermanent, ')
           ..write('createdAt: $createdAt, ')
-          ..write('languageCode: $languageCode')
+          ..write('languageCode: $languageCode, ')
+          ..write('syncId: $syncId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, folderId, title, imagePath, isPermanent, createdAt, languageCode);
+  int get hashCode => Object.hash(id, folderId, title, imagePath, isPermanent,
+      createdAt, languageCode, syncId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -621,7 +689,8 @@ class Quiz extends DataClass implements Insertable<Quiz> {
           other.imagePath == this.imagePath &&
           other.isPermanent == this.isPermanent &&
           other.createdAt == this.createdAt &&
-          other.languageCode == this.languageCode);
+          other.languageCode == this.languageCode &&
+          other.syncId == this.syncId);
 }
 
 class QuizzesCompanion extends UpdateCompanion<Quiz> {
@@ -632,6 +701,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
   final Value<bool> isPermanent;
   final Value<DateTime> createdAt;
   final Value<String?> languageCode;
+  final Value<String?> syncId;
   const QuizzesCompanion({
     this.id = const Value.absent(),
     this.folderId = const Value.absent(),
@@ -640,6 +710,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
     this.isPermanent = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.languageCode = const Value.absent(),
+    this.syncId = const Value.absent(),
   });
   QuizzesCompanion.insert({
     this.id = const Value.absent(),
@@ -649,6 +720,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
     this.isPermanent = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.languageCode = const Value.absent(),
+    this.syncId = const Value.absent(),
   }) : title = Value(title);
   static Insertable<Quiz> custom({
     Expression<int>? id,
@@ -658,6 +730,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
     Expression<bool>? isPermanent,
     Expression<DateTime>? createdAt,
     Expression<String>? languageCode,
+    Expression<String>? syncId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -667,6 +740,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
       if (isPermanent != null) 'is_permanent': isPermanent,
       if (createdAt != null) 'created_at': createdAt,
       if (languageCode != null) 'language_code': languageCode,
+      if (syncId != null) 'sync_id': syncId,
     });
   }
 
@@ -677,7 +751,8 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
       Value<String?>? imagePath,
       Value<bool>? isPermanent,
       Value<DateTime>? createdAt,
-      Value<String?>? languageCode}) {
+      Value<String?>? languageCode,
+      Value<String?>? syncId}) {
     return QuizzesCompanion(
       id: id ?? this.id,
       folderId: folderId ?? this.folderId,
@@ -686,6 +761,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
       isPermanent: isPermanent ?? this.isPermanent,
       createdAt: createdAt ?? this.createdAt,
       languageCode: languageCode ?? this.languageCode,
+      syncId: syncId ?? this.syncId,
     );
   }
 
@@ -713,6 +789,9 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
     if (languageCode.present) {
       map['language_code'] = Variable<String>(languageCode.value);
     }
+    if (syncId.present) {
+      map['sync_id'] = Variable<String>(syncId.value);
+    }
     return map;
   }
 
@@ -725,7 +804,8 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
           ..write('imagePath: $imagePath, ')
           ..write('isPermanent: $isPermanent, ')
           ..write('createdAt: $createdAt, ')
-          ..write('languageCode: $languageCode')
+          ..write('languageCode: $languageCode, ')
+          ..write('syncId: $syncId')
           ..write(')'))
         .toString();
   }
@@ -792,6 +872,11 @@ class $QuestionsTable extends Questions
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("is_permanent" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
+  @override
+  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
+      'sync_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -801,7 +886,8 @@ class $QuestionsTable extends Questions
         answerConfig,
         explanation,
         imagePath,
-        isPermanent
+        isPermanent,
+        syncId
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -862,6 +948,10 @@ class $QuestionsTable extends Questions
           isPermanent.isAcceptableOrUnknown(
               data['is_permanent']!, _isPermanentMeta));
     }
+    if (data.containsKey('sync_id')) {
+      context.handle(_syncIdMeta,
+          syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta));
+    }
     return context;
   }
 
@@ -887,6 +977,8 @@ class $QuestionsTable extends Questions
           .read(DriftSqlType.string, data['${effectivePrefix}image_path']),
       isPermanent: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_permanent'])!,
+      syncId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_id']),
     );
   }
 
@@ -905,6 +997,7 @@ class Question extends DataClass implements Insertable<Question> {
   final String? explanation;
   final String? imagePath;
   final bool isPermanent;
+  final String? syncId;
   const Question(
       {required this.id,
       required this.questionText,
@@ -913,7 +1006,8 @@ class Question extends DataClass implements Insertable<Question> {
       required this.answerConfig,
       this.explanation,
       this.imagePath,
-      required this.isPermanent});
+      required this.isPermanent,
+      this.syncId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -931,6 +1025,9 @@ class Question extends DataClass implements Insertable<Question> {
       map['image_path'] = Variable<String>(imagePath);
     }
     map['is_permanent'] = Variable<bool>(isPermanent);
+    if (!nullToAbsent || syncId != null) {
+      map['sync_id'] = Variable<String>(syncId);
+    }
     return map;
   }
 
@@ -950,6 +1047,8 @@ class Question extends DataClass implements Insertable<Question> {
           ? const Value.absent()
           : Value(imagePath),
       isPermanent: Value(isPermanent),
+      syncId:
+          syncId == null && nullToAbsent ? const Value.absent() : Value(syncId),
     );
   }
 
@@ -965,6 +1064,7 @@ class Question extends DataClass implements Insertable<Question> {
       explanation: serializer.fromJson<String?>(json['explanation']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       isPermanent: serializer.fromJson<bool>(json['isPermanent']),
+      syncId: serializer.fromJson<String?>(json['syncId']),
     );
   }
   @override
@@ -979,6 +1079,7 @@ class Question extends DataClass implements Insertable<Question> {
       'explanation': serializer.toJson<String?>(explanation),
       'imagePath': serializer.toJson<String?>(imagePath),
       'isPermanent': serializer.toJson<bool>(isPermanent),
+      'syncId': serializer.toJson<String?>(syncId),
     };
   }
 
@@ -990,7 +1091,8 @@ class Question extends DataClass implements Insertable<Question> {
           String? answerConfig,
           Value<String?> explanation = const Value.absent(),
           Value<String?> imagePath = const Value.absent(),
-          bool? isPermanent}) =>
+          bool? isPermanent,
+          Value<String?> syncId = const Value.absent()}) =>
       Question(
         id: id ?? this.id,
         questionText: questionText ?? this.questionText,
@@ -1002,6 +1104,7 @@ class Question extends DataClass implements Insertable<Question> {
         explanation: explanation.present ? explanation.value : this.explanation,
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
         isPermanent: isPermanent ?? this.isPermanent,
+        syncId: syncId.present ? syncId.value : this.syncId,
       );
   Question copyWithCompanion(QuestionsCompanion data) {
     return Question(
@@ -1022,6 +1125,7 @@ class Question extends DataClass implements Insertable<Question> {
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       isPermanent:
           data.isPermanent.present ? data.isPermanent.value : this.isPermanent,
+      syncId: data.syncId.present ? data.syncId.value : this.syncId,
     );
   }
 
@@ -1035,14 +1139,15 @@ class Question extends DataClass implements Insertable<Question> {
           ..write('answerConfig: $answerConfig, ')
           ..write('explanation: $explanation, ')
           ..write('imagePath: $imagePath, ')
-          ..write('isPermanent: $isPermanent')
+          ..write('isPermanent: $isPermanent, ')
+          ..write('syncId: $syncId')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, questionText, questionVariants,
-      answerType, answerConfig, explanation, imagePath, isPermanent);
+      answerType, answerConfig, explanation, imagePath, isPermanent, syncId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1054,7 +1159,8 @@ class Question extends DataClass implements Insertable<Question> {
           other.answerConfig == this.answerConfig &&
           other.explanation == this.explanation &&
           other.imagePath == this.imagePath &&
-          other.isPermanent == this.isPermanent);
+          other.isPermanent == this.isPermanent &&
+          other.syncId == this.syncId);
 }
 
 class QuestionsCompanion extends UpdateCompanion<Question> {
@@ -1066,6 +1172,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
   final Value<String?> explanation;
   final Value<String?> imagePath;
   final Value<bool> isPermanent;
+  final Value<String?> syncId;
   const QuestionsCompanion({
     this.id = const Value.absent(),
     this.questionText = const Value.absent(),
@@ -1075,6 +1182,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     this.explanation = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.isPermanent = const Value.absent(),
+    this.syncId = const Value.absent(),
   });
   QuestionsCompanion.insert({
     this.id = const Value.absent(),
@@ -1085,6 +1193,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     this.explanation = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.isPermanent = const Value.absent(),
+    this.syncId = const Value.absent(),
   })  : questionText = Value(questionText),
         answerType = Value(answerType),
         answerConfig = Value(answerConfig);
@@ -1097,6 +1206,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     Expression<String>? explanation,
     Expression<String>? imagePath,
     Expression<bool>? isPermanent,
+    Expression<String>? syncId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1107,6 +1217,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
       if (explanation != null) 'explanation': explanation,
       if (imagePath != null) 'image_path': imagePath,
       if (isPermanent != null) 'is_permanent': isPermanent,
+      if (syncId != null) 'sync_id': syncId,
     });
   }
 
@@ -1118,7 +1229,8 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
       Value<String>? answerConfig,
       Value<String?>? explanation,
       Value<String?>? imagePath,
-      Value<bool>? isPermanent}) {
+      Value<bool>? isPermanent,
+      Value<String?>? syncId}) {
     return QuestionsCompanion(
       id: id ?? this.id,
       questionText: questionText ?? this.questionText,
@@ -1128,6 +1240,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
       explanation: explanation ?? this.explanation,
       imagePath: imagePath ?? this.imagePath,
       isPermanent: isPermanent ?? this.isPermanent,
+      syncId: syncId ?? this.syncId,
     );
   }
 
@@ -1158,6 +1271,9 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     if (isPermanent.present) {
       map['is_permanent'] = Variable<bool>(isPermanent.value);
     }
+    if (syncId.present) {
+      map['sync_id'] = Variable<String>(syncId.value);
+    }
     return map;
   }
 
@@ -1171,7 +1287,8 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
           ..write('answerConfig: $answerConfig, ')
           ..write('explanation: $explanation, ')
           ..write('imagePath: $imagePath, ')
-          ..write('isPermanent: $isPermanent')
+          ..write('isPermanent: $isPermanent, ')
+          ..write('syncId: $syncId')
           ..write(')'))
         .toString();
   }
@@ -1439,6 +1556,7 @@ typedef $$FoldersTableCreateCompanionBuilder = FoldersCompanion Function({
   Value<String?> imagePath,
   Value<bool> isPermanent,
   Value<DateTime> createdAt,
+  Value<String?> syncId,
 });
 typedef $$FoldersTableUpdateCompanionBuilder = FoldersCompanion Function({
   Value<int> id,
@@ -1447,6 +1565,7 @@ typedef $$FoldersTableUpdateCompanionBuilder = FoldersCompanion Function({
   Value<String?> imagePath,
   Value<bool> isPermanent,
   Value<DateTime> createdAt,
+  Value<String?> syncId,
 });
 
 class $$FoldersTableFilterComposer
@@ -1476,6 +1595,9 @@ class $$FoldersTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncId => $composableBuilder(
+      column: $table.syncId, builder: (column) => ColumnFilters(column));
 }
 
 class $$FoldersTableOrderingComposer
@@ -1505,6 +1627,9 @@ class $$FoldersTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncId => $composableBuilder(
+      column: $table.syncId, builder: (column) => ColumnOrderings(column));
 }
 
 class $$FoldersTableAnnotationComposer
@@ -1533,6 +1658,9 @@ class $$FoldersTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get syncId =>
+      $composableBuilder(column: $table.syncId, builder: (column) => column);
 }
 
 class $$FoldersTableTableManager extends RootTableManager<
@@ -1564,6 +1692,7 @@ class $$FoldersTableTableManager extends RootTableManager<
             Value<String?> imagePath = const Value.absent(),
             Value<bool> isPermanent = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> syncId = const Value.absent(),
           }) =>
               FoldersCompanion(
             id: id,
@@ -1572,6 +1701,7 @@ class $$FoldersTableTableManager extends RootTableManager<
             imagePath: imagePath,
             isPermanent: isPermanent,
             createdAt: createdAt,
+            syncId: syncId,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1580,6 +1710,7 @@ class $$FoldersTableTableManager extends RootTableManager<
             Value<String?> imagePath = const Value.absent(),
             Value<bool> isPermanent = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> syncId = const Value.absent(),
           }) =>
               FoldersCompanion.insert(
             id: id,
@@ -1588,6 +1719,7 @@ class $$FoldersTableTableManager extends RootTableManager<
             imagePath: imagePath,
             isPermanent: isPermanent,
             createdAt: createdAt,
+            syncId: syncId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -1616,6 +1748,7 @@ typedef $$QuizzesTableCreateCompanionBuilder = QuizzesCompanion Function({
   Value<bool> isPermanent,
   Value<DateTime> createdAt,
   Value<String?> languageCode,
+  Value<String?> syncId,
 });
 typedef $$QuizzesTableUpdateCompanionBuilder = QuizzesCompanion Function({
   Value<int> id,
@@ -1625,6 +1758,7 @@ typedef $$QuizzesTableUpdateCompanionBuilder = QuizzesCompanion Function({
   Value<bool> isPermanent,
   Value<DateTime> createdAt,
   Value<String?> languageCode,
+  Value<String?> syncId,
 });
 
 final class $$QuizzesTableReferences
@@ -1676,6 +1810,9 @@ class $$QuizzesTableFilterComposer
 
   ColumnFilters<String> get languageCode => $composableBuilder(
       column: $table.languageCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncId => $composableBuilder(
+      column: $table.syncId, builder: (column) => ColumnFilters(column));
 
   Expression<bool> quizQuestionsRefs(
       Expression<bool> Function($$QuizQuestionsTableFilterComposer f) f) {
@@ -1729,6 +1866,9 @@ class $$QuizzesTableOrderingComposer
   ColumnOrderings<String> get languageCode => $composableBuilder(
       column: $table.languageCode,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncId => $composableBuilder(
+      column: $table.syncId, builder: (column) => ColumnOrderings(column));
 }
 
 class $$QuizzesTableAnnotationComposer
@@ -1760,6 +1900,9 @@ class $$QuizzesTableAnnotationComposer
 
   GeneratedColumn<String> get languageCode => $composableBuilder(
       column: $table.languageCode, builder: (column) => column);
+
+  GeneratedColumn<String> get syncId =>
+      $composableBuilder(column: $table.syncId, builder: (column) => column);
 
   Expression<T> quizQuestionsRefs<T extends Object>(
       Expression<T> Function($$QuizQuestionsTableAnnotationComposer a) f) {
@@ -1813,6 +1956,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
             Value<bool> isPermanent = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> languageCode = const Value.absent(),
+            Value<String?> syncId = const Value.absent(),
           }) =>
               QuizzesCompanion(
             id: id,
@@ -1822,6 +1966,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
             isPermanent: isPermanent,
             createdAt: createdAt,
             languageCode: languageCode,
+            syncId: syncId,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1831,6 +1976,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
             Value<bool> isPermanent = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> languageCode = const Value.absent(),
+            Value<String?> syncId = const Value.absent(),
           }) =>
               QuizzesCompanion.insert(
             id: id,
@@ -1840,6 +1986,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
             isPermanent: isPermanent,
             createdAt: createdAt,
             languageCode: languageCode,
+            syncId: syncId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
@@ -1894,6 +2041,7 @@ typedef $$QuestionsTableCreateCompanionBuilder = QuestionsCompanion Function({
   Value<String?> explanation,
   Value<String?> imagePath,
   Value<bool> isPermanent,
+  Value<String?> syncId,
 });
 typedef $$QuestionsTableUpdateCompanionBuilder = QuestionsCompanion Function({
   Value<int> id,
@@ -1904,6 +2052,7 @@ typedef $$QuestionsTableUpdateCompanionBuilder = QuestionsCompanion Function({
   Value<String?> explanation,
   Value<String?> imagePath,
   Value<bool> isPermanent,
+  Value<String?> syncId,
 });
 
 final class $$QuestionsTableReferences
@@ -1959,6 +2108,9 @@ class $$QuestionsTableFilterComposer
 
   ColumnFilters<bool> get isPermanent => $composableBuilder(
       column: $table.isPermanent, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncId => $composableBuilder(
+      column: $table.syncId, builder: (column) => ColumnFilters(column));
 
   Expression<bool> quizQuestionsRefs(
       Expression<bool> Function($$QuizQuestionsTableFilterComposer f) f) {
@@ -2017,6 +2169,9 @@ class $$QuestionsTableOrderingComposer
 
   ColumnOrderings<bool> get isPermanent => $composableBuilder(
       column: $table.isPermanent, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncId => $composableBuilder(
+      column: $table.syncId, builder: (column) => ColumnOrderings(column));
 }
 
 class $$QuestionsTableAnnotationComposer
@@ -2051,6 +2206,9 @@ class $$QuestionsTableAnnotationComposer
 
   GeneratedColumn<bool> get isPermanent => $composableBuilder(
       column: $table.isPermanent, builder: (column) => column);
+
+  GeneratedColumn<String> get syncId =>
+      $composableBuilder(column: $table.syncId, builder: (column) => column);
 
   Expression<T> quizQuestionsRefs<T extends Object>(
       Expression<T> Function($$QuizQuestionsTableAnnotationComposer a) f) {
@@ -2105,6 +2263,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             Value<String?> explanation = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
             Value<bool> isPermanent = const Value.absent(),
+            Value<String?> syncId = const Value.absent(),
           }) =>
               QuestionsCompanion(
             id: id,
@@ -2115,6 +2274,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             explanation: explanation,
             imagePath: imagePath,
             isPermanent: isPermanent,
+            syncId: syncId,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2125,6 +2285,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             Value<String?> explanation = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
             Value<bool> isPermanent = const Value.absent(),
+            Value<String?> syncId = const Value.absent(),
           }) =>
               QuestionsCompanion.insert(
             id: id,
@@ -2135,6 +2296,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             explanation: explanation,
             imagePath: imagePath,
             isPermanent: isPermanent,
+            syncId: syncId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

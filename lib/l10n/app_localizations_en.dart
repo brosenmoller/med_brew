@@ -564,4 +564,139 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get discard => 'Discard';
+
+  @override
+  String get navSync => 'Sync';
+
+  @override
+  String get navSyncSubtitle => 'Share content with nearby devices';
+
+  @override
+  String get syncTitle => 'Sync';
+
+  @override
+  String get syncInfo =>
+      'Open this screen on both devices and make sure they are on the same Wi-Fi network.';
+
+  @override
+  String get syncNearbyDevices => 'Nearby devices';
+
+  @override
+  String get syncDiscovering => 'Searching for devices on your network…';
+
+  @override
+  String get syncRefresh => 'Refresh';
+
+  @override
+  String get syncWaitingForIncoming => 'Waiting for incoming sync';
+
+  @override
+  String get syncWaitingSubtitle =>
+      'Another device can initiate a sync with you';
+
+  @override
+  String get syncRequestSent => 'Waiting for the other device to accept…';
+
+  @override
+  String syncConfirmMessage(String deviceName) {
+    return 'Sync with $deviceName?';
+  }
+
+  @override
+  String get syncAcceptTitle => 'Incoming sync request';
+
+  @override
+  String syncAcceptMessage(String deviceName) {
+    return '$deviceName wants to sync with you.';
+  }
+
+  @override
+  String get syncAccept => 'Accept';
+
+  @override
+  String get syncReject => 'Reject';
+
+  @override
+  String get syncInProgress => 'Syncing…';
+
+  @override
+  String get syncComplete => 'Sync complete';
+
+  @override
+  String get syncAlreadyUpToDate => 'Everything is already up to date.';
+
+  @override
+  String get syncFailed => 'Sync failed';
+
+  @override
+  String get syncSyncAgain => 'Sync again';
+
+  @override
+  String syncResultFolders(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders added',
+      one: '1 folder added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultQuizzes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count quizzes added',
+      one: '1 quiz added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultQuestions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count questions added',
+      one: '1 question added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultSrs(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count SRS entries updated',
+      one: '1 SRS entry updated',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncPermissionTitle => 'Network permission required';
+
+  @override
+  String get syncPermissionRationale =>
+      'To discover nearby devices on your network, Med Brew needs the Nearby Wi-Fi Devices permission.';
+
+  @override
+  String get syncPermissionGrantButton => 'Grant permission';
+
+  @override
+  String get syncPermissionPermanentlyDenied =>
+      'Permission was permanently denied. Please enable it in app settings.';
+
+  @override
+  String get syncOpenSettings => 'Open settings';
+
+  @override
+  String get syncThisDevice => 'This device';
+
+  @override
+  String syncDiscoverableAs(String name) {
+    return 'Discoverable as: $name';
+  }
 }

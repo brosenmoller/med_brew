@@ -27,6 +27,14 @@ void main() async {
   await favoritesService.init();
   await settingsService.init();
 
+  // Apply any new built-in content from the bundled seed that is missing on
+  // this device. Runs once per kSeedVersion bump; safe to re-run (idempotent).
+  if (settingsService.seedVersion < AppDatabase.kSeedVersion) {
+    await db.mergeNewSeedContent();
+    await settingsService.setSeedVersion(AppDatabase.kSeedVersion);
+    await questionService.refresh();
+  }
+
   runApp(MedBrew(db: db));
 }
 

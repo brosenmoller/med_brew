@@ -1051,6 +1051,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard'**
   String get discard;
+
+  /// No description provided for @navSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get navSync;
+
+  /// No description provided for @navSyncSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share content with nearby devices'**
+  String get navSyncSubtitle;
+
+  /// No description provided for @syncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get syncTitle;
+
+  /// No description provided for @syncInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this screen on both devices and make sure they are on the same Wi-Fi network.'**
+  String get syncInfo;
+
+  /// No description provided for @syncNearbyDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby devices'**
+  String get syncNearbyDevices;
+
+  /// No description provided for @syncDiscovering.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching for devices on your network…'**
+  String get syncDiscovering;
+
+  /// No description provided for @syncRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get syncRefresh;
+
+  /// No description provided for @syncWaitingForIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for incoming sync'**
+  String get syncWaitingForIncoming;
+
+  /// No description provided for @syncWaitingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Another device can initiate a sync with you'**
+  String get syncWaitingSubtitle;
+
+  /// No description provided for @syncRequestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the other device to accept…'**
+  String get syncRequestSent;
+
+  /// No description provided for @syncConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync with {deviceName}?'**
+  String syncConfirmMessage(String deviceName);
+
+  /// No description provided for @syncAcceptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming sync request'**
+  String get syncAcceptTitle;
+
+  /// No description provided for @syncAcceptMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{deviceName} wants to sync with you.'**
+  String syncAcceptMessage(String deviceName);
+
+  /// No description provided for @syncAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get syncAccept;
+
+  /// No description provided for @syncReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get syncReject;
+
+  /// No description provided for @syncInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncInProgress;
+
+  /// No description provided for @syncComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync complete'**
+  String get syncComplete;
+
+  /// No description provided for @syncAlreadyUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is already up to date.'**
+  String get syncAlreadyUpToDate;
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncFailed;
+
+  /// No description provided for @syncSyncAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync again'**
+  String get syncSyncAgain;
+
+  /// No description provided for @syncResultFolders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 folder added} other{{count} folders added}}'**
+  String syncResultFolders(int count);
+
+  /// No description provided for @syncResultQuizzes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 quiz added} other{{count} quizzes added}}'**
+  String syncResultQuizzes(int count);
+
+  /// No description provided for @syncResultQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 question added} other{{count} questions added}}'**
+  String syncResultQuestions(int count);
+
+  /// No description provided for @syncResultSrs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 SRS entry updated} other{{count} SRS entries updated}}'**
+  String syncResultSrs(int count);
+
+  /// No description provided for @syncPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Network permission required'**
+  String get syncPermissionTitle;
+
+  /// No description provided for @syncPermissionRationale.
+  ///
+  /// In en, this message translates to:
+  /// **'To discover nearby devices on your network, Med Brew needs the Nearby Wi-Fi Devices permission.'**
+  String get syncPermissionRationale;
+
+  /// No description provided for @syncPermissionGrantButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant permission'**
+  String get syncPermissionGrantButton;
+
+  /// No description provided for @syncPermissionPermanentlyDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission was permanently denied. Please enable it in app settings.'**
+  String get syncPermissionPermanentlyDenied;
+
+  /// No description provided for @syncOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get syncOpenSettings;
+
+  /// No description provided for @syncThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get syncThisDevice;
+
+  /// No description provided for @syncDiscoverableAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Discoverable as: {name}'**
+  String syncDiscoverableAs(String name);
 }
 
 class _AppLocalizationsDelegate
