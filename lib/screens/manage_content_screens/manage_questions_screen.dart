@@ -134,6 +134,7 @@ class ManageQuestionsScreen extends StatelessWidget {
       'typed'          => l10n.answerTypeTypedChip,
       'imageClick'     => l10n.answerTypeImageClickChip,
       'sorting'        => l10n.answerTypeSortingChip,
+      'set'            => l10n.answerTypeSetChip,
       _                => type,
     };
     return _Chip(label: label, color: Colors.blue);

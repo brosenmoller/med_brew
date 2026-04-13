@@ -1016,6 +1016,60 @@ abstract class AppLocalizations {
   /// **'Sorting'**
   String get answerTypeSortingChip;
 
+  /// No description provided for @answerTypeSetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get answerTypeSetLabel;
+
+  /// No description provided for @answerTypeSetChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get answerTypeSetChip;
+
+  /// No description provided for @setAnswersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct answers'**
+  String get setAnswersLabel;
+
+  /// No description provided for @setAnswerN.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer {n}'**
+  String setAnswerN(int n);
+
+  /// No description provided for @setAddAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Add answer'**
+  String get setAddAnswer;
+
+  /// No description provided for @setAtLeastTwo.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 2 answers required'**
+  String get setAtLeastTwo;
+
+  /// No description provided for @setHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type an answer…'**
+  String get setHint;
+
+  /// No description provided for @setAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get setAdd;
+
+  /// No description provided for @setMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed'**
+  String get setMissed;
+
   /// No description provided for @sortingItemsLabel.
   ///
   /// In en, this message translates to:

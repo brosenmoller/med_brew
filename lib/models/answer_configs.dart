@@ -168,6 +168,34 @@ class SortingConfig {
   };
 }
 
+class SetConfig {
+  final List<String> answers;
+
+  SetConfig({required this.answers});
+
+  static String _normalize(String text) {
+    return text.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
+  /// Returns the canonical answer that matches [input], or null if none.
+  /// Removes it from [remaining] so each canonical answer can only be
+  /// claimed once per submission.
+  static String? claimMatch(String input, List<String> remaining) {
+    final norm = _normalize(input);
+    final idx = remaining.indexWhere((a) => _normalize(a) == norm);
+    if (idx == -1) return null;
+    return remaining.removeAt(idx);
+  }
+
+  factory SetConfig.fromJson(Map<String, dynamic> json) {
+    return SetConfig(
+      answers: List<String>.from(json['answers'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'answers': answers};
+}
+
 class TypedAnswerConfig {
   final List<String> acceptedAnswers;
 

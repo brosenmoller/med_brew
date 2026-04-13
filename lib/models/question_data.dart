@@ -1,4 +1,4 @@
-import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SortingConfig, TypedAnswerConfig;
+import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SetConfig, SortingConfig, TypedAnswerConfig;
 import 'package:med_brew/models/answer_type.dart' show AnswerType;
 
 class QuestionData {
@@ -14,6 +14,7 @@ class QuestionData {
   final ImageClickConfig? imageClickConfig;
   final FlashcardConfig? flashcardConfig;
   final SortingConfig? sortingConfig;
+  final SetConfig? setConfig;
 
   QuestionData({
     required this.id,
@@ -26,6 +27,7 @@ class QuestionData {
     this.imageClickConfig,
     this.flashcardConfig,
     this.sortingConfig,
+    this.setConfig,
   });
 
   factory QuestionData.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,8 @@ class QuestionData {
           ? FlashcardConfig.fromJson(json['flashcardConfig']) : null,
       sortingConfig: json['sortingConfig'] != null
           ? SortingConfig.fromJson(json['sortingConfig']) : null,
+      setConfig: json['setConfig'] != null
+          ? SetConfig.fromJson(json['setConfig']) : null,
     );
   }
 }

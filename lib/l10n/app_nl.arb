@@ -177,6 +177,20 @@
   "answerTypeFlashcardLabel": "Flashcard",
   "answerTypeSortingLabel": "Sorteren",
   "answerTypeSortingChip": "Sorteren",
+  "answerTypeSetLabel": "Set",
+  "answerTypeSetChip": "Set",
+  "setAnswersLabel": "Correcte antwoorden",
+  "setAnswerN": "Antwoord {n}",
+  "@setAnswerN": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "setAddAnswer": "Antwoord toevoegen",
+  "setAtLeastTwo": "Minimaal 2 antwoorden vereist",
+  "setHint": "Typ een antwoord…",
+  "setAdd": "Toevoegen",
+  "setMissed": "Gemist",
   "sortingItemsLabel": "Items (juiste volgorde, boven → onder)",
   "sortingItemN": "Item {n}",
   "addItem": "Item toevoegen",

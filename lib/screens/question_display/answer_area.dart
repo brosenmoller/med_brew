@@ -7,6 +7,7 @@ import 'package:med_brew/widgets/typed_answer_widget.dart';
 import 'package:med_brew/widgets/image_click_widget.dart';
 import 'package:med_brew/widgets/flashcard_widget.dart';
 import 'package:med_brew/widgets/sorting_widget.dart';
+import 'package:med_brew/widgets/set_widget.dart';
 
 class AnswerArea extends StatelessWidget {
   final QuestionData question;
@@ -57,6 +58,13 @@ class AnswerArea extends StatelessWidget {
         );
       case AnswerType.sorting:
         return SortingWidget(
+          question: question,
+          locked: locked,
+          answerState: answerState,
+          onAnswered: onAnswered,
+        );
+      case AnswerType.set:
+        return SetWidget(
           question: question,
           locked: locked,
           answerState: answerState,

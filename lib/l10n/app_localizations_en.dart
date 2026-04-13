@@ -544,6 +544,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get answerTypeSortingChip => 'Sorting';
 
   @override
+  String get answerTypeSetLabel => 'Set';
+
+  @override
+  String get answerTypeSetChip => 'Set';
+
+  @override
+  String get setAnswersLabel => 'Correct answers';
+
+  @override
+  String setAnswerN(int n) {
+    return 'Answer $n';
+  }
+
+  @override
+  String get setAddAnswer => 'Add answer';
+
+  @override
+  String get setAtLeastTwo => 'At least 2 answers required';
+
+  @override
+  String get setHint => 'Type an answer…';
+
+  @override
+  String get setAdd => 'Add';
+
+  @override
+  String get setMissed => 'Missed';
+
+  @override
   String get sortingItemsLabel => 'Items (correct order, top → bottom)';
 
   @override

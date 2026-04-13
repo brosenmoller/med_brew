@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
-import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SortingConfig, TypedAnswerConfig;
+import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SetConfig, SortingConfig, TypedAnswerConfig;
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 import 'package:med_brew/widgets/unsaved_changes_guard.dart';
@@ -13,6 +13,7 @@ import 'edit_question/typed_answer_section.dart';
 import 'edit_question/image_click_section.dart';
 import 'edit_question/flashcard_section.dart';
 import 'edit_question/sorting_section.dart';
+import 'edit_question/set_section.dart';
 
 class EditQuestionScreen extends StatefulWidget {
   final String quizId;
@@ -65,6 +66,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   // Sorting
   late final List<TextEditingController> _sortingControllers;
   bool _sortingShowPreFilled = true;
+
+  // Set
+  late final List<TextEditingController> _setControllers;
 
   bool get _hasChanges => _isDirty;
 
@@ -148,6 +152,18 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         _sortingControllers =
             List.generate(4, (_) => TextEditingController());
       }
+
+      if (_answerType == 'set') {
+        final sc = SetConfig.fromJson(config);
+        _setControllers =
+            sc.answers.map((a) => TextEditingController(text: a)).toList();
+        while (_setControllers.length < 2) {
+          _setControllers.add(TextEditingController());
+        }
+      } else {
+        _setControllers =
+            List.generate(2, (_) => TextEditingController());
+      }
     } else {
       // Add mode defaults
       _optionControllers =
@@ -158,6 +174,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       _flashcardBackTextController = TextEditingController();
       _sortingControllers =
           List.generate(4, (_) => TextEditingController());
+      _setControllers =
+          List.generate(2, (_) => TextEditingController());
     }
 
     _questionController.addListener(_markDirty);
@@ -167,6 +185,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     _flashcardFrontTextController.addListener(_markDirty);
     _flashcardBackTextController.addListener(_markDirty);
     for (final c in _sortingControllers) { c.addListener(_markDirty); }
+    for (final c in _setControllers) { c.addListener(_markDirty); }
   }
 
   @override
@@ -178,6 +197,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     _flashcardFrontTextController.dispose();
     _flashcardBackTextController.dispose();
     for (final c in _sortingControllers) c.dispose();
+    for (final c in _setControllers) c.dispose();
     super.dispose();
   }
 
@@ -310,6 +330,20 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                       }),
                     ),
 
+                  if (_answerType == 'set')
+                    SetSection(
+                      answerControllers: _setControllers,
+                      onAddAnswer: () {
+                        final c = TextEditingController();
+                        c.addListener(_markDirty);
+                        setState(() => _setControllers.add(c));
+                      },
+                      onRemoveAnswer: (i) => setState(() {
+                        _setControllers.removeAt(i).dispose();
+                        _isDirty = true;
+                      }),
+                    ),
+
                   if (_answerType == 'sorting')
                     SortingSection(
                       itemControllers: _sortingControllers,
@@ -436,6 +470,20 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         items: _sortingControllers.map((c) => c.text.trim()).toList(),
         showPreFilled: _sortingShowPreFilled,
       ).toJson());
+    } else if (_answerType == 'set') {
+      savedImagePath = await _pickerKey.currentState
+          ?.applyAutoName('question_$questionText') ?? _imagePath;
+      final answers = _setControllers
+          .map((c) => c.text.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (answers.length < 2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.setAtLeastTwo)),
+        );
+        return;
+      }
+      answerConfig = jsonEncode(SetConfig(answers: answers).toJson());
     } else {
       savedImagePath = await _pickerKey.currentState
           ?.applyAutoName('question_$questionText') ?? _imagePath;

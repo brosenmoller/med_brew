@@ -4,4 +4,5 @@ enum AnswerType {
   imageClick,
   flashcard,
   sorting,
+  set,
 }

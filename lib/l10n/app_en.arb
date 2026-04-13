@@ -267,6 +267,20 @@
   "answerTypeFlashcardLabel": "Flashcard",
   "answerTypeSortingLabel": "Sorting",
   "answerTypeSortingChip": "Sorting",
+  "answerTypeSetLabel": "Set",
+  "answerTypeSetChip": "Set",
+  "setAnswersLabel": "Correct answers",
+  "setAnswerN": "Answer {n}",
+  "@setAnswerN": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "setAddAnswer": "Add answer",
+  "setAtLeastTwo": "At least 2 answers required",
+  "setHint": "Type an answer…",
+  "setAdd": "Add",
+  "setMissed": "Missed",
   "sortingItemsLabel": "Items (correct order, top → bottom)",
   "sortingItemN": "Item {n}",
   "@sortingItemN": {
