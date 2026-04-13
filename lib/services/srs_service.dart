@@ -3,6 +3,7 @@ import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/services/question_service.dart';
+import 'package:med_brew/services/settings_service.dart';
 
 class SrsService {
   static final SrsService _instance = SrsService._internal();
@@ -31,7 +32,11 @@ class SrsService {
   UserQuestionData getUserData(QuestionData question) {
     UserQuestionData? userData = _box.get(question.id);
     if (userData == null) {
-      userData = UserQuestionData(questionId: question.id);
+      final settings = SettingsService().srsSettings;
+      userData = UserQuestionData(
+        questionId: question.id,
+        easeFactor: settings.initialEase,
+      );
       _box.put(question.id, userData);
     }
     return userData;
@@ -52,7 +57,7 @@ class SrsService {
   /// Update user data after answering a question
   Future<void> updateAfterAnswer(QuestionData question, SrsQuality quality) async {
     final userData = getUserData(question);
-    userData.updateAfterAnswer(quality);
+    userData.updateAfterAnswer(quality, SettingsService().srsSettings);
     await _box.put(question.id, userData);
   }
 

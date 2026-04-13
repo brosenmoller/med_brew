@@ -9,11 +9,13 @@ import 'package:med_brew/services/favorites_service.dart' show FavoritesService;
 import 'package:med_brew/services/question_service.dart' show QuestionService;
 import 'package:med_brew/services/settings_service.dart';
 import 'package:med_brew/services/srs_service.dart' show SrsService;
+import 'package:med_brew/utils/app_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Hive.initFlutter();
+  final storageDir = await getAppStorageDir();
+  Hive.init(storageDir.path);
   Hive.registerAdapter(UserQuestionDataAdapter());
 
   final db = AppDatabase();

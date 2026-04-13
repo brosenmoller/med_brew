@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:med_brew/models/srs_settings.dart';
 
 class SettingsService {
   SettingsService._internal();
@@ -19,6 +20,8 @@ class SettingsService {
     }
   }
 
+  // ── Language ──────────────────────────────────────────────────────────────
+
   /// The stored language code, or null for system default.
   String? get languageCode => _box.get('languageCode') as String?;
 
@@ -29,6 +32,57 @@ class SettingsService {
     } else {
       await _box.put('languageCode', code);
       localeNotifier.value = Locale(code);
+    }
+  }
+
+  // ── SRS settings ──────────────────────────────────────────────────────────
+
+  static const _kLapseMult = 'srs_lapse_mult';
+  static const _kEaseAgain = 'srs_ease_again';
+  static const _kEaseHard = 'srs_ease_hard';
+  static const _kEaseGood = 'srs_ease_good';
+  static const _kEaseEasy = 'srs_ease_easy';
+  static const _kInitialEase = 'srs_initial_ease';
+  static const _kMaxDays = 'srs_max_days';
+
+  SrsSettings get srsSettings => SrsSettings(
+    lapseMultiplier:
+        (_box.get(_kLapseMult) as double?) ?? SrsSettings.defaultLapseMultiplier,
+    easeAgain:
+        (_box.get(_kEaseAgain) as double?) ?? SrsSettings.defaultEaseAgain,
+    easeHard:
+        (_box.get(_kEaseHard) as double?) ?? SrsSettings.defaultEaseHard,
+    easeGood:
+        (_box.get(_kEaseGood) as double?) ?? SrsSettings.defaultEaseGood,
+    easeEasy:
+        (_box.get(_kEaseEasy) as double?) ?? SrsSettings.defaultEaseEasy,
+    initialEase:
+        (_box.get(_kInitialEase) as double?) ?? SrsSettings.defaultInitialEase,
+    maxIntervalDays:
+        (_box.get(_kMaxDays) as int?) ?? SrsSettings.defaultMaxIntervalDays,
+  );
+
+  Future<void> setSrsSettings(SrsSettings s) async {
+    await _box.put(_kLapseMult, s.lapseMultiplier);
+    await _box.put(_kEaseAgain, s.easeAgain);
+    await _box.put(_kEaseHard, s.easeHard);
+    await _box.put(_kEaseGood, s.easeGood);
+    await _box.put(_kEaseEasy, s.easeEasy);
+    await _box.put(_kInitialEase, s.initialEase);
+    await _box.put(_kMaxDays, s.maxIntervalDays);
+  }
+
+  Future<void> resetSrsSettings() async {
+    for (final key in [
+      _kLapseMult,
+      _kEaseAgain,
+      _kEaseHard,
+      _kEaseGood,
+      _kEaseEasy,
+      _kInitialEase,
+      _kMaxDays,
+    ]) {
+      await _box.delete(key);
     }
   }
 }

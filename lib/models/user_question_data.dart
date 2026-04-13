@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:med_brew/models/srs_settings.dart';
 part 'user_question_data.g.dart';
 enum SrsQuality { again, hard, good, easy }
 
@@ -50,15 +51,14 @@ class UserQuestionData extends HiveObject {
 
   Duration get intervalDuration => Duration(seconds: intervalSeconds.round());
 
-  static const double _maxIntervalSeconds = 180 * 24 * 3600; // 180 days
-
   void _adjustEase(double adjustment) {
     easeFactor = (easeFactor + adjustment).clamp(1.1, 3.0);
   }
 
-  void updateAfterAnswer(SrsQuality quality) {
+  void updateAfterAnswer(SrsQuality quality, [SrsSettings settings = const SrsSettings()]) {
     final now = DateTime.now();
     lastReviewed = now;
+    final maxSecs = settings.maxIntervalDays * 24.0 * 3600;
 
     if (streak == 0) {
       switch (quality) {
@@ -82,24 +82,25 @@ class UserQuestionData extends HiveObject {
 
     if (quality == SrsQuality.again) {
       streak = 0;
-      intervalSeconds = const Duration(minutes: 1).inSeconds.toDouble();
-      _adjustEase(-0.20);
+      intervalSeconds = (intervalSeconds * settings.lapseMultiplier)
+          .clamp(const Duration(minutes: 10).inSeconds.toDouble(), maxSecs);
+      _adjustEase(settings.easeAgain);
     } else {
       streak++;
       switch (quality) {
         case SrsQuality.hard:
-          _adjustEase(-0.15);
+          _adjustEase(settings.easeHard);
           break;
         case SrsQuality.good:
-          _adjustEase(0.0);
+          _adjustEase(settings.easeGood);
           break;
         case SrsQuality.easy:
-          _adjustEase(0.15);
+          _adjustEase(settings.easeEasy);
           break;
         default:
           break;
       }
-      intervalSeconds = (intervalSeconds * easeFactor).clamp(0, _maxIntervalSeconds);
+      intervalSeconds = (intervalSeconds * easeFactor).clamp(0, maxSecs);
     }
 
     nextReview = now.add(intervalDuration);

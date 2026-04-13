@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
+import 'package:med_brew/models/srs_settings.dart';
 import 'package:med_brew/screens/sync_screen.dart';
 import 'package:med_brew/services/favorites_service.dart';
 import 'package:med_brew/services/question_service.dart';
@@ -20,6 +21,25 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final SrsService _srsService = SrsService();
   final SettingsService _settings = SettingsService();
+
+  late SrsSettings _srs;
+
+  @override
+  void initState() {
+    super.initState();
+    _srs = _settings.srsSettings;
+  }
+
+  Future<void> _saveSrs(SrsSettings updated) async {
+    setState(() => _srs = updated);
+    await _settings.setSrsSettings(updated);
+  }
+
+  Future<void> _resetSrs() async {
+    await _settings.resetSrsSettings();
+    setState(() => _srs = const SrsSettings());
+  }
+
 
   Future<void> _confirmWipe(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -62,11 +82,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        children: [
             // ── Language ──────────────────────────────────────────
             DropdownButtonFormField<String?>(
               value: _settings.languageCode,
@@ -127,6 +145,122 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Divider(),
             ],
 
+            // ── SRS Algorithm ────────────────────────────────────
+            Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              clipBehavior: Clip.hardEdge,
+              child: ExpansionTile(
+                leading: const Icon(Icons.tune),
+                title: const Text('SRS Algorithm'),
+                subtitle: const Text('Adjust scheduling behaviour'),
+                childrenPadding: const EdgeInsets.only(bottom: 12),
+                children: [
+                  _SrsSliderRow(
+                    key: ValueKey('lapse_${_srs.lapseMultiplier}'),
+                    label: 'Lapse multiplier',
+                    initialValue: _srs.lapseMultiplier,
+                    min: 0.05,
+                    max: 0.75,
+                    divisions: 14,
+                    formatValue: (v) => v.toStringAsFixed(2),
+                    description:
+                        'On "Again", keep this fraction of the card\'s current interval.',
+                    onChangeEnd: (v) => _saveSrs(
+                      _srs.copyWith(lapseMultiplier: double.parse(v.toStringAsFixed(2))),
+                    ),
+                  ),
+                  _SrsSliderRow(
+                    key: ValueKey('again_${_srs.easeAgain}'),
+                    label: 'Again — ease penalty',
+                    initialValue: _srs.easeAgain,
+                    min: -0.50,
+                    max: -0.05,
+                    divisions: 9,
+                    formatValue: (v) => v.toStringAsFixed(2),
+                    description: 'How much the ease factor drops on each lapse.',
+                    onChangeEnd: (v) => _saveSrs(
+                      _srs.copyWith(easeAgain: double.parse(v.toStringAsFixed(2))),
+                    ),
+                  ),
+                  _SrsSliderRow(
+                    key: ValueKey('hard_${_srs.easeHard}'),
+                    label: 'Hard — ease penalty',
+                    initialValue: _srs.easeHard,
+                    min: -0.50,
+                    max: -0.05,
+                    divisions: 9,
+                    formatValue: (v) => v.toStringAsFixed(2),
+                    description: 'How much the ease factor drops on "Hard".',
+                    onChangeEnd: (v) => _saveSrs(
+                      _srs.copyWith(easeHard: double.parse(v.toStringAsFixed(2))),
+                    ),
+                  ),
+                  _SrsSliderRow(
+                    key: ValueKey('good_${_srs.easeGood}'),
+                    label: 'Good — ease adjustment',
+                    initialValue: _srs.easeGood,
+                    min: -0.05,
+                    max: 0.10,
+                    divisions: 15,
+                    formatValue: (v) {
+                      final s = v.toStringAsFixed(2);
+                      return v > 0 ? '+$s' : s;
+                    },
+                    description: 'How much the ease factor shifts on "Good". Default 0 keeps it neutral.',
+                    onChangeEnd: (v) => _saveSrs(
+                      _srs.copyWith(easeGood: double.parse(v.toStringAsFixed(2))),
+                    ),
+                  ),
+                  _SrsSliderRow(
+                    key: ValueKey('easy_${_srs.easeEasy}'),
+                    label: 'Easy — ease bonus',
+                    initialValue: _srs.easeEasy,
+                    min: 0.05,
+                    max: 0.50,
+                    divisions: 9,
+                    formatValue: (v) => '+${v.toStringAsFixed(2)}',
+                    description: 'How much the ease factor rises on "Easy".',
+                    onChangeEnd: (v) => _saveSrs(
+                      _srs.copyWith(easeEasy: double.parse(v.toStringAsFixed(2))),
+                    ),
+                  ),
+                  _SrsSliderRow(
+                    key: ValueKey('initial_${_srs.initialEase}'),
+                    label: 'Initial ease factor',
+                    initialValue: _srs.initialEase,
+                    min: 1.3,
+                    max: 3.0,
+                    divisions: 17,
+                    formatValue: (v) => v.toStringAsFixed(1),
+                    description: 'Starting ease factor for newly enrolled cards.',
+                    onChangeEnd: (v) => _saveSrs(
+                      _srs.copyWith(initialEase: double.parse(v.toStringAsFixed(1))),
+                    ),
+                  ),
+                  _SrsSliderRow(
+                    key: ValueKey('maxInterval_${_srs.maxIntervalDays}'),
+                    label: 'Max interval',
+                    initialValue: _srs.maxIntervalDays.toDouble(),
+                    min: 30,
+                    max: 365,
+                    divisions: 67,
+                    formatValue: (v) => '${v.round()} days',
+                    description: 'Longest interval a card can be scheduled.',
+                    onChangeEnd: (v) =>
+                        _saveSrs(_srs.copyWith(maxIntervalDays: v.round())),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.restore),
+                      label: const Text('Reset to defaults'),
+                      onPressed: _resetSrs,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             // ── Reset SRS ────────────────────────────────────────
             ElevatedButton.icon(
               icon: const Icon(Icons.restart_alt),
@@ -164,8 +298,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               },
             ),
-          ],
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SrsSliderRow extends StatefulWidget {
+  final String label;
+  final double initialValue;
+  final double min;
+  final double max;
+  final int divisions;
+  final String Function(double) formatValue;
+  final ValueChanged<double> onChangeEnd;
+  final String? description;
+
+  const _SrsSliderRow({
+    super.key,
+    required this.label,
+    required this.initialValue,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.formatValue,
+    required this.onChangeEnd,
+    this.description,
+  });
+
+  @override
+  State<_SrsSliderRow> createState() => _SrsSliderRowState();
+}
+
+class _SrsSliderRowState extends State<_SrsSliderRow> {
+  late double _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initialValue;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(widget.label, style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                widget.formatValue(_value),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          if (widget.description != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 2),
+              child: Text(
+                widget.description!,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: Colors.grey[600]),
+              ),
+            ),
+          Slider(
+            value: _value,
+            min: widget.min,
+            max: widget.max,
+            divisions: widget.divisions,
+            onChanged: (v) => setState(() => _value = v),
+            onChangeEnd: widget.onChangeEnd,
+          ),
+        ],
       ),
     );
   }
