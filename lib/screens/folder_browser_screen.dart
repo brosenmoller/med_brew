@@ -24,7 +24,13 @@ class FolderBrowserScreen extends StatelessWidget {
     final quizzes = _service.getQuizzesInFolder(folder?.id);
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth < 600 ? 2 : 6;
+    final crossAxisCount = screenWidth < 400
+        ? 2
+        : screenWidth < 600
+            ? 3
+            : screenWidth < 900
+                ? 4
+                : 6;
 
     final isEmpty = subfolders.isEmpty && quizzes.isEmpty;
 
