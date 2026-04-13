@@ -89,11 +89,31 @@ class QuestionService {
           questionVariants = [qRow.questionText];
         }
 
+        // imagePathVariants: prefer the new column; fall back to legacy imagePath.
+        // For imageClick the variants list is intentionally empty — imagePath
+        // is used directly by ImageClickWidget for the background image.
+        List<String> imagePathVariants;
+        if (answerType == AnswerType.imageClick) {
+          imagePathVariants = [];
+        } else if (qRow.imagePathVariants != null) {
+          try {
+            imagePathVariants =
+                List<String>.from(jsonDecode(qRow.imagePathVariants!));
+          } catch (_) {
+            imagePathVariants = [];
+          }
+        } else if (qRow.imagePath != null) {
+          imagePathVariants = [qRow.imagePath!];
+        } else {
+          imagePathVariants = [];
+        }
+
         questionIds.add(questionId);
         _questions[questionId] = QuestionData(
           id: questionId,
           questionVariants: questionVariants,
           imagePath: qRow.imagePath,
+          imagePathVariants: imagePathVariants,
           answerType: answerType,
           explanation: qRow.explanation,
           multipleChoiceConfig: answerType == AnswerType.multipleChoice

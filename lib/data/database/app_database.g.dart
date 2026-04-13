@@ -716,6 +716,12 @@ class $QuestionsTable extends Questions
   late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
       'image_path', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _imagePathVariantsMeta =
+      const VerificationMeta('imagePathVariants');
+  @override
+  late final GeneratedColumn<String> imagePathVariants =
+      GeneratedColumn<String>('image_path_variants', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -724,7 +730,8 @@ class $QuestionsTable extends Questions
         answerType,
         answerConfig,
         explanation,
-        imagePath
+        imagePath,
+        imagePathVariants
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -781,6 +788,12 @@ class $QuestionsTable extends Questions
       context.handle(_imagePathMeta,
           imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta));
     }
+    if (data.containsKey('image_path_variants')) {
+      context.handle(
+          _imagePathVariantsMeta,
+          imagePathVariants.isAcceptableOrUnknown(
+              data['image_path_variants']!, _imagePathVariantsMeta));
+    }
     return context;
   }
 
@@ -804,6 +817,8 @@ class $QuestionsTable extends Questions
           .read(DriftSqlType.string, data['${effectivePrefix}explanation']),
       imagePath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}image_path']),
+      imagePathVariants: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}image_path_variants']),
     );
   }
 
@@ -821,6 +836,7 @@ class Question extends DataClass implements Insertable<Question> {
   final String answerConfig;
   final String? explanation;
   final String? imagePath;
+  final String? imagePathVariants;
   const Question(
       {required this.id,
       required this.questionText,
@@ -828,7 +844,8 @@ class Question extends DataClass implements Insertable<Question> {
       required this.answerType,
       required this.answerConfig,
       this.explanation,
-      this.imagePath});
+      this.imagePath,
+      this.imagePathVariants});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -844,6 +861,9 @@ class Question extends DataClass implements Insertable<Question> {
     }
     if (!nullToAbsent || imagePath != null) {
       map['image_path'] = Variable<String>(imagePath);
+    }
+    if (!nullToAbsent || imagePathVariants != null) {
+      map['image_path_variants'] = Variable<String>(imagePathVariants);
     }
     return map;
   }
@@ -863,6 +883,9 @@ class Question extends DataClass implements Insertable<Question> {
       imagePath: imagePath == null && nullToAbsent
           ? const Value.absent()
           : Value(imagePath),
+      imagePathVariants: imagePathVariants == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePathVariants),
     );
   }
 
@@ -877,6 +900,8 @@ class Question extends DataClass implements Insertable<Question> {
       answerConfig: serializer.fromJson<String>(json['answerConfig']),
       explanation: serializer.fromJson<String?>(json['explanation']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
+      imagePathVariants:
+          serializer.fromJson<String?>(json['imagePathVariants']),
     );
   }
   @override
@@ -890,6 +915,7 @@ class Question extends DataClass implements Insertable<Question> {
       'answerConfig': serializer.toJson<String>(answerConfig),
       'explanation': serializer.toJson<String?>(explanation),
       'imagePath': serializer.toJson<String?>(imagePath),
+      'imagePathVariants': serializer.toJson<String?>(imagePathVariants),
     };
   }
 
@@ -900,7 +926,8 @@ class Question extends DataClass implements Insertable<Question> {
           String? answerType,
           String? answerConfig,
           Value<String?> explanation = const Value.absent(),
-          Value<String?> imagePath = const Value.absent()}) =>
+          Value<String?> imagePath = const Value.absent(),
+          Value<String?> imagePathVariants = const Value.absent()}) =>
       Question(
         id: id ?? this.id,
         questionText: questionText ?? this.questionText,
@@ -911,6 +938,9 @@ class Question extends DataClass implements Insertable<Question> {
         answerConfig: answerConfig ?? this.answerConfig,
         explanation: explanation.present ? explanation.value : this.explanation,
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
+        imagePathVariants: imagePathVariants.present
+            ? imagePathVariants.value
+            : this.imagePathVariants,
       );
   Question copyWithCompanion(QuestionsCompanion data) {
     return Question(
@@ -929,6 +959,9 @@ class Question extends DataClass implements Insertable<Question> {
       explanation:
           data.explanation.present ? data.explanation.value : this.explanation,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      imagePathVariants: data.imagePathVariants.present
+          ? data.imagePathVariants.value
+          : this.imagePathVariants,
     );
   }
 
@@ -941,14 +974,15 @@ class Question extends DataClass implements Insertable<Question> {
           ..write('answerType: $answerType, ')
           ..write('answerConfig: $answerConfig, ')
           ..write('explanation: $explanation, ')
-          ..write('imagePath: $imagePath')
+          ..write('imagePath: $imagePath, ')
+          ..write('imagePathVariants: $imagePathVariants')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, questionText, questionVariants,
-      answerType, answerConfig, explanation, imagePath);
+      answerType, answerConfig, explanation, imagePath, imagePathVariants);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -959,7 +993,8 @@ class Question extends DataClass implements Insertable<Question> {
           other.answerType == this.answerType &&
           other.answerConfig == this.answerConfig &&
           other.explanation == this.explanation &&
-          other.imagePath == this.imagePath);
+          other.imagePath == this.imagePath &&
+          other.imagePathVariants == this.imagePathVariants);
 }
 
 class QuestionsCompanion extends UpdateCompanion<Question> {
@@ -970,6 +1005,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
   final Value<String> answerConfig;
   final Value<String?> explanation;
   final Value<String?> imagePath;
+  final Value<String?> imagePathVariants;
   final Value<int> rowid;
   const QuestionsCompanion({
     this.id = const Value.absent(),
@@ -979,6 +1015,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     this.answerConfig = const Value.absent(),
     this.explanation = const Value.absent(),
     this.imagePath = const Value.absent(),
+    this.imagePathVariants = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   QuestionsCompanion.insert({
@@ -989,6 +1026,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     required String answerConfig,
     this.explanation = const Value.absent(),
     this.imagePath = const Value.absent(),
+    this.imagePathVariants = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         questionText = Value(questionText),
@@ -1002,6 +1040,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     Expression<String>? answerConfig,
     Expression<String>? explanation,
     Expression<String>? imagePath,
+    Expression<String>? imagePathVariants,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1012,6 +1051,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
       if (answerConfig != null) 'answer_config': answerConfig,
       if (explanation != null) 'explanation': explanation,
       if (imagePath != null) 'image_path': imagePath,
+      if (imagePathVariants != null) 'image_path_variants': imagePathVariants,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1024,6 +1064,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
       Value<String>? answerConfig,
       Value<String?>? explanation,
       Value<String?>? imagePath,
+      Value<String?>? imagePathVariants,
       Value<int>? rowid}) {
     return QuestionsCompanion(
       id: id ?? this.id,
@@ -1033,6 +1074,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
       answerConfig: answerConfig ?? this.answerConfig,
       explanation: explanation ?? this.explanation,
       imagePath: imagePath ?? this.imagePath,
+      imagePathVariants: imagePathVariants ?? this.imagePathVariants,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1061,6 +1103,9 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     if (imagePath.present) {
       map['image_path'] = Variable<String>(imagePath.value);
     }
+    if (imagePathVariants.present) {
+      map['image_path_variants'] = Variable<String>(imagePathVariants.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1077,6 +1122,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
           ..write('answerConfig: $answerConfig, ')
           ..write('explanation: $explanation, ')
           ..write('imagePath: $imagePath, ')
+          ..write('imagePathVariants: $imagePathVariants, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1781,6 +1827,7 @@ typedef $$QuestionsTableCreateCompanionBuilder = QuestionsCompanion Function({
   required String answerConfig,
   Value<String?> explanation,
   Value<String?> imagePath,
+  Value<String?> imagePathVariants,
   Value<int> rowid,
 });
 typedef $$QuestionsTableUpdateCompanionBuilder = QuestionsCompanion Function({
@@ -1791,6 +1838,7 @@ typedef $$QuestionsTableUpdateCompanionBuilder = QuestionsCompanion Function({
   Value<String> answerConfig,
   Value<String?> explanation,
   Value<String?> imagePath,
+  Value<String?> imagePathVariants,
   Value<int> rowid,
 });
 
@@ -1844,6 +1892,10 @@ class $$QuestionsTableFilterComposer
 
   ColumnFilters<String> get imagePath => $composableBuilder(
       column: $table.imagePath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get imagePathVariants => $composableBuilder(
+      column: $table.imagePathVariants,
+      builder: (column) => ColumnFilters(column));
 
   Expression<bool> quizQuestionsRefs(
       Expression<bool> Function($$QuizQuestionsTableFilterComposer f) f) {
@@ -1899,6 +1951,10 @@ class $$QuestionsTableOrderingComposer
 
   ColumnOrderings<String> get imagePath => $composableBuilder(
       column: $table.imagePath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get imagePathVariants => $composableBuilder(
+      column: $table.imagePathVariants,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$QuestionsTableAnnotationComposer
@@ -1930,6 +1986,9 @@ class $$QuestionsTableAnnotationComposer
 
   GeneratedColumn<String> get imagePath =>
       $composableBuilder(column: $table.imagePath, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePathVariants => $composableBuilder(
+      column: $table.imagePathVariants, builder: (column) => column);
 
   Expression<T> quizQuestionsRefs<T extends Object>(
       Expression<T> Function($$QuizQuestionsTableAnnotationComposer a) f) {
@@ -1983,6 +2042,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             Value<String> answerConfig = const Value.absent(),
             Value<String?> explanation = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
+            Value<String?> imagePathVariants = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               QuestionsCompanion(
@@ -1993,6 +2053,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             answerConfig: answerConfig,
             explanation: explanation,
             imagePath: imagePath,
+            imagePathVariants: imagePathVariants,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -2003,6 +2064,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             required String answerConfig,
             Value<String?> explanation = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
+            Value<String?> imagePathVariants = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               QuestionsCompanion.insert(
@@ -2013,6 +2075,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             answerConfig: answerConfig,
             explanation: explanation,
             imagePath: imagePath,
+            imagePathVariants: imagePathVariants,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

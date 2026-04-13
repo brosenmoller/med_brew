@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:med_brew/models/answer_state.dart';
 import 'package:med_brew/models/question_data.dart';
@@ -25,11 +27,16 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
   final TextEditingController _controller = TextEditingController();
   late final FocusNode _focusNode;
   bool _submitted = false;
+  String? _resolvedImagePath;
 
   @override
   void initState() {
     super.initState();
     _focusNode = FocusNode();
+    final variants = widget.question.imagePathVariants;
+    if (variants.isNotEmpty) {
+      _resolvedImagePath = variants[Random().nextInt(variants.length)];
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusNode.requestFocus();
     });
@@ -65,12 +72,12 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (widget.question.imagePath != null)
+            if (_resolvedImagePath != null)
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: QuestionImage(
-                    path: widget.question.imagePath!,
+                    path: _resolvedImagePath!,
                     maxHeight: double.infinity,
                   ),
                 ),

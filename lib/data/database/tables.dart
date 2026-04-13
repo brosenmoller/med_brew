@@ -36,6 +36,9 @@ class Questions extends Table {
   TextColumn get answerConfig => text()();
   TextColumn get explanation => text().nullable()();
   TextColumn get imagePath => text().nullable()();
+  // JSON array of image paths — one is picked at random each time the question
+  // is displayed. Null means fall back to the legacy single imagePath.
+  TextColumn get imagePathVariants => text().nullable()();
   @override
   Set<Column> get primaryKey => {id};
 }

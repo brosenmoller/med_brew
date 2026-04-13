@@ -27,7 +27,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   // UUID generation expression for SQLite
   static const _uuidExpr =
@@ -270,6 +270,10 @@ class AppDatabase extends _$AppDatabase {
 
         await customStatement('PRAGMA foreign_keys = ON');
       }
+
+      if (from < 8) {
+        await m.addColumn(questions, questions.imagePathVariants);
+      }
     },
   );
 
@@ -374,6 +378,9 @@ class AppDatabase extends _$AppDatabase {
               : [question.questionText],
           'answerType': question.answerType,
           'imagePath': question.imagePath,
+          'imagePathVariants': question.imagePathVariants != null
+              ? jsonDecode(question.imagePathVariants!)
+              : null,
           'explanation': question.explanation,
         };
 
@@ -432,6 +439,7 @@ class AppDatabase extends _$AppDatabase {
         final variants = (q['questionVariants'] as List?)?.cast<String>();
         final questionText = variants?.first ?? '';
 
+        final importedVariants = q['imagePathVariants'] as List?;
         final newId = await insertQuestion(QuestionsCompanion(
           id: Value(importedId),
           questionText: Value(questionText),
@@ -442,6 +450,9 @@ class AppDatabase extends _$AppDatabase {
           answerConfig: Value(answerConfig),
           explanation: Value(q['explanation'] as String?),
           imagePath: Value(q['imagePath'] as String?),
+          imagePathVariants: importedVariants != null
+              ? Value(jsonEncode(importedVariants.cast<String>()))
+              : const Value.absent(),
         ));
         questionIdMap[importedId] = newId;
         inserted++;

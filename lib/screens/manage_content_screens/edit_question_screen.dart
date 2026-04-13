@@ -1,12 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SetConfig, SortingConfig, TypedAnswerConfig;
 import 'package:med_brew/services/question_service.dart';
+import 'package:med_brew/widgets/app_image.dart';
+import 'package:med_brew/widgets/image_browser_dialog.dart';
 import 'package:med_brew/widgets/image_picker_field.dart';
 import 'package:med_brew/widgets/unsaved_changes_guard.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'edit_question/answer_type_selector.dart';
 import 'edit_question/multiple_choice_section.dart';
 import 'edit_question/typed_answer_section.dart';
@@ -52,6 +59,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
   // Typed
   late final List<TextEditingController> _acceptedAnswerControllers;
+
+  // Image variants (for multipleChoice, typed, sorting, set)
+  late List<String> _imagePathVariants;
 
   // Image click — list of polygons in normalized (0–1) coordinates
   List<List<Offset>> _selectedImageAreas = [];
@@ -176,6 +186,24 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
           List.generate(4, (_) => TextEditingController());
       _setControllers =
           List.generate(2, (_) => TextEditingController());
+    }
+
+    // Image variants: load from new column if set, fall back to legacy imagePath.
+    // imageClick uses a single _imagePath managed by _pickerKey instead.
+    if (_answerType == 'imageClick' || _answerType == 'flashcard') {
+      _imagePathVariants = [];
+    } else if (q?.imagePathVariants != null) {
+      try {
+        _imagePathVariants =
+            List<String>.from(jsonDecode(q!.imagePathVariants!));
+      } catch (_) {
+        _imagePathVariants = [];
+      }
+    } else if (q?.imagePath != null) {
+      // Legacy single-image question: migrate into the variants list.
+      _imagePathVariants = [q!.imagePath!];
+    } else {
+      _imagePathVariants = [];
     }
 
     _questionController.addListener(_markDirty);
@@ -365,15 +393,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
                   if (_answerType != 'imageClick' && _answerType != 'flashcard') ...[
                     const SizedBox(height: 8),
-                    ImagePickerField(
-                      key: _pickerKey,
-                      label: l10n.questionImageOptional,
-                      initialPath: _imagePath,
-                      onChanged: (path) => setState(() {
-                        _imagePath = path;
-                        _isDirty = true;
-                      }),
-                    ),
+                    _buildImageVariantsEditor(),
                     const SizedBox(height: 16),
                   ],
 
@@ -400,6 +420,146 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     );
   }
 
+  Widget _buildImageVariantsEditor() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Question images (randomized)',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 6),
+            const Tooltip(
+              message:
+                  'A random image is shown each time this question appears.\n'
+                  'Add multiple images of the same subject so students learn\n'
+                  'the concept, not a specific image.',
+              child: Icon(Icons.help_outline, size: 16),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_imagePathVariants.isNotEmpty)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _imagePathVariants.asMap().entries.map((entry) {
+              final index = entry.key;
+              final path = entry.value;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: AppImage(
+                        path: path,
+                        fit: BoxFit.cover,
+                        width: 100,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: -8,
+                    right: -8,
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _imagePathVariants.removeAt(index);
+                        _isDirty = true;
+                      }),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close,
+                            size: 18, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        if (_imagePathVariants.isNotEmpty) const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _addNewImageVariant,
+                icon: const Icon(Icons.file_open_outlined, size: 16),
+                label: const Text('New image'),
+                style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 8)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _addExistingImageVariant,
+                icon: const Icon(Icons.photo_library_outlined, size: 16),
+                label: const Text('Existing image'),
+                style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 8)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _addNewImageVariant() async {
+    final result =
+        await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result?.files.single.path == null) return;
+    final saved = await _saveImageToStorage(result!.files.single.path!);
+    if (saved != null && mounted) {
+      setState(() {
+        _imagePathVariants.add(saved);
+        _isDirty = true;
+      });
+    }
+  }
+
+  Future<void> _addExistingImageVariant() async {
+    final picked = await ImageBrowserDialog.show(context);
+    if (picked == null) return;
+    await Future.delayed(const Duration(milliseconds: 250));
+    if (mounted) {
+      setState(() {
+        _imagePathVariants.add(picked);
+        _isDirty = true;
+      });
+    }
+  }
+
+  Future<String?> _saveImageToStorage(String sourcePath) async {
+    final fileName = p.basename(sourcePath);
+    try {
+      if (kDebugMode) {
+        final dest = Directory(
+            p.join(Directory.current.path, 'assets', 'images'));
+        if (!dest.existsSync()) dest.createSync(recursive: true);
+        await File(sourcePath).copy(p.join(dest.path, fileName));
+        return 'assets/images/$fileName';
+      } else {
+        final dir = await getApplicationDocumentsDirectory();
+        final dest = Directory(p.join(dir.path, 'images'));
+        if (!dest.existsSync()) dest.createSync(recursive: true);
+        final destPath = p.join(dest.path, fileName);
+        await File(sourcePath).copy(destPath);
+        return destPath;
+      }
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -407,7 +567,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     final questionText = _questionController.text.trim();
 
     final String answerConfig;
-    String? savedImagePath;
+    // imageClick/flashcard use a single imagePath; all other types use the
+    // imagePathVariants list and derive imagePath from its first element.
+    String? singleImagePath; // only set for imageClick / flashcard
 
     if (_answerType == 'multipleChoice') {
       if (_correctIndices.isEmpty) {
@@ -415,8 +577,6 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
             SnackBar(content: Text(l10n.selectAtLeastOneCorrect)));
         return;
       }
-      savedImagePath = await _pickerKey.currentState
-          ?.applyAutoName('question_$questionText') ?? _imagePath;
       answerConfig = jsonEncode({
         'options': _optionControllers.map((c) => c.text.trim()).toList(),
         'correctIndices': _correctIndices.toList(),
@@ -425,7 +585,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         if (_showCorrectCount) 'showCorrectCount': true,
       });
     } else if (_answerType == 'imageClick') {
-      savedImagePath = await _pickerKey.currentState
+      singleImagePath = await _pickerKey.currentState
           ?.applyAutoName('question_$questionText') ?? _imagePath;
       if (_selectedImageAreas.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -455,7 +615,6 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         return;
       }
 
-      savedImagePath = null;
       answerConfig = jsonEncode(FlashcardConfig(
         frontText: frontText.isEmpty ? null : frontText,
         frontImagePath: frontImagePath,
@@ -464,15 +623,11 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         randomizeSides: _flashcardRandomizeSides,
       ).toJson());
     } else if (_answerType == 'sorting') {
-      savedImagePath = await _pickerKey.currentState
-          ?.applyAutoName('question_$questionText') ?? _imagePath;
       answerConfig = jsonEncode(SortingConfig(
         items: _sortingControllers.map((c) => c.text.trim()).toList(),
         showPreFilled: _sortingShowPreFilled,
       ).toJson());
     } else if (_answerType == 'set') {
-      savedImagePath = await _pickerKey.currentState
-          ?.applyAutoName('question_$questionText') ?? _imagePath;
       final answers = _setControllers
           .map((c) => c.text.trim())
           .where((s) => s.isNotEmpty)
@@ -485,8 +640,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       }
       answerConfig = jsonEncode(SetConfig(answers: answers).toJson());
     } else {
-      savedImagePath = await _pickerKey.currentState
-          ?.applyAutoName('question_$questionText') ?? _imagePath;
+      // typed
       answerConfig = jsonEncode({
         'acceptedAnswers': _acceptedAnswerControllers
             .map((c) => c.text.trim())
@@ -495,13 +649,26 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       });
     }
 
+    // Build image fields for the companion.
+    // imageClick / flashcard: singleImagePath, no variants.
+    // All other types: variants list drives both columns.
+    final bool usesVariants =
+        _answerType != 'imageClick' && _answerType != 'flashcard';
+    final String? finalImagePath = usesVariants
+        ? (_imagePathVariants.isEmpty ? null : _imagePathVariants.first)
+        : singleImagePath;
+    final String? finalVariantsJson = usesVariants && _imagePathVariants.isNotEmpty
+        ? jsonEncode(_imagePathVariants)
+        : null;
+
     final explanation = _explanationController.text.trim();
     final companion = QuestionsCompanion(
       questionText: Value(questionText),
       answerType: Value(_answerType),
       answerConfig: Value(answerConfig),
       explanation: Value(explanation.isEmpty ? null : explanation),
-      imagePath: Value(savedImagePath),
+      imagePath: Value(finalImagePath),
+      imagePathVariants: Value(finalVariantsJson),
     );
 
     if (widget.isEditing) {
@@ -511,13 +678,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     } else {
       await widget.db.insertQuestionIntoQuiz(
         quizId: widget.quizId,
-        question: QuestionsCompanion(
-          questionText: Value(questionText),
-          answerType: Value(_answerType),
-          answerConfig: Value(answerConfig),
-          explanation: Value(explanation.isEmpty ? null : explanation),
-          imagePath: Value(savedImagePath),
-        ),
+        question: companion,
       );
     }
 

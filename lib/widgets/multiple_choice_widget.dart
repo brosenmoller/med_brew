@@ -31,6 +31,7 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
   late Set<int> _correctDisplayIndices;
   late bool _isMultipleCorrect;
   late FocusNode _focusNode;
+  String? _resolvedImagePath;
 
   bool get isDesktop {
     if (kIsWeb) return false;
@@ -61,6 +62,11 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
         .where((e) => correctTexts.contains(e.value))
         .map((e) => e.key)
         .toSet();
+
+    final variants = widget.question.imagePathVariants;
+    if (variants.isNotEmpty) {
+      _resolvedImagePath = variants[Random().nextInt(variants.length)];
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focusNode.requestFocus();
@@ -245,12 +251,12 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
     Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.question.imagePath != null)
+        if (_resolvedImagePath != null)
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: QuestionImage(
-                path: widget.question.imagePath!,
+                path: _resolvedImagePath!,
                 maxHeight: double.infinity,
               ),
             ),
