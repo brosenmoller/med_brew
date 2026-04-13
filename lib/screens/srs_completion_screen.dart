@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
@@ -46,15 +45,7 @@ class SrsCompletionScreen extends StatelessWidget {
         title: Text(l10n.srsSessionComplete),
         centerTitle: true,
       ),
-      body: KeyboardListener(
-        focusNode: FocusNode()..requestFocus(),
-        onKeyEvent: (event) {
-          if (event is KeyDownEvent &&
-              (event.logicalKey == LogicalKeyboardKey.escape)) {
-            Navigator.pop(context);
-          }
-        },
-        child: Align(
+      body: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 680),
@@ -138,7 +129,6 @@ class SrsCompletionScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }

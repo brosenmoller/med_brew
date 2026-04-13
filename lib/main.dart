@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -42,17 +43,28 @@ class MedBrew extends StatefulWidget {
 
 class _MedBrewState extends State<MedBrew> {
   final SettingsService _settings = SettingsService();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
     _settings.localeNotifier.addListener(_onLocaleChanged);
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
   }
 
   @override
   void dispose() {
     _settings.localeNotifier.removeListener(_onLocaleChanged);
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     super.dispose();
+  }
+
+  bool _handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      _navigatorKey.currentState?.maybePop();
+    }
+    return false;
   }
 
   void _onLocaleChanged() => setState(() {});
@@ -60,6 +72,7 @@ class _MedBrewState extends State<MedBrew> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Med Brew',
       locale: _settings.localeNotifier.value,
