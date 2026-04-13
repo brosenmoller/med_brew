@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path_dart;
 import 'package:uuid/uuid.dart';
@@ -23,31 +22,24 @@ class AppDatabase extends _$AppDatabase {
     return LazyDatabase(() async {
       final dir = await getApplicationDocumentsDirectory();
       final file = File(path_dart.join(dir.path, 'med_brew.db'));
-
-      if (!file.existsSync()) {
-        final data = await rootBundle.load('assets/seed.db');
-        final bytes = data.buffer.asUint8List();
-        await file.writeAsBytes(bytes, flush: true);
-      }
-
       return NativeDatabase.createInBackground(file);
     });
   }
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (m, from, to) async {
       if (from < 2) {
-        // Create the new folders table
+        // Create the new folders table (current schema, no is_permanent)
         await m.createTable(folders);
 
         // Migrate existing categories as root-level folders (IDs preserved)
         await customStatement('''
-          INSERT INTO folders (id, parent_folder_id, title, image_path, is_permanent, created_at)
-          SELECT id, NULL, title, image_path, is_permanent, created_at
+          INSERT INTO folders (id, parent_folder_id, title, image_path, created_at)
+          SELECT id, NULL, title, image_path, created_at
           FROM categories
         ''');
 
@@ -89,247 +81,170 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(folders, folders.syncId);
         await m.addColumn(quizzes, quizzes.syncId);
         await m.addColumn(questions, questions.syncId);
-        // Back-fill UUIDs for all non-permanent rows using SQLite randomblob
+        // Back-fill UUIDs for all rows (is_permanent distinction is removed in v6)
         const uuidExpr =
             "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || "
             "substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(2))) || "
             "'-' || lower(hex(randomblob(6)))";
         await customStatement(
-            'UPDATE folders SET sync_id = $uuidExpr WHERE is_permanent = 0 AND sync_id IS NULL');
+            'UPDATE folders SET sync_id = $uuidExpr WHERE sync_id IS NULL');
         await customStatement(
-            'UPDATE quizzes SET sync_id = $uuidExpr WHERE is_permanent = 0 AND sync_id IS NULL');
+            'UPDATE quizzes SET sync_id = $uuidExpr WHERE sync_id IS NULL');
         await customStatement(
-            'UPDATE questions SET sync_id = $uuidExpr WHERE is_permanent = 0 AND sync_id IS NULL');
+            'UPDATE questions SET sync_id = $uuidExpr WHERE sync_id IS NULL');
+      }
+
+      if (from < 6) {
+        // Drop is_permanent from all three tables via table reconstruction.
+        // SQLite does not support DROP COLUMN reliably on older versions.
+        await customStatement('''
+          CREATE TABLE folders_new (
+            "id"               INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            "parent_folder_id" INTEGER,
+            "title"            TEXT NOT NULL,
+            "image_path"       TEXT,
+            "created_at"       INTEGER NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+            "sync_id"          TEXT
+          )
+        ''');
+        await customStatement('''
+          INSERT INTO folders_new (id, parent_folder_id, title, image_path, created_at, sync_id)
+          SELECT id, parent_folder_id, title, image_path, created_at, sync_id FROM folders
+        ''');
+        await customStatement('DROP TABLE folders');
+        await customStatement('ALTER TABLE folders_new RENAME TO folders');
+
+        await customStatement('''
+          CREATE TABLE quizzes_new (
+            "id"            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            "folder_id"     INTEGER,
+            "title"         TEXT NOT NULL,
+            "image_path"    TEXT,
+            "created_at"    INTEGER NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+            "language_code" TEXT,
+            "sync_id"       TEXT
+          )
+        ''');
+        await customStatement('''
+          INSERT INTO quizzes_new (id, folder_id, title, image_path, created_at, language_code, sync_id)
+          SELECT id, folder_id, title, image_path, created_at, language_code, sync_id FROM quizzes
+        ''');
+        await customStatement('DROP TABLE quizzes');
+        await customStatement('ALTER TABLE quizzes_new RENAME TO quizzes');
+
+        await customStatement('''
+          CREATE TABLE questions_new (
+            "id"                INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            "question_text"     TEXT NOT NULL,
+            "question_variants" TEXT,
+            "answer_type"       TEXT NOT NULL,
+            "answer_config"     TEXT NOT NULL,
+            "explanation"       TEXT,
+            "image_path"        TEXT,
+            "sync_id"           TEXT
+          )
+        ''');
+        await customStatement('''
+          INSERT INTO questions_new (id, question_text, question_variants, answer_type, answer_config, explanation, image_path, sync_id)
+          SELECT id, question_text, question_variants, answer_type, answer_config, explanation, image_path, sync_id FROM questions
+        ''');
+        await customStatement('DROP TABLE questions');
+        await customStatement('ALTER TABLE questions_new RENAME TO questions');
       }
     },
   );
-
-  /// Bump this whenever new built-in content is added to assets/seed.db.
-  /// Existing installs whose stored seedVersion is lower will receive the
-  /// new content automatically on next launch.
-  static const int kSeedVersion = 1;
-
-  // Used by the seed export to mark permanent on the copy
-  AppDatabase.fromFile(File file) : super(NativeDatabase(file));
-
-  // Mark everything permanent — called on the seed copy, not the live DB
-  Future<void> markAllPermanent() async {
-    await customUpdate('UPDATE folders SET is_permanent = 1');
-    await customUpdate('UPDATE quizzes SET is_permanent = 1');
-    await customUpdate('UPDATE questions SET is_permanent = 1');
-  }
-
-  // ─── Seed merge ───────────────────────────────────────────────
-  //
-  // Called once per kSeedVersion bump. Opens the bundled seed as a
-  // temporary database, finds any permanent items not yet present in this
-  // database (matched by syncId, with a title fallback for pre-v5 rows that
-  // have no syncId), and inserts them. Custom user content is never touched.
-
-  Future<void> mergeNewSeedContent() async {
-    final data = await rootBundle.load('assets/seed.db');
-    final dir = await getApplicationDocumentsDirectory();
-    final tempFile =
-        File(path_dart.join(dir.path, '_seed_merge.db'));
-    await tempFile.writeAsBytes(data.buffer.asUint8List());
-    // The temp seed file is a completely separate SQLite file from the live DB,
-    // so there is no shared executor and no risk of corruption.
-    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-    final seedDb = AppDatabase.fromFile(tempFile);
-    try {
-      await _applyMissingSeedContent(seedDb);
-    } finally {
-      await seedDb.close();
-      if (tempFile.existsSync()) tempFile.deleteSync();
-    }
-  }
-
-  Future<void> _applyMissingSeedContent(AppDatabase seed) async {
-    // Build lookup maps of what this DB already has (by syncId).
-    final mySyncedFolders = {
-      for (final f in await (select(folders)
-            ..where((t) => t.syncId.isNotNull()))
-          .get())
-        f.syncId!: f.id,
-    };
-    final mySyncedQuizzes = {
-      for (final q in await (select(quizzes)
-            ..where((t) => t.syncId.isNotNull()))
-          .get())
-        q.syncId!: q.id,
-    };
-    final mySyncedQuestions = {
-      for (final q in await (select(questions)
-            ..where((t) => t.syncId.isNotNull()))
-          .get())
-        q.syncId!: q.id,
-    };
-
-    final seedFolders = await seed.select(seed.folders).get();
-    final seedQuizzes = await seed.select(seed.quizzes).get();
-    final seedQuestions = await seed.select(seed.questions).get();
-    final seedJunctions = await seed.select(seed.quizQuestions).get();
-
-    // Translate seed-local IDs → this DB's IDs (needed to wire relationships).
-    final folderIdMap = <int, int>{};
-    final questionIdMap = <int, int>{};
-
-    await transaction(() async {
-      // 1. Questions
-      for (final q in seedQuestions) {
-        // Items with no syncId cannot be tracked — skip.
-        if (q.syncId == null) continue;
-
-        if (mySyncedQuestions.containsKey(q.syncId)) {
-          questionIdMap[q.id] = mySyncedQuestions[q.syncId]!;
-          continue;
-        }
-
-        // Old installs: permanent rows have null syncId. Match by text + type
-        // to avoid duplicating existing content and assign the stable syncId.
-        final titleMatch = await (select(questions)
-              ..where((t) =>
-                  t.questionText.equals(q.questionText) &
-                  t.answerType.equals(q.answerType) &
-                  t.isPermanent.equals(true) &
-                  t.syncId.isNull()))
-            .getSingleOrNull();
-        if (titleMatch != null) {
-          await (update(questions)..where((t) => t.id.equals(titleMatch.id)))
-              .write(QuestionsCompanion(syncId: Value(q.syncId)));
-          questionIdMap[q.id] = titleMatch.id;
-          continue;
-        }
-
-        final localId = await into(questions).insert(QuestionsCompanion(
-          questionText: Value(q.questionText),
-          questionVariants: Value(q.questionVariants),
-          answerType: Value(q.answerType),
-          answerConfig: Value(q.answerConfig),
-          explanation: Value(q.explanation),
-          imagePath: Value(q.imagePath),
-          isPermanent: const Value(true),
-          syncId: Value(q.syncId),
-        ));
-        questionIdMap[q.id] = localId;
-      }
-
-      // 2. Folders — first pass: insert without parent
-      for (final f in seedFolders) {
-        if (f.syncId == null) continue;
-
-        if (mySyncedFolders.containsKey(f.syncId)) {
-          folderIdMap[f.id] = mySyncedFolders[f.syncId]!;
-          continue;
-        }
-
-        // Fallback for old installs: match permanent folder by title.
-        final titleMatch = await (select(folders)
-              ..where((t) =>
-                  t.title.equals(f.title) &
-                  t.isPermanent.equals(true) &
-                  t.syncId.isNull()))
-            .getSingleOrNull();
-        if (titleMatch != null) {
-          await (update(folders)..where((t) => t.id.equals(titleMatch.id)))
-              .write(FoldersCompanion(syncId: Value(f.syncId)));
-          folderIdMap[f.id] = titleMatch.id;
-          continue;
-        }
-
-        final localId = await into(folders).insert(FoldersCompanion(
-          title: Value(f.title),
-          imagePath: Value(f.imagePath),
-          isPermanent: const Value(true),
-          syncId: Value(f.syncId),
-        ));
-        folderIdMap[f.id] = localId;
-      }
-      // Second pass: wire parent relationships for newly inserted folders.
-      for (final f in seedFolders) {
-        if (f.syncId == null || f.parentFolderId == null) continue;
-        if (mySyncedFolders.containsKey(f.syncId)) continue; // pre-existing, leave alone
-        final localId = folderIdMap[f.id];
-        final parentLocalId = folderIdMap[f.parentFolderId!];
-        if (localId != null && parentLocalId != null) {
-          await (update(folders)..where((t) => t.id.equals(localId)))
-              .write(FoldersCompanion(parentFolderId: Value(parentLocalId)));
-        }
-      }
-
-      // 3. Quizzes + junction rows
-      for (final qz in seedQuizzes) {
-        if (qz.syncId == null) continue;
-
-        int quizLocalId;
-
-        if (mySyncedQuizzes.containsKey(qz.syncId)) {
-          quizLocalId = mySyncedQuizzes[qz.syncId]!;
-        } else {
-          // Fallback for old installs.
-          final folderId =
-              qz.folderId != null ? folderIdMap[qz.folderId!] : null;
-          final titleMatch = await (select(quizzes)
-                ..where((t) =>
-                    t.title.equals(qz.title) &
-                    t.isPermanent.equals(true) &
-                    t.syncId.isNull()))
-              .getSingleOrNull();
-          if (titleMatch != null) {
-            await (update(quizzes)
-                  ..where((t) => t.id.equals(titleMatch.id)))
-                .write(QuizzesCompanion(syncId: Value(qz.syncId)));
-            quizLocalId = titleMatch.id;
-          } else {
-            quizLocalId = await into(quizzes).insert(QuizzesCompanion(
-              title: Value(qz.title),
-              folderId: Value(folderId),
-              imagePath: Value(qz.imagePath),
-              languageCode: Value(qz.languageCode),
-              isPermanent: const Value(true),
-              syncId: Value(qz.syncId),
-            ));
-          }
-        }
-
-        // Add any junction rows the quiz has in the seed (insertJunctionRowSafe
-        // ignores rows that already exist, so this is safe to run every time).
-        for (final j
-            in seedJunctions.where((j) => j.quizId == qz.id)) {
-          final qLocalId = questionIdMap[j.questionId];
-          if (qLocalId == null) continue;
-          await insertJunctionRowSafe(quizLocalId, qLocalId, j.sortOrder);
-        }
-      }
-    });
-  }
 
   // ─── Export ───────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> exportToJsonMap() async {
     final allFolders = await getAllFolders();
     final allQuizzes = await getAllQuizzes();
-    final seenQuestionIds = <int>{};
 
     final foldersJson = allFolders.map((f) => {
       'id': f.id.toString(),
+      'syncId': f.syncId,
       'parentFolderId': f.parentFolderId?.toString(),
       'title': f.title,
       'imagePath': f.imagePath,
     }).toList();
 
+    final quizzesAndQuestions = await _buildJsonForQuizzes(allQuizzes);
+
+    return {
+      'folders': foldersJson,
+      'quizzes': quizzesAndQuestions['quizzes'],
+      'questions': quizzesAndQuestions['questions'],
+    };
+  }
+
+  Future<Map<String, dynamic>> exportFolderToJsonMap(int folderId) async {
+    final folderIds = await _collectFolderSubtree(folderId);
+    final folderList = <Folder>[];
+    for (final id in folderIds) {
+      final f = await (select(folders)..where((t) => t.id.equals(id))).getSingleOrNull();
+      if (f != null) folderList.add(f);
+    }
+    final folderIdsList = folderIds.toList();
+    final quizList = await (select(quizzes)
+      ..where((t) => t.folderId.isIn(folderIdsList))).get();
+
+    final foldersJson = folderList.map((f) => {
+      'id': f.id.toString(),
+      'syncId': f.syncId,
+      'parentFolderId': f.parentFolderId?.toString(),
+      'title': f.title,
+      'imagePath': f.imagePath,
+    }).toList();
+
+    final quizzesAndQuestions = await _buildJsonForQuizzes(quizList);
+
+    return {
+      'folders': foldersJson,
+      'quizzes': quizzesAndQuestions['quizzes'],
+      'questions': quizzesAndQuestions['questions'],
+    };
+  }
+
+  Future<Map<String, dynamic>> exportQuizToJsonMap(int quizId) async {
+    final quiz = await (select(quizzes)..where((t) => t.id.equals(quizId))).getSingleOrNull();
+    if (quiz == null) return {'folders': [], 'quizzes': [], 'questions': []};
+    final quizzesAndQuestions = await _buildJsonForQuizzes([quiz]);
+    return {
+      'folders': <Map<String, dynamic>>[],
+      'quizzes': quizzesAndQuestions['quizzes'],
+      'questions': quizzesAndQuestions['questions'],
+    };
+  }
+
+  /// Collects the given folder and all its descendants, returning their IDs.
+  Future<Set<int>> _collectFolderSubtree(int folderId) async {
+    final result = <int>{folderId};
+    final children = await (select(folders)
+      ..where((t) => t.parentFolderId.equals(folderId))).get();
+    for (final child in children) {
+      result.addAll(await _collectFolderSubtree(child.id));
+    }
+    return result;
+  }
+
+  /// Builds the quizzes + questions JSON for the given list of quizzes.
+  Future<Map<String, List<Map<String, dynamic>>>> _buildJsonForQuizzes(
+      List<Quiz> quizList) async {
+    final seenQuestionIds = <int>{};
     final quizzesJson = <Map<String, dynamic>>[];
     final questionsJson = <Map<String, dynamic>>[];
 
-    for (final quiz in allQuizzes) {
+    for (final quiz in quizList) {
       final questionList = await getQuestionsForQuiz(quiz.id);
       quizzesJson.add({
         'id': quiz.id.toString(),
+        'syncId': quiz.syncId,
         'folderId': quiz.folderId?.toString(),
         'title': quiz.title,
         'imagePath': quiz.imagePath,
         'languageCode': quiz.languageCode,
         'questionIds': questionList.map((q) => q.id.toString()).toList(),
+        'questionSyncIds': questionList.map((q) => q.syncId).toList(),
       });
 
       for (final question in questionList) {
@@ -339,6 +254,7 @@ class AppDatabase extends _$AppDatabase {
         final config = jsonDecode(question.answerConfig) as Map<String, dynamic>;
         final questionJson = <String, dynamic>{
           'id': question.id.toString(),
+          'syncId': question.syncId,
           'questionVariants': question.questionVariants != null
               ? jsonDecode(question.questionVariants!)
               : [question.questionText],
@@ -362,26 +278,37 @@ class AppDatabase extends _$AppDatabase {
       }
     }
 
-    return {
-      'folders': foldersJson,
-      'quizzes': quizzesJson,
-      'questions': questionsJson,
-    };
+    return {'quizzes': quizzesJson, 'questions': questionsJson};
   }
 
   // ─── Import ───────────────────────────────────────────────────
 
-  Future<void> importFromJson(Map<String, dynamic> data) async {
+  /// Imports content from a JSON map.
+  /// Returns the number of new items inserted.
+  /// Items whose syncId is already present in the DB are skipped (idempotent).
+  Future<int> importFromJson(Map<String, dynamic> data) async {
+    int inserted = 0;
+
     await transaction(() async {
       final questionsRaw = data['questions'] as List;
       final quizzesRaw = data['quizzes'] as List;
 
       final Map<String, int> questionIdMap = {};
-      final Map<String, int> quizIdMap = {};
       final Map<String, int> folderIdMap = {};
 
       // 1 — Questions (no dependencies)
       for (final q in questionsRaw) {
+        final importedId = q['id'] as String;
+        final syncId = q['syncId'] as String?;
+
+        if (syncId != null) {
+          final existing = await getQuestionBySyncId(syncId);
+          if (existing != null) {
+            questionIdMap[importedId] = existing.id;
+            continue;
+          }
+        }
+
         final answerType = q['answerType'] as String;
         final String answerConfig = switch (answerType) {
           'multipleChoice' => jsonEncode(q['multipleChoiceConfig']),
@@ -394,7 +321,7 @@ class AppDatabase extends _$AppDatabase {
         final variants = (q['questionVariants'] as List?)?.cast<String>();
         final questionText = variants?.first ?? '';
 
-        final newId = await into(questions).insert(QuestionsCompanion.insert(
+        final newId = await insertQuestion(QuestionsCompanion.insert(
           questionText: questionText,
           questionVariants: variants != null && variants.length > 1
               ? Value(jsonEncode(variants))
@@ -403,21 +330,35 @@ class AppDatabase extends _$AppDatabase {
           answerConfig: answerConfig,
           explanation: Value(q['explanation'] as String?),
           imagePath: Value(q['imagePath'] as String?),
+          syncId: syncId != null ? Value(syncId) : const Value.absent(),
         ));
-        questionIdMap[q['id'] as String] = newId;
+        questionIdMap[importedId] = newId;
+        inserted++;
       }
 
-      // 2 — Folders (handle both new 'folders' format and legacy 'categories')
+      // 2 — Folders
       if (data.containsKey('folders')) {
-        // New format — two-pass to handle parent references
         final foldersRaw = data['folders'] as List;
         // First pass: insert all folders without parent
         for (final f in foldersRaw) {
+          final importedId = f['id'] as String;
+          final syncId = f['syncId'] as String?;
+
+          if (syncId != null) {
+            final existing = await getFolderBySyncId(syncId);
+            if (existing != null) {
+              folderIdMap[importedId] = existing.id;
+              continue;
+            }
+          }
+
           final newId = await insertFolder(FoldersCompanion.insert(
             title: f['title'] as String,
             imagePath: Value(f['imagePath'] as String?),
+            syncId: syncId != null ? Value(syncId) : const Value.absent(),
           ));
-          folderIdMap[f['id'] as String] = newId;
+          folderIdMap[importedId] = newId;
+          inserted++;
         }
         // Second pass: set parent_folder_id
         for (final f in foldersRaw) {
@@ -440,19 +381,27 @@ class AppDatabase extends _$AppDatabase {
             imagePath: Value(c['imagePath'] as String?),
           ));
           folderIdMap[c['id'] as String] = newId;
+          inserted++;
         }
       }
 
       // 3 — Quizzes + junction rows
       for (final quiz in quizzesRaw) {
-        // Determine which folder owns this quiz
-        int? targetFolderId;
+        final importedId = quiz['id'] as String;
+        final syncId = quiz['syncId'] as String?;
 
+        if (syncId != null) {
+          final existing = await getQuizBySyncId(syncId);
+          if (existing != null) {
+            // Quiz already exists — skip entirely (junction rows already set)
+            continue;
+          }
+        }
+
+        int? targetFolderId;
         if (quiz.containsKey('folderId') && quiz['folderId'] != null) {
-          // New format
           targetFolderId = folderIdMap[quiz['folderId'] as String];
         } else if (data.containsKey('categories')) {
-          // Legacy: find which category listed this quiz
           final categoriesRaw = data['categories'] as List;
           final owner = categoriesRaw
               .cast<Map<String, dynamic>>()
@@ -471,8 +420,9 @@ class AppDatabase extends _$AppDatabase {
           title: quiz['title'] as String,
           imagePath: Value(quiz['imagePath'] as String?),
           languageCode: Value(quiz['languageCode'] as String?),
+          syncId: syncId != null ? Value(syncId) : const Value.absent(),
         ));
-        quizIdMap[quiz['id'] as String] = newQuizId;
+        inserted++;
 
         int order = 0;
         for (final qStringId in (quiz['questionIds'] as List)) {
@@ -486,6 +436,8 @@ class AppDatabase extends _$AppDatabase {
         }
       }
     });
+
+    return inserted;
   }
 
   // ─── Folders ──────────────────────────────────────────────────
@@ -560,6 +512,8 @@ class AppDatabase extends _$AppDatabase {
 
   // ─── Questions ────────────────────────────────────────────────
 
+  Future<List<Question>> getAllQuestions() => select(questions).get();
+
   Future<List<Question>> getQuestionsForQuiz(int quizId) {
     final query = select(questions).join([
       innerJoin(
@@ -597,15 +551,20 @@ class AppDatabase extends _$AppDatabase {
         .write(QuizQuestionsCompanion(sortOrder: Value(newIndex)));
   }
 
-  Future<void> insertQuestionIntoQuiz({
-    required QuestionsCompanion question,
-    required int quizId,
-  }) async {
+  Future<int> insertQuestion(QuestionsCompanion question) async {
     final questionId = await into(questions).insert(question);
     if (!question.syncId.present) {
       await (update(questions)..where((t) => t.id.equals(questionId)))
           .write(QuestionsCompanion(syncId: Value(const Uuid().v4())));
     }
+    return questionId;
+  }
+
+  Future<void> insertQuestionIntoQuiz({
+    required QuestionsCompanion question,
+    required int quizId,
+  }) async {
+    final questionId = await insertQuestion(question);
     await into(quizQuestions).insert(
       QuizQuestionsCompanion.insert(
         quizId: quizId,
@@ -618,15 +577,6 @@ class AppDatabase extends _$AppDatabase {
       (delete(questions)..where((t) => t.id.equals(id))).go();
 
   // ─── Sync helpers ─────────────────────────────────────────────
-
-  Future<List<Folder>> getNonPermanentFolders() =>
-      (select(folders)..where((t) => t.isPermanent.equals(false))).get();
-
-  Future<List<Quiz>> getNonPermanentQuizzes() =>
-      (select(quizzes)..where((t) => t.isPermanent.equals(false))).get();
-
-  Future<List<Question>> getNonPermanentQuestions() =>
-      (select(questions)..where((t) => t.isPermanent.equals(false))).get();
 
   Future<Folder?> getFolderBySyncId(String syncId) =>
       (select(folders)..where((t) => t.syncId.equals(syncId))).getSingleOrNull();

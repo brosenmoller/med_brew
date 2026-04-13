@@ -220,7 +220,6 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
         folderId: Value(existing.folderId),
         title: Value(title),
         imagePath: Value(imagePath),
-        isPermanent: Value(existing.isPermanent),
         languageCode: Value(languageCode),
       ));
     }

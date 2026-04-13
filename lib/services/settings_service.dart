@@ -22,13 +22,6 @@ class SettingsService {
   /// The stored language code, or null for system default.
   String? get languageCode => _box.get('languageCode') as String?;
 
-  /// Version of the seed content that has been applied to this database.
-  /// 0 means never applied (pre-versioning installs or fresh box).
-  int get seedVersion => _box.get('seedVersion', defaultValue: 0) as int;
-
-  Future<void> setSeedVersion(int version) =>
-      _box.put('seedVersion', version);
-
   Future<void> setLanguageCode(String? code) async {
     if (code == null) {
       await _box.delete('languageCode');

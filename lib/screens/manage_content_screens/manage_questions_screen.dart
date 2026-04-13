@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
@@ -65,7 +64,6 @@ class ManageQuestionsScreen extends StatelessWidget {
             },
             itemBuilder: (context, i) {
               final question = questions[i];
-              final canEdit = !question.isPermanent || kDebugMode;
               return ListTile(
                 key: ValueKey(question.id),
                 leading: _answerTypeIcon(question.answerType),
@@ -77,14 +75,9 @@ class ManageQuestionsScreen extends StatelessWidget {
                 subtitle: Row(
                   children: [
                     _answerTypeChip(question.answerType, l10n),
-                    if (question.isPermanent) ...[
-                      const SizedBox(width: 6),
-                      _Chip(label: l10n.builtIn, color: Colors.grey),
-                    ],
                   ],
                 ),
-                trailing: canEdit
-                    ? Row(
+                trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
@@ -108,8 +101,7 @@ class ManageQuestionsScreen extends StatelessWidget {
                     ),
                     const Icon(Icons.drag_handle),
                   ],
-                )
-                    : const Icon(Icons.drag_handle, color: Colors.grey),
+                ),
               );
             },
           );

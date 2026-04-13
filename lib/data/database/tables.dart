@@ -6,7 +6,6 @@ class Folders extends Table {
   IntColumn get parentFolderId => integer().nullable()();
   TextColumn get title => text()();
   TextColumn get imagePath => text().nullable()();
-  BoolColumn get isPermanent => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   TextColumn get syncId => text().nullable()();
 }
@@ -18,7 +17,6 @@ class Quizzes extends Table {
   IntColumn get folderId => integer().nullable()();
   TextColumn get title => text()();
   TextColumn get imagePath => text().nullable()();
-  BoolColumn get isPermanent => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   // Optional BCP-47 language tag for the quiz content (e.g. 'en', 'nl', 'de').
   // Null means the quiz is language-neutral / applicable to all languages.
@@ -36,7 +34,6 @@ class Questions extends Table {
   TextColumn get answerConfig => text()();
   TextColumn get explanation => text().nullable()();
   TextColumn get imagePath => text().nullable()();
-  BoolColumn get isPermanent => boolean().withDefault(const Constant(false))();
   TextColumn get syncId => text().nullable()();
 }
 

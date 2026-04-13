@@ -376,11 +376,11 @@ class SyncService {
   // ── Manifest ─────────────────────────────────────────────────
 
   Future<SyncManifest> _buildManifest() async {
-    final foldersRows = await _db!.getNonPermanentFolders();
-    final quizzesRows = await _db!.getNonPermanentQuizzes();
-    final questionsRows = await _db!.getNonPermanentQuestions();
+    final foldersRows = await _db!.getAllFolders();
+    final quizzesRows = await _db!.getAllQuizzes();
+    final questionsRows = await _db!.getAllQuestions();
 
-    // Build SRS manifest keys: use syncId for custom questions, int-string for permanent
+    // Build SRS manifest keys: resolve int-string IDs to syncIds where possible
     final srsKeys = <String>[];
     for (final data in SrsService().getAllUserData()) {
       final key = data.questionId;
@@ -497,7 +497,7 @@ class SyncService {
       if (qj['imageName'] != null) imageFilenames.add(qj['imageName'] as String);
     }
 
-    // SRS data (all custom + permanent questions)
+    // SRS data
     final srsDataJson = <Map<String, dynamic>>[];
     if (includeSrs) {
       for (final data in SrsService().getAllUserData()) {
@@ -506,7 +506,7 @@ class SyncService {
         String syncKey;
         if (intId != null) {
           final syncId = await _db!.getQuestionSyncIdById(intId);
-          syncKey = syncId ?? key; // syncId for custom, int-string for permanent
+          syncKey = syncId ?? key;
         } else {
           syncKey = key;
         }
@@ -684,10 +684,10 @@ class SyncService {
       String localKey;
 
       if (int.tryParse(questionSyncId) != null) {
-        // Permanent question — int-string key is stable across devices
+        // Legacy int-string key — pass through as-is
         localKey = questionSyncId;
       } else {
-        // Custom question — resolve UUID → local int ID
+        // UUID syncId — resolve to local int ID
         final question = await _db!.getQuestionBySyncId(questionSyncId);
         if (question == null) continue;
         localKey = question.id.toString();

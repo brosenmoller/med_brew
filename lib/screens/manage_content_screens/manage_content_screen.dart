@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/data/database/app_database.dart';
+import 'package:med_brew/screens/content_packs_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/edit_folder_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/edit_quiz_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/manage_folder_screen.dart';
@@ -14,7 +14,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Root management screen. Handles import/export/seed and renders the
+/// Root management screen. Handles import/export and renders the
 /// root folder contents via [ManageFolderScreen].
 class ManageContentScreen extends StatelessWidget {
   final AppDatabase db;
@@ -29,6 +29,14 @@ class ManageContentScreen extends StatelessWidget {
         title: Text(l10n.manageContentTitle),
         actions: [
           IconButton(
+            icon: const Icon(Icons.collections_bookmark_outlined),
+            tooltip: l10n.contentPacksTooltip,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ContentPacksScreen(db: db)),
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.upload_file),
             tooltip: l10n.importJsonTooltip,
             onPressed: () => _importJson(context),
@@ -38,12 +46,6 @@ class ManageContentScreen extends StatelessWidget {
             tooltip: l10n.exportJsonTooltip,
             onPressed: () => _exportJson(context),
           ),
-          if (kDebugMode)
-            IconButton(
-              icon: const Icon(Icons.save_alt),
-              tooltip: l10n.exportSeedDbTooltip,
-              onPressed: () => _exportSeedDb(context),
-            ),
         ],
       ),
       floatingActionButton: Column(
@@ -74,36 +76,6 @@ class ManageContentScreen extends StatelessWidget {
       // Reuse the folder contents view — null folder = root level
       body: FolderContentsBody(db: db, folder: null),
     );
-  }
-
-  // ── Seed DB export ──────────────────────────────────────────────
-
-  Future<void> _exportSeedDb(BuildContext context) async {
-    try {
-      final dir = await getApplicationDocumentsDirectory();
-      final source = File(p.join(dir.path, 'med_brew.db'));
-      final destPath =
-          p.join(Directory.current.path, 'assets', 'seed.db');
-      final dest = File(destPath);
-      await source.copy(destPath);
-
-      final seedDb = AppDatabase.fromFile(dest);
-      await seedDb.markAllPermanent();
-      await seedDb.close();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('seed.db saved to $destPath')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.exportFailed(e))),
-        );
-      }
-    }
   }
 
   // ── JSON export ─────────────────────────────────────────────────

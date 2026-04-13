@@ -542,6 +542,48 @@ abstract class AppLocalizations {
   /// **'Export seed.db'**
   String get exportSeedDbTooltip;
 
+  /// No description provided for @exportFolderTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Export folder'**
+  String get exportFolderTooltip;
+
+  /// No description provided for @exportQuizTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Export quiz'**
+  String get exportQuizTooltip;
+
+  /// No description provided for @contentPacksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Content Packs'**
+  String get contentPacksTitle;
+
+  /// No description provided for @contentPacksTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse content packs'**
+  String get contentPacksTooltip;
+
+  /// No description provided for @contentPacksImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get contentPacksImport;
+
+  /// No description provided for @contentPacksImportedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} new items'**
+  String contentPacksImportedCount(int count);
+
+  /// No description provided for @contentPacksAlreadyUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Already up to date'**
+  String get contentPacksAlreadyUpToDate;
+
   /// No description provided for @importSuccess.
   ///
   /// In en, this message translates to:

@@ -28,8 +28,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Wipe all content?'),
         content: const Text(
             'This deletes every folder, quiz, question, SRS record, and '
-            'favorite, then re-seeds built-in content from the bundled seed. '
-            'Custom content cannot be recovered.'),
+            'favorite. Content cannot be recovered — re-import packs from '
+            'the Content Packs screen afterwards.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -49,11 +49,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await widget.db.wipeAllContent();
     await SrsService().resetAll();
     await FavoritesService().clearAll();
-    await widget.db.mergeNewSeedContent();
     await QuestionService().refresh();
 
     messenger.showSnackBar(
-      const SnackBar(content: Text('All content wiped and re-seeded.')),
+      const SnackBar(content: Text('All content wiped.')),
     );
   }
 

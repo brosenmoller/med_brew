@@ -135,6 +135,18 @@
   "importJsonTooltip": "Import JSON",
   "exportJsonTooltip": "Export JSON",
   "exportSeedDbTooltip": "Export seed.db",
+  "exportFolderTooltip": "Export folder",
+  "exportQuizTooltip": "Export quiz",
+  "contentPacksTitle": "Content Packs",
+  "contentPacksTooltip": "Browse content packs",
+  "contentPacksImport": "Import",
+  "contentPacksImportedCount": "Imported {count} new items",
+  "@contentPacksImportedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "contentPacksAlreadyUpToDate": "Already up to date",
   "importSuccess": "Import successful",
   "importFailed": "Import failed: {error}",
   "@importFailed": {

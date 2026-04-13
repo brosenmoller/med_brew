@@ -264,6 +264,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportSeedDbTooltip => 'Export seed.db';
 
   @override
+  String get exportFolderTooltip => 'Export folder';
+
+  @override
+  String get exportQuizTooltip => 'Export quiz';
+
+  @override
+  String get contentPacksTitle => 'Content Packs';
+
+  @override
+  String get contentPacksTooltip => 'Browse content packs';
+
+  @override
+  String get contentPacksImport => 'Import';
+
+  @override
+  String contentPacksImportedCount(int count) {
+    return 'Imported $count new items';
+  }
+
+  @override
+  String get contentPacksAlreadyUpToDate => 'Already up to date';
+
+  @override
   String get importSuccess => 'Import successful';
 
   @override

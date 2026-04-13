@@ -264,6 +264,29 @@ class AppLocalizationsNl extends AppLocalizations {
   String get exportSeedDbTooltip => 'seed.db exporteren';
 
   @override
+  String get exportFolderTooltip => 'Map exporteren';
+
+  @override
+  String get exportQuizTooltip => 'Quiz exporteren';
+
+  @override
+  String get contentPacksTitle => 'Inhoudspakketten';
+
+  @override
+  String get contentPacksTooltip => 'Inhoudspakketten bekijken';
+
+  @override
+  String get contentPacksImport => 'Importeren';
+
+  @override
+  String contentPacksImportedCount(int count) {
+    return '$count nieuwe items geïmporteerd';
+  }
+
+  @override
+  String get contentPacksAlreadyUpToDate => 'Al up-to-date';
+
+  @override
   String get importSuccess => 'Importeren geslaagd';
 
   @override

@@ -76,7 +76,7 @@ dev_dependencies:
 flutter:
   generate: true
   assets:
-    - assets/seed.db
+    - assets/content_packs/
     - assets/images/
 
   # The following line ensures that the Material Icons font is

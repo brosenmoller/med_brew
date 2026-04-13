@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
@@ -7,6 +10,9 @@ import 'package:med_brew/screens/manage_content_screens/edit_quiz_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/manage_questions_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/app_image.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// Shows the contents (subfolders + quizzes) of a folder, or the root if
 /// [folder] is null. Navigating into a subfolder pushes another instance.
@@ -144,7 +150,6 @@ class _FolderTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final canEdit = !f.isPermanent || kDebugMode;
     return ListTile(
       leading: f.imagePath != null
           ? ClipRRect(
@@ -159,35 +164,35 @@ class _FolderTile extends StatelessWidget {
           : const CircleAvatar(child: Icon(Icons.folder_outlined)),
       title: Text(f.title,
           style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: f.isPermanent
-          ? Text(
-              kDebugMode ? l10n.builtInDebug : l10n.builtIn,
-              style: TextStyle(
-                color: kDebugMode ? Colors.orange : Colors.grey,
-                fontSize: 12,
-              ),
-            )
-          : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (canEdit) ...[
+          if (kDebugMode)
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: l10n.edit,
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EditFolderScreen(db: db, existing: f),
-                ),
+              icon: const Icon(Icons.library_add_outlined),
+              tooltip: 'Add to content packs manifest',
+              onPressed: () => _addToManifest(context),
+            ),
+          IconButton(
+            icon: const Icon(Icons.upload_outlined),
+            tooltip: l10n.exportFolderTooltip,
+            onPressed: () => _exportFolder(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: l10n.edit,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EditFolderScreen(db: db, existing: f),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              tooltip: l10n.delete,
-              onPressed: () => _confirmDeleteFolder(context),
-            ),
-          ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            tooltip: l10n.delete,
+            onPressed: () => _confirmDeleteFolder(context),
+          ),
           const Icon(Icons.chevron_right),
         ],
       ),
@@ -198,6 +203,40 @@ class _FolderTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _addToManifest(BuildContext context) async {
+    final data = await db.exportFolderToJsonMap(f.id);
+    final fileName = 'folder_${f.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.json';
+    await _writePackToManifest(context, data: data, fileName: fileName, title: f.title, syncId: f.syncId);
+  }
+
+  Future<void> _exportFolder(BuildContext context) async {
+    try {
+      final data = await db.exportFolderToJsonMap(f.id);
+      final jsonString = const JsonEncoder.withIndent('  ').convert(data);
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = 'folder_${f.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}.json';
+      final file = File(p.join(dir.path, fileName));
+      await file.writeAsString(jsonString);
+
+      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Exported to ${file.path}')),
+          );
+        }
+      } else {
+        await Share.shareXFiles([XFile(file.path)], subject: 'Med Brew folder export');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.exportFailed(e))),
+        );
+      }
+    }
   }
 
   void _confirmDeleteFolder(BuildContext context) {
@@ -235,7 +274,6 @@ class _QuizTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final canEdit = !q.isPermanent || kDebugMode;
     return ListTile(
       leading: q.imagePath != null
           ? ClipRRect(
@@ -250,39 +288,39 @@ class _QuizTile extends StatelessWidget {
           : const CircleAvatar(child: Icon(Icons.quiz_outlined)),
       title: Text(q.title,
           style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: q.isPermanent
-          ? Text(
-              kDebugMode ? l10n.builtInDebug : l10n.builtIn,
-              style: TextStyle(
-                color: kDebugMode ? Colors.orange : Colors.grey,
-                fontSize: 12,
-              ),
-            )
-          : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (canEdit) ...[
+          if (kDebugMode)
             IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: l10n.edit,
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EditQuizScreen(
-                    db: db,
-                    folderId: q.folderId,
-                    existing: q,
-                  ),
+              icon: const Icon(Icons.library_add_outlined),
+              tooltip: 'Add to content packs manifest',
+              onPressed: () => _addToManifest(context),
+            ),
+          IconButton(
+            icon: const Icon(Icons.upload_outlined),
+            tooltip: l10n.exportQuizTooltip,
+            onPressed: () => _exportQuiz(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: l10n.edit,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EditQuizScreen(
+                  db: db,
+                  folderId: q.folderId,
+                  existing: q,
                 ),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              tooltip: l10n.delete,
-              onPressed: () => _confirmDeleteQuiz(context),
-            ),
-          ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            tooltip: l10n.delete,
+            onPressed: () => _confirmDeleteQuiz(context),
+          ),
           const Icon(Icons.chevron_right),
         ],
       ),
@@ -293,6 +331,40 @@ class _QuizTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _addToManifest(BuildContext context) async {
+    final data = await db.exportQuizToJsonMap(q.id);
+    final fileName = 'quiz_${q.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.json';
+    await _writePackToManifest(context, data: data, fileName: fileName, title: q.title, syncId: q.syncId);
+  }
+
+  Future<void> _exportQuiz(BuildContext context) async {
+    try {
+      final data = await db.exportQuizToJsonMap(q.id);
+      final jsonString = const JsonEncoder.withIndent('  ').convert(data);
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = 'quiz_${q.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}.json';
+      final file = File(p.join(dir.path, fileName));
+      await file.writeAsString(jsonString);
+
+      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Exported to ${file.path}')),
+          );
+        }
+      } else {
+        await Share.shareXFiles([XFile(file.path)], subject: 'Med Brew quiz export');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.exportFailed(e))),
+        );
+      }
+    }
   }
 
   void _confirmDeleteQuiz(BuildContext context) {
@@ -319,5 +391,61 @@ class _QuizTile extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Writes [data] to `assets/content_packs/[fileName]` and upserts the
+/// corresponding entry in `assets/content_packs/index.json`.
+/// Deduplicates by [syncId] first, then by [fileName].
+Future<void> _writePackToManifest(
+  BuildContext context, {
+  required Map<String, dynamic> data,
+  required String fileName,
+  required String title,
+  required String? syncId,
+}) async {
+  try {
+    final packDir = p.join(Directory.current.path, 'assets', 'content_packs');
+
+    await File(p.join(packDir, fileName))
+        .writeAsString(const JsonEncoder.withIndent('  ').convert(data));
+
+    final manifestFile = File(p.join(packDir, 'index.json'));
+    List<dynamic> manifest = [];
+    if (await manifestFile.exists()) {
+      manifest = jsonDecode(await manifestFile.readAsString()) as List;
+    }
+
+    final newEntry = <String, dynamic>{
+      'file': fileName,
+      'title': title,
+      if (syncId != null) 'syncId': syncId,
+    };
+
+    final idx = manifest.indexWhere((e) {
+      final entry = e as Map<String, dynamic>;
+      if (syncId != null && entry['syncId'] == syncId) return true;
+      return entry['file'] == fileName;
+    });
+    if (idx >= 0) {
+      manifest[idx] = newEntry;
+    } else {
+      manifest.add(newEntry);
+    }
+
+    await manifestFile
+        .writeAsString(const JsonEncoder.withIndent('  ').convert(manifest));
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Added "$title" to content packs manifest')),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add to manifest: $e')),
+      );
+    }
   }
 }

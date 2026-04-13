@@ -85,6 +85,18 @@
   "importJsonTooltip": "JSON importeren",
   "exportJsonTooltip": "JSON exporteren",
   "exportSeedDbTooltip": "seed.db exporteren",
+  "exportFolderTooltip": "Map exporteren",
+  "exportQuizTooltip": "Quiz exporteren",
+  "contentPacksTitle": "Inhoudspakketten",
+  "contentPacksTooltip": "Inhoudspakketten bekijken",
+  "contentPacksImport": "Importeren",
+  "contentPacksImportedCount": "{count} nieuwe items geïmporteerd",
+  "@contentPacksImportedCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "contentPacksAlreadyUpToDate": "Al up-to-date",
   "importSuccess": "Importeren geslaagd",
   "importFailed": "Importeren mislukt: {error}",
   "exportFailed": "Exporteren mislukt: {error}",
