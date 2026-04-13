@@ -161,6 +161,11 @@ class QuestionService {
     return _folders.values.where((f) => f.parentFolderId == null).toList();
   }
 
+  List<FolderData> getAllFolders() {
+    _ensureInitialized();
+    return _folders.values.toList();
+  }
+
   List<FolderData> getSubfolders(String folderId) {
     _ensureInitialized();
     return _folders.values

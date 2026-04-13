@@ -42,6 +42,10 @@
   "quizzesSection": "Quizzen",
   "emptyFolder": "Hier is nog niets.",
 
+  "searchTooltip": "Zoeken",
+  "searchHint": "Zoek mappen & quizzen…",
+  "searchNoResults": "Geen resultaten gevonden.",
+
   "favoritesTitle": "Favorieten",
   "favoritesEmpty": "Nog geen favoriete quizzen.",
 

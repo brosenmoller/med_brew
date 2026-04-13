@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/folder_data.dart';
+import 'package:med_brew/screens/global_search_screen.dart';
 import 'package:med_brew/screens/quiz_session_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/widgets/folder_tile.dart';
@@ -43,6 +44,16 @@ class FolderBrowserScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(folder?.title ?? l10n.navBrowse),
+        actions: [
+          IconButton(
+            tooltip: l10n.searchTooltip,
+            icon: const Icon(Icons.search),
+            onPressed: () => showSearch(
+              context: context,
+              delegate: GlobalSearchDelegate(hint: l10n.searchHint),
+            ),
+          ),
+        ],
       ),
       body: isEmpty
           ? Center(child: Text(l10n.emptyFolder))

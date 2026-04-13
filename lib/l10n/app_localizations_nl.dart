@@ -115,6 +115,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get emptyFolder => 'Hier is nog niets.';
 
   @override
+  String get searchTooltip => 'Zoeken';
+
+  @override
+  String get searchHint => 'Zoek mappen & quizzen…';
+
+  @override
+  String get searchNoResults => 'Geen resultaten gevonden.';
+
+  @override
   String get favoritesTitle => 'Favorieten';
 
   @override

@@ -115,6 +115,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyFolder => 'Nothing here yet.';
 
   @override
+  String get searchTooltip => 'Search';
+
+  @override
+  String get searchHint => 'Search folders & quizzes…';
+
+  @override
+  String get searchNoResults => 'No results found.';
+
+  @override
   String get favoritesTitle => 'Favorites';
 
   @override

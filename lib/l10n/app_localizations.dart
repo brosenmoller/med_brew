@@ -308,6 +308,24 @@ abstract class AppLocalizations {
   /// **'Nothing here yet.'**
   String get emptyFolder;
 
+  /// No description provided for @searchTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchTooltip;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search folders & quizzes…'**
+  String get searchHint;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found.'**
+  String get searchNoResults;
+
   /// No description provided for @favoritesTitle.
   ///
   /// In en, this message translates to:

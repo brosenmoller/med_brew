@@ -42,6 +42,10 @@
   "quizzesSection": "Quizzes",
   "emptyFolder": "Nothing here yet.",
 
+  "searchTooltip": "Search",
+  "searchHint": "Search folders & quizzes…",
+  "searchNoResults": "No results found.",
+
   "favoritesTitle": "Favorites",
   "favoritesEmpty": "No favorite quizzes yet.",
 
