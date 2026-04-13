@@ -46,6 +46,60 @@
   "searchHint": "Zoek mappen & quizzen…",
   "searchNoResults": "Geen resultaten gevonden.",
 
+  "streakSectionTitle": "Streaks",
+  "streakEnabledToggle": "Streak bijhouden",
+  "streakEnabledSubtitle": "Verdien een streakdag voor elke dag dat je studeert",
+  "streakNotifsToggle": "Dagelijkse herinnering",
+  "streakNotifsSubtitle": "Ontvang een melding om je streak te bewaren",
+  "streakNotifsTime": "Herinneringstijd",
+  "streakResetButton": "Streak resetten",
+  "streakResetDialogTitle": "Streak resetten?",
+  "streakResetDialogContent": "Je huidige streak gaat verloren.",
+
+  "streakCount": "{count, plural, =1{1 dag streak} other{{count} dagen streak}}",
+  "@streakCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streakFreezesRemaining": "{count, plural, =0{Geen bevriezingen meer deze week} =1{1 bevriezing over deze week} other{{count} bevriezingen over deze week}}",
+  "@streakFreezesRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "streakContinued": "Streak voortgezet!",
+  "streakContinuedBody": "{count, plural, =1{Je hebt een streak van 1 dag!} other{Je hebt een streak van {count} dagen!}}",
+  "@streakContinuedBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streakFreezeUsed": "Bevriezing gebruikt!",
+  "streakFreezeUsedBody": "{count, plural, =0{Geen bevriezingen meer deze week} =1{1 bevriezing over deze week} other{{count} bevriezingen over deze week}}",
+  "@streakFreezeUsedBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streakReset": "Streak gereset",
+  "streakResetBody": "Geen bevriezingen meer — opnieuw beginnen bij 1 dag.",
+
+  "streakInfoTitle": "Streak",
+  "streakBest": "Beste: {count, plural, =1{1 dag} other{{count} dagen}}",
+  "@streakBest": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streakFreezesRestockOn": "Wordt bijgevuld op {date}",
+  "@streakFreezesRestockOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+
   "favoritesTitle": "Favorieten",
   "favoritesEmpty": "Nog geen favoriete quizzen.",
 

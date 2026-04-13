@@ -14,6 +14,7 @@ import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/services/favorites_service.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
+import 'package:med_brew/services/streak_service.dart';
 import 'package:med_brew/services/sync_discovery_service.dart';
 import 'package:drift/drift.dart' show Value;
 
@@ -496,6 +497,17 @@ class SyncService {
         ? FavoritesService().getAllFavoriteIds()
         : <String>[];
 
+    // Streak — always included so peers can merge by highest count.
+    // Per-device settings (notifs, enabled toggle) are intentionally excluded.
+    final streak = StreakService();
+    final streakDataJson = <String, dynamic>{
+      'streakCount': streak.currentStreak,
+      'highestStreak': streak.highestStreak,
+      'lastActivityDate': streak.lastActivityDate,
+      'freezesUsedThisWeek': streak.freezesUsedThisWeek,
+      'weekAnchor': streak.weekAnchor,
+    };
+
     return SyncPayload(
       folders: foldersJson,
       quizzes: quizzesJson,
@@ -503,6 +515,7 @@ class SyncService {
       srsData: srsDataJson,
       favoriteSyncIds: favIds,
       imageFilenames: imageFilenames.toList(),
+      streakData: streakDataJson,
     );
   }
 
@@ -675,6 +688,21 @@ class SyncService {
         await FavoritesService().addFavorite(favId);
         favoritesAdded++;
       }
+    }
+
+    // Streak — merge by "highest streak wins"; per-device settings not touched.
+    final remoteStreak = payload.streakData;
+    if (remoteStreak != null) {
+      await StreakService().mergeFromSync(
+        remoteCount:
+            (remoteStreak['streakCount'] as num?)?.toInt() ?? 0,
+        remoteLastDate: remoteStreak['lastActivityDate'] as String?,
+        remoteFreezesUsed:
+            (remoteStreak['freezesUsedThisWeek'] as num?)?.toInt() ?? 0,
+        remoteWeekAnchor: remoteStreak['weekAnchor'] as String?,
+        remoteHighestStreak:
+            (remoteStreak['highestStreak'] as num?)?.toInt() ?? 0,
+      );
     }
 
     return SyncResult(

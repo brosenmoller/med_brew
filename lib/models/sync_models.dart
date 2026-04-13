@@ -83,6 +83,8 @@ class SyncPayload {
   final List<Map<String, dynamic>> srsData;
   final List<String> favoriteSyncIds;
   final List<String> imageFilenames;
+  /// Nullable for backward-compat: absent when receiving from an older client.
+  final Map<String, dynamic>? streakData;
 
   const SyncPayload({
     required this.folders,
@@ -91,6 +93,7 @@ class SyncPayload {
     required this.srsData,
     required this.favoriteSyncIds,
     required this.imageFilenames,
+    this.streakData,
   });
 
   Map<String, dynamic> toJson() => {
@@ -100,6 +103,7 @@ class SyncPayload {
         'srsData': srsData,
         'favoriteSyncIds': favoriteSyncIds,
         'imageFilenames': imageFilenames,
+        if (streakData != null) 'streakData': streakData,
       };
 
   factory SyncPayload.fromJson(Map<String, dynamic> json) => SyncPayload(
@@ -119,6 +123,9 @@ class SyncPayload {
             (json['favoriteSyncIds'] as List).map((e) => e as String).toList(),
         imageFilenames:
             (json['imageFilenames'] as List).map((e) => e as String).toList(),
+        streakData: json['streakData'] != null
+            ? Map<String, dynamic>.from(json['streakData'] as Map)
+            : null,
       );
 }
 

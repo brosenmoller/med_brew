@@ -3,6 +3,7 @@ import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/models/user_question_data.dart' show SrsQuality;
 import 'package:med_brew/services/srs_service.dart';
+import 'package:med_brew/services/streak_service.dart';
 import 'package:med_brew/screens/question_display/question_display_screen.dart';
 import 'package:med_brew/screens/srs_completion_screen.dart';
 
@@ -26,18 +27,21 @@ class _SrsSessionScreenState extends State<SrsSessionScreen> {
   int currentIndex = 0;
   int correctAnswers = 0;
 
-  void _nextQuestion(bool wasCorrect) {
+  void _nextQuestion(bool wasCorrect) async {
     if (wasCorrect) correctAnswers++;
 
     if (currentIndex < widget.questions.length - 1) {
       setState(() => currentIndex++);
     } else {
+      final streakEvent = await StreakService().recordActivity();
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => SrsCompletionScreen(
             completedQuizTitle: widget.sessionTitle,
             reviewedCount: widget.questions.length,
+            streakEvent: streakEvent,
           ),
         ),
       );

@@ -124,6 +124,113 @@ class AppLocalizationsNl extends AppLocalizations {
   String get searchNoResults => 'Geen resultaten gevonden.';
 
   @override
+  String get streakSectionTitle => 'Streaks';
+
+  @override
+  String get streakEnabledToggle => 'Streak bijhouden';
+
+  @override
+  String get streakEnabledSubtitle =>
+      'Verdien een streakdag voor elke dag dat je studeert';
+
+  @override
+  String get streakNotifsToggle => 'Dagelijkse herinnering';
+
+  @override
+  String get streakNotifsSubtitle =>
+      'Ontvang een melding om je streak te bewaren';
+
+  @override
+  String get streakNotifsTime => 'Herinneringstijd';
+
+  @override
+  String get streakResetButton => 'Streak resetten';
+
+  @override
+  String get streakResetDialogTitle => 'Streak resetten?';
+
+  @override
+  String get streakResetDialogContent => 'Je huidige streak gaat verloren.';
+
+  @override
+  String streakCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dagen streak',
+      one: '1 dag streak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String streakFreezesRemaining(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bevriezingen over deze week',
+      one: '1 bevriezing over deze week',
+      zero: 'Geen bevriezingen meer deze week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakContinued => 'Streak voortgezet!';
+
+  @override
+  String streakContinuedBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Je hebt een streak van $count dagen!',
+      one: 'Je hebt een streak van 1 dag!',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakFreezeUsed => 'Bevriezing gebruikt!';
+
+  @override
+  String streakFreezeUsedBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bevriezingen over deze week',
+      one: '1 bevriezing over deze week',
+      zero: 'Geen bevriezingen meer deze week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakReset => 'Streak gereset';
+
+  @override
+  String get streakResetBody =>
+      'Geen bevriezingen meer — opnieuw beginnen bij 1 dag.';
+
+  @override
+  String get streakInfoTitle => 'Streak';
+
+  @override
+  String streakBest(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dagen',
+      one: '1 dag',
+    );
+    return 'Beste: $_temp0';
+  }
+
+  @override
+  String streakFreezesRestockOn(String date) {
+    return 'Wordt bijgevuld op $date';
+  }
+
+  @override
   String get favoritesTitle => 'Favorieten';
 
   @override

@@ -5,6 +5,8 @@ import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/screens/home_screen.dart';
 import 'package:med_brew/screens/quiz_session_screen.dart';
+import 'package:med_brew/services/streak_service.dart';
+import 'package:med_brew/widgets/streak_banner.dart';
 
 class QuizCompletionScreen extends StatelessWidget {
   final String quizName;
@@ -12,6 +14,7 @@ class QuizCompletionScreen extends StatelessWidget {
   final int totalQuestions;
   /// Passed so the Retry button can restart the same quiz.
   final QuizData? quizData;
+  final StreakEvent? streakEvent;
 
   const QuizCompletionScreen({
     super.key,
@@ -19,6 +22,7 @@ class QuizCompletionScreen extends StatelessWidget {
     required this.correctAnswers,
     required this.totalQuestions,
     this.quizData,
+    this.streakEvent,
   });
 
   @override
@@ -51,6 +55,7 @@ class QuizCompletionScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 24),
+                  if (streakEvent != null) StreakBanner(event: streakEvent!),
                   Text(
                     quizName,
                     style: Theme.of(context)

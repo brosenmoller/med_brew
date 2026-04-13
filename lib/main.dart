@@ -7,9 +7,11 @@ import 'package:med_brew/data/database/app_database.dart';
 import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/screens/home_screen.dart';
 import 'package:med_brew/services/favorites_service.dart' show FavoritesService;
+import 'package:med_brew/services/notification_service.dart';
 import 'package:med_brew/services/question_service.dart' show QuestionService;
 import 'package:med_brew/services/settings_service.dart';
 import 'package:med_brew/services/srs_service.dart' show SrsService;
+import 'package:med_brew/services/streak_service.dart';
 import 'package:med_brew/utils/app_storage.dart';
 
 void main() async {
@@ -25,10 +27,25 @@ void main() async {
   final questionService = QuestionService();
   final favoritesService = FavoritesService();
   final settingsService = SettingsService();
+  final notificationService = NotificationService();
+  final streakService = StreakService();
+
   await srsService.init();
   await questionService.init(db);
   await favoritesService.init();
   await settingsService.init();
+  await notificationService.init();
+  await streakService.init();
+
+  // Restore scheduled reminder after app restart.
+  if (streakService.streakEnabled && streakService.notifsEnabled) {
+    await notificationService.rescheduleReminder(
+      hour: streakService.notifsHour,
+      minute: streakService.notifsMinute,
+      title: 'Med Brew',
+      body: "Don't forget to study — keep your streak alive!",
+    );
+  }
 
   runApp(MedBrew(db: db));
 }

@@ -326,6 +326,126 @@ abstract class AppLocalizations {
   /// **'No results found.'**
   String get searchNoResults;
 
+  /// No description provided for @streakSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get streakSectionTitle;
+
+  /// No description provided for @streakEnabledToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable streak tracking'**
+  String get streakEnabledToggle;
+
+  /// No description provided for @streakEnabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Earn a streak day for each day you study'**
+  String get streakEnabledSubtitle;
+
+  /// No description provided for @streakNotifsToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reminder'**
+  String get streakNotifsToggle;
+
+  /// No description provided for @streakNotifsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a notification to keep your streak'**
+  String get streakNotifsSubtitle;
+
+  /// No description provided for @streakNotifsTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder time'**
+  String get streakNotifsTime;
+
+  /// No description provided for @streakResetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset streak'**
+  String get streakResetButton;
+
+  /// No description provided for @streakResetDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset streak?'**
+  String get streakResetDialogTitle;
+
+  /// No description provided for @streakResetDialogContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current streak will be lost.'**
+  String get streakResetDialogContent;
+
+  /// No description provided for @streakCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day streak} other{{count} day streak}}'**
+  String streakCount(int count);
+
+  /// No description provided for @streakFreezesRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No freezes left this week} =1{1 freeze left this week} other{{count} freezes left this week}}'**
+  String streakFreezesRemaining(int count);
+
+  /// No description provided for @streakContinued.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak continued!'**
+  String get streakContinued;
+
+  /// No description provided for @streakContinuedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{You\'re on a 1-day streak!} other{You\'re on a {count}-day streak!}}'**
+  String streakContinuedBody(int count);
+
+  /// No description provided for @streakFreezeUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze used!'**
+  String get streakFreezeUsed;
+
+  /// No description provided for @streakFreezeUsedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No freezes left this week} =1{1 freeze left this week} other{{count} freezes left this week}}'**
+  String streakFreezeUsedBody(int count);
+
+  /// No description provided for @streakReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak reset'**
+  String get streakReset;
+
+  /// No description provided for @streakResetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of freezes — starting fresh at 1 day.'**
+  String get streakResetBody;
+
+  /// No description provided for @streakInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get streakInfoTitle;
+
+  /// No description provided for @streakBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Best: {count, plural, =1{1 day} other{{count} days}}'**
+  String streakBest(int count);
+
+  /// No description provided for @streakFreezesRestockOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Restocks on {date}'**
+  String streakFreezesRestockOn(String date);
+
   /// No description provided for @favoritesTitle.
   ///
   /// In en, this message translates to:

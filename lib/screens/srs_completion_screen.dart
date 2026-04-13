@@ -5,15 +5,19 @@ import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/screens/srs_session_screen.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
+import 'package:med_brew/services/streak_service.dart';
+import 'package:med_brew/widgets/streak_banner.dart';
 
 class SrsCompletionScreen extends StatelessWidget {
   final String completedQuizTitle;
   final int reviewedCount;
+  final StreakEvent? streakEvent;
 
   const SrsCompletionScreen({
     super.key,
     required this.completedQuizTitle,
     required this.reviewedCount,
+    this.streakEvent,
   });
 
   /// Quizzes that still have due questions right now.
@@ -70,7 +74,9 @@ class SrsCompletionScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
+                if (streakEvent != null) StreakBanner(event: streakEvent!),
+                const SizedBox(height: 16),
 
                 // ── Due quizzes / all-caught-up ───────────────────────────
                 if (due.isEmpty) ...[

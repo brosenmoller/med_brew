@@ -5,12 +5,89 @@ import 'package:med_brew/screens/folder_browser_screen.dart';
 import 'package:med_brew/screens/manage_content_screens/manage_content_screen.dart';
 import 'package:med_brew/screens/settings_screen.dart';
 import 'package:med_brew/screens/favorites_screen.dart';
+import 'package:med_brew/services/streak_service.dart';
 import 'srs_overview_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final AppDatabase db;
 
   const HomeScreen({super.key, required this.db});
+
+  void _showStreakInfo(BuildContext context, StreakState state, AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final today = DateTime.now();
+    final currentMonday = today.subtract(Duration(days: today.weekday - 1));
+    final nextMonday = currentMonday.add(const Duration(days: 7));
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final restockStr = 'Mon ${months[nextMonday.month - 1]} ${nextMonday.day}';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.streakInfoTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.local_fire_department, color: Colors.orange, size: 22),
+                const SizedBox(width: 10),
+                Text(
+                  l10n.streakCount(state.streakCount),
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.emoji_events_rounded, color: Colors.amber.shade600, size: 22),
+                const SizedBox(width: 10),
+                Text(
+                  l10n.streakBest(state.highestStreak),
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.ac_unit_rounded, color: Colors.lightBlue.shade300, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.streakFreezesRemaining(state.freezesRemaining),
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.streakFreezesRestockOn(restockStr),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurface.withOpacity(0.55),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.back),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +101,41 @@ class HomeScreen extends StatelessWidget {
             expandedHeight: 180,
             pinned: true,
             backgroundColor: colorScheme.primary,
+            leadingWidth: 80,
+            leading: ValueListenableBuilder<StreakState>(
+              valueListenable: StreakService().streakNotifier,
+              builder: (context, state, _) {
+                if (!state.streakEnabled) return const SizedBox.shrink();
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => _showStreakInfo(context, state, l10n),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${state.streakCount}',
+                              style: TextStyle(
+                                color: colorScheme.onPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
             actions: [
               IconButton(
                 icon: Icon(Icons.settings, color: colorScheme.onPrimary),

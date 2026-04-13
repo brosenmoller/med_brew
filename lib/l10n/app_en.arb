@@ -46,6 +46,60 @@
   "searchHint": "Search folders & quizzes…",
   "searchNoResults": "No results found.",
 
+  "streakSectionTitle": "Streak",
+  "streakEnabledToggle": "Enable streak tracking",
+  "streakEnabledSubtitle": "Earn a streak day for each day you study",
+  "streakNotifsToggle": "Daily reminder",
+  "streakNotifsSubtitle": "Get a notification to keep your streak",
+  "streakNotifsTime": "Reminder time",
+  "streakResetButton": "Reset streak",
+  "streakResetDialogTitle": "Reset streak?",
+  "streakResetDialogContent": "Your current streak will be lost.",
+
+  "streakCount": "{count, plural, =1{1 day streak} other{{count} day streak}}",
+  "@streakCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streakFreezesRemaining": "{count, plural, =0{No freezes left this week} =1{1 freeze left this week} other{{count} freezes left this week}}",
+  "@streakFreezesRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "streakContinued": "Streak continued!",
+  "streakContinuedBody": "{count, plural, =1{You're on a 1-day streak!} other{You're on a {count}-day streak!}}",
+  "@streakContinuedBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streakFreezeUsed": "Freeze used!",
+  "streakFreezeUsedBody": "{count, plural, =0{No freezes left this week} =1{1 freeze left this week} other{{count} freezes left this week}}",
+  "@streakFreezeUsedBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streakReset": "Streak reset",
+  "streakResetBody": "Out of freezes — starting fresh at 1 day.",
+
+  "streakInfoTitle": "Streak",
+  "streakBest": "Best: {count, plural, =1{1 day} other{{count} days}}",
+  "@streakBest": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "streakFreezesRestockOn": "Restocks on {date}",
+  "@streakFreezesRestockOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+
   "favoritesTitle": "Favorites",
   "favoritesEmpty": "No favorite quizzes yet.",
 

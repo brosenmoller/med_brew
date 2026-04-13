@@ -5,9 +5,11 @@ import 'package:med_brew/l10n/app_localizations.dart';
 import 'package:med_brew/models/srs_settings.dart';
 import 'package:med_brew/screens/sync_screen.dart';
 import 'package:med_brew/services/favorites_service.dart';
+import 'package:med_brew/services/notification_service.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/settings_service.dart';
 import 'package:med_brew/services/srs_service.dart';
+import 'package:med_brew/services/streak_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final AppDatabase db;
@@ -21,13 +23,21 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final SrsService _srsService = SrsService();
   final SettingsService _settings = SettingsService();
+  final StreakService _streak = StreakService();
+  final NotificationService _notifs = NotificationService();
 
   late SrsSettings _srs;
+  late bool _streakEnabled;
+  late bool _notifsEnabled;
+  late TimeOfDay _notifTime;
 
   @override
   void initState() {
     super.initState();
     _srs = _settings.srsSettings;
+    _streakEnabled = _streak.streakEnabled;
+    _notifsEnabled = _streak.notifsEnabled;
+    _notifTime = TimeOfDay(hour: _streak.notifsHour, minute: _streak.notifsMinute);
   }
 
   Future<void> _saveSrs(SrsSettings updated) async {
@@ -144,6 +154,95 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(),
             ],
+
+            // ── Streak ───────────────────────────────────────────
+            Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              clipBehavior: Clip.hardEdge,
+              child: ExpansionTile(
+                leading: const Icon(Icons.local_fire_department),
+                title: Text(l10n.streakSectionTitle),
+                subtitle: ValueListenableBuilder<StreakState>(
+                  valueListenable: _streak.streakNotifier,
+                  builder: (context, state, _) => Text(
+                    state.streakEnabled && state.streakCount > 0
+                        ? l10n.streakCount(state.streakCount)
+                        : l10n.streakEnabledSubtitle,
+                  ),
+                ),
+                childrenPadding: const EdgeInsets.only(bottom: 12),
+                children: [
+                  SwitchListTile(
+                    title: Text(l10n.streakEnabledToggle),
+                    value: _streakEnabled,
+                    onChanged: (v) async {
+                      await _streak.setStreakEnabled(v);
+                      setState(() => _streakEnabled = v);
+                    },
+                  ),
+                  if (_streakEnabled) ...[
+                    SwitchListTile(
+                      title: Text(l10n.streakNotifsToggle),
+                      subtitle: Text(l10n.streakNotifsSubtitle),
+                      value: _notifsEnabled,
+                      onChanged: (v) async {
+                        if (v) {
+                          final granted = await _notifs.requestPermission();
+                          if (!granted) return;
+                        }
+                        await _streak.setNotifsEnabled(v);
+                        if (mounted) setState(() => _notifsEnabled = v);
+                      },
+                    ),
+                    if (_notifsEnabled)
+                      ListTile(
+                        title: Text(l10n.streakNotifsTime),
+                        trailing: Text(
+                          _notifTime.format(context),
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        onTap: () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: _notifTime,
+                          );
+                          if (picked == null || !mounted) return;
+                          await _streak.setNotifTime(picked.hour, picked.minute);
+                          setState(() => _notifTime = picked);
+                        },
+                      ),
+                    const Divider(indent: 16, endIndent: 16),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.restart_alt),
+                        label: Text(l10n.streakResetButton),
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(l10n.streakResetDialogTitle),
+                              content: Text(l10n.streakResetDialogContent),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: Text(l10n.cancel),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: Text(l10n.reset),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) await _streak.resetStreak();
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
 
             // ── SRS Algorithm ────────────────────────────────────
             Card(
