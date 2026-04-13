@@ -15,6 +15,7 @@ import 'package:med_brew/services/favorites_service.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
 import 'package:med_brew/services/sync_discovery_service.dart';
+import 'package:drift/drift.dart' show Value;
 
 class SyncService {
   static final SyncService _instance = SyncService._internal();
@@ -164,17 +165,17 @@ class SyncService {
     try {
       final data = Map<String, dynamic>.from(
           jsonDecode(await req.readAsString()) as Map);
-      final folderSyncIds =
-          (data['folderSyncIds'] as List).map((e) => e as String).toList();
-      final quizSyncIds =
-          (data['quizSyncIds'] as List).map((e) => e as String).toList();
-      final questionSyncIds =
-          (data['questionSyncIds'] as List).map((e) => e as String).toList();
+      final folderIds =
+          (data['folderIds'] as List).map((e) => e as String).toList();
+      final quizIds =
+          (data['quizIds'] as List).map((e) => e as String).toList();
+      final questionIds =
+          (data['questionIds'] as List).map((e) => e as String).toList();
 
       final payload = await _buildPayload(
-        folderSyncIds: folderSyncIds,
-        quizSyncIds: quizSyncIds,
-        questionSyncIds: questionSyncIds,
+        folderIds: folderIds,
+        quizIds: quizIds,
+        questionIds: questionIds,
       );
       return Response.ok(
         jsonEncode(payload.toJson()),
@@ -253,17 +254,17 @@ class SyncService {
 
     // Delta for content
     final localFolderIds =
-        localManifest.folders.map((e) => e.syncId).toSet();
+        localManifest.folders.map((e) => e.id).toSet();
     final localQuizIds =
-        localManifest.quizzes.map((e) => e.syncId).toSet();
+        localManifest.quizzes.map((e) => e.id).toSet();
     final localQuestionIds =
-        localManifest.questions.map((e) => e.syncId).toSet();
+        localManifest.questions.map((e) => e.id).toSet();
     final remoteFolderIds =
-        remoteManifest.folders.map((e) => e.syncId).toSet();
+        remoteManifest.folders.map((e) => e.id).toSet();
     final remoteQuizIds =
-        remoteManifest.quizzes.map((e) => e.syncId).toSet();
+        remoteManifest.quizzes.map((e) => e.id).toSet();
     final remoteQuestionIds =
-        remoteManifest.questions.map((e) => e.syncId).toSet();
+        remoteManifest.questions.map((e) => e.id).toSet();
 
     final toSendFolderIds =
         localFolderIds.difference(remoteFolderIds).toList();
@@ -289,9 +290,9 @@ class SyncService {
         toSendQuestionIds.isNotEmpty) {
       _progress('Sending local content…');
       final pushPayload = await _buildPayload(
-        folderSyncIds: toSendFolderIds,
-        quizSyncIds: toSendQuizIds,
-        questionSyncIds: toSendQuestionIds,
+        folderIds: toSendFolderIds,
+        quizIds: toSendQuizIds,
+        questionIds: toSendQuestionIds,
         includeSrs: true,
         includeFavorites: true,
       );
@@ -305,9 +306,9 @@ class SyncService {
     } else {
       // Still push SRS + favorites even if no new content
       final srsAndFavPayload = await _buildPayload(
-        folderSyncIds: [],
-        quizSyncIds: [],
-        questionSyncIds: [],
+        folderIds: [],
+        quizIds: [],
+        questionIds: [],
         includeSrs: true,
         includeFavorites: true,
       );
@@ -334,9 +335,9 @@ class SyncService {
         Uri.parse('$base/sync/pull'),
         headers: {'content-type': 'application/json'},
         body: jsonEncode({
-          'folderSyncIds': toFetchFolderIds,
-          'quizSyncIds': toFetchQuizIds,
-          'questionSyncIds': toFetchQuestionIds,
+          'folderIds': toFetchFolderIds,
+          'quizIds': toFetchQuizIds,
+          'questionIds': toFetchQuestionIds,
         }),
       );
       final fetchedPayload = SyncPayload.fromJson(
@@ -351,10 +352,8 @@ class SyncService {
       result = await _importPayload(fetchedPayload);
 
       // Also apply remote favorites we don't have yet
-      if (toFetchFavIds.isNotEmpty) {
-        for (final favSyncId in toFetchFavIds) {
-          await FavoritesService().addFavoriteBySyncId(favSyncId, _db!);
-        }
+      for (final favId in toFetchFavIds) {
+        await FavoritesService().addFavorite(favId);
       }
     }
 
@@ -380,60 +379,44 @@ class SyncService {
     final quizzesRows = await _db!.getAllQuizzes();
     final questionsRows = await _db!.getAllQuestions();
 
-    // Build SRS manifest keys: resolve int-string IDs to syncIds where possible
-    final srsKeys = <String>[];
-    for (final data in SrsService().getAllUserData()) {
-      final key = data.questionId;
-      final intId = int.tryParse(key);
-      if (intId != null) {
-        final syncId = await _db!.getQuestionSyncIdById(intId);
-        srsKeys.add(syncId ?? key);
-      } else {
-        srsKeys.add(key);
-      }
-    }
+    // SRS keys are UUID question IDs directly — no bridge conversion needed
+    final srsKeys = SrsService().getAllUserData().map((d) => d.questionId).toList();
 
-    final favSyncIds =
-        await FavoritesService().getAllFavoriteSyncIds(_db!);
+    final favIds = FavoritesService().getAllFavoriteIds();
 
     return SyncManifest(
       folders: foldersRows
-          .where((f) => f.syncId != null)
-          .map((f) => SyncEntry(syncId: f.syncId!, createdAt: f.createdAt))
+          .map((f) => SyncEntry(id: f.id, createdAt: f.createdAt))
           .toList(),
       quizzes: quizzesRows
-          .where((q) => q.syncId != null)
-          .map((q) => SyncEntry(syncId: q.syncId!, createdAt: q.createdAt))
+          .map((q) => SyncEntry(id: q.id, createdAt: q.createdAt))
           .toList(),
       questions: questionsRows
-          .where((q) => q.syncId != null)
           .map((q) => SyncEntry(
-              syncId: q.syncId!,
+              id: q.id,
               createdAt: DateTime.fromMillisecondsSinceEpoch(0)))
           .toList(),
       srsKeys: srsKeys,
-      favoriteSyncIds: favSyncIds,
+      favoriteSyncIds: favIds,
     );
   }
 
   // ── Payload building ─────────────────────────────────────────
 
   Future<SyncPayload> _buildPayload({
-    required List<String> folderSyncIds,
-    required List<String> quizSyncIds,
-    required List<String> questionSyncIds,
+    required List<String> folderIds,
+    required List<String> quizIds,
+    required List<String> questionIds,
     bool includeSrs = false,
     bool includeFavorites = false,
   }) async {
     final foldersJson = <Map<String, dynamic>>[];
-    for (final syncId in folderSyncIds) {
-      final f = await _db!.getFolderBySyncId(syncId);
+    for (final id in folderIds) {
+      final f = await _db!.getFolderById(id);
       if (f == null) continue;
       foldersJson.add({
-        'syncId': f.syncId,
-        'parentSyncId': f.parentFolderId != null
-            ? await _db!.getFolderSyncIdById(f.parentFolderId!)
-            : null,
+        'id': f.id,
+        'parentId': f.parentFolderId,
         'title': f.title,
         'imageName':
             f.imagePath != null ? p.basename(f.imagePath!) : null,
@@ -441,31 +424,26 @@ class SyncService {
     }
 
     final quizzesJson = <Map<String, dynamic>>[];
-    for (final syncId in quizSyncIds) {
-      final quiz = await _db!.getQuizBySyncId(syncId);
+    for (final id in quizIds) {
+      final quiz = await _db!.getQuizById(id);
       if (quiz == null) continue;
       final questionsInQuiz = await _db!.getQuestionsForQuiz(quiz.id);
       quizzesJson.add({
-        'syncId': quiz.syncId,
-        'folderSyncId': quiz.folderId != null
-            ? await _db!.getFolderSyncIdById(quiz.folderId!)
-            : null,
+        'id': quiz.id,
+        'folderId': quiz.folderId,
         'title': quiz.title,
         'imageName':
             quiz.imagePath != null ? p.basename(quiz.imagePath!) : null,
         'languageCode': quiz.languageCode,
-        'questionSyncIds': questionsInQuiz
-            .where((q) => q.syncId != null)
-            .map((q) => q.syncId!)
-            .toList(),
+        'questionIds': questionsInQuiz.map((q) => q.id).toList(),
       });
     }
 
     final questionsJson = <Map<String, dynamic>>[];
     final imageFilenames = <String>{};
 
-    for (final syncId in questionSyncIds) {
-      final q = await _db!.getQuestionBySyncId(syncId);
+    for (final id in questionIds) {
+      final q = await _db!.getQuestionById(id);
       if (q == null) continue;
       final config =
           Map<String, dynamic>.from(jsonDecode(q.answerConfig) as Map);
@@ -476,7 +454,7 @@ class SyncService {
       if (q.imagePath != null) imageFilenames.add(p.basename(q.imagePath!));
 
       questionsJson.add({
-        'syncId': q.syncId,
+        'id': q.id,
         'questionText': q.questionText,
         'questionVariants': q.questionVariants != null
             ? jsonDecode(q.questionVariants!)
@@ -497,21 +475,12 @@ class SyncService {
       if (qj['imageName'] != null) imageFilenames.add(qj['imageName'] as String);
     }
 
-    // SRS data
+    // SRS data — question IDs are UUID strings directly
     final srsDataJson = <Map<String, dynamic>>[];
     if (includeSrs) {
       for (final data in SrsService().getAllUserData()) {
-        final key = data.questionId;
-        final intId = int.tryParse(key);
-        String syncKey;
-        if (intId != null) {
-          final syncId = await _db!.getQuestionSyncIdById(intId);
-          syncKey = syncId ?? key;
-        } else {
-          syncKey = key;
-        }
         srsDataJson.add({
-          'questionSyncId': syncKey,
+          'questionId': data.questionId,
           'streak': data.streak,
           'easeFactor': data.easeFactor,
           'intervalSeconds': data.intervalSeconds,
@@ -523,8 +492,8 @@ class SyncService {
     }
 
     // Favorites
-    final favSyncIds = includeFavorites
-        ? await FavoritesService().getAllFavoriteSyncIds(_db!)
+    final favIds = includeFavorites
+        ? FavoritesService().getAllFavoriteIds()
         : <String>[];
 
     return SyncPayload(
@@ -532,7 +501,7 @@ class SyncService {
       quizzes: quizzesJson,
       questions: questionsJson,
       srsData: srsDataJson,
-      favoriteSyncIds: favSyncIds,
+      favoriteSyncIds: favIds,
       imageFilenames: imageFilenames.toList(),
     );
   }
@@ -564,16 +533,16 @@ class SyncService {
     int srsUpdated = 0, favoritesAdded = 0;
 
     final imgDir = await _getImagesDir();
-    final folderIdMap = <String, int>{};
-    final questionIdMap = <String, int>{};
+    final folderIdMap = <String, String>{};
+    final questionIdMap = <String, String>{};
 
     await _db!.transaction(() async {
       // 1. Questions (no dependencies)
       for (final qJson in payload.questions) {
-        final syncId = qJson['syncId'] as String;
-        final existing = await _db!.getQuestionBySyncId(syncId);
+        final id = qJson['id'] as String;
+        final existing = await _db!.getQuestionById(id);
         if (existing != null) {
-          questionIdMap[syncId] = existing.id;
+          questionIdMap[id] = existing.id;
           continue;
         }
 
@@ -593,27 +562,27 @@ class SyncService {
         final imgName = qJson['imageName'] as String?;
         if (imgName != null) imagePath = p.join(imgDir, imgName);
 
-        final newId = await _db!.insertQuestionForSync(
-          syncId: syncId,
-          questionText: questionText,
+        final newId = await _db!.insertQuestion(QuestionsCompanion(
+          id: Value(id),
+          questionText: Value(questionText),
           questionVariants: variants != null && variants.length > 1
-              ? jsonEncode(variants)
-              : null,
-          answerType: answerType,
-          answerConfig: jsonEncode(localConfig),
-          explanation: qJson['explanation'] as String?,
-          imagePath: imagePath,
-        );
-        questionIdMap[syncId] = newId;
+              ? Value(jsonEncode(variants))
+              : const Value.absent(),
+          answerType: Value(answerType),
+          answerConfig: Value(jsonEncode(localConfig)),
+          explanation: Value(qJson['explanation'] as String?),
+          imagePath: Value(imagePath),
+        ));
+        questionIdMap[id] = newId;
         questionsAdded++;
       }
 
       // 2. Folders — first pass: insert without parent
       for (final fJson in payload.folders) {
-        final syncId = fJson['syncId'] as String;
-        final existing = await _db!.getFolderBySyncId(syncId);
+        final id = fJson['id'] as String;
+        final existing = await _db!.getFolderById(id);
         if (existing != null) {
-          folderIdMap[syncId] = existing.id;
+          folderIdMap[id] = existing.id;
           continue;
         }
 
@@ -621,21 +590,21 @@ class SyncService {
         final imgName = fJson['imageName'] as String?;
         if (imgName != null) imagePath = p.join(imgDir, imgName);
 
-        final newId = await _db!.insertFolderForSync(
-          syncId: syncId,
-          title: fJson['title'] as String,
-          imagePath: imagePath,
-        );
-        folderIdMap[syncId] = newId;
+        final newId = await _db!.insertFolder(FoldersCompanion(
+          id: Value(id),
+          title: Value(fJson['title'] as String),
+          imagePath: Value(imagePath),
+        ));
+        folderIdMap[id] = newId;
         foldersAdded++;
       }
       // Second pass: wire up parent relationships
       for (final fJson in payload.folders) {
-        final syncId = fJson['syncId'] as String;
-        final parentSyncId = fJson['parentSyncId'] as String?;
-        if (parentSyncId == null) continue;
-        final localId = folderIdMap[syncId];
-        final parentLocalId = folderIdMap[parentSyncId];
+        final id = fJson['id'] as String;
+        final parentId = fJson['parentId'] as String?;
+        if (parentId == null) continue;
+        final localId = folderIdMap[id];
+        final parentLocalId = folderIdMap[parentId];
         if (localId != null && parentLocalId != null) {
           await _db!.updateFolderParentId(localId, parentLocalId);
         }
@@ -643,35 +612,35 @@ class SyncService {
 
       // 3. Quizzes + junction rows
       for (final qzJson in payload.quizzes) {
-        final syncId = qzJson['syncId'] as String;
-        int quizLocalId;
+        final id = qzJson['id'] as String;
+        String quizLocalId;
 
-        final existing = await _db!.getQuizBySyncId(syncId);
+        final existing = await _db!.getQuizById(id);
         if (existing != null) {
           quizLocalId = existing.id;
         } else {
-          final folderSyncId = qzJson['folderSyncId'] as String?;
-          final folderId =
-              folderSyncId != null ? folderIdMap[folderSyncId] : null;
+          final folderId = qzJson['folderId'] as String?;
+          final folderLocalId =
+              folderId != null ? folderIdMap[folderId] : null;
 
           String? imagePath;
           final imgName = qzJson['imageName'] as String?;
           if (imgName != null) imagePath = p.join(imgDir, imgName);
 
-          quizLocalId = await _db!.insertQuizForSync(
-            syncId: syncId,
-            title: qzJson['title'] as String,
-            folderId: folderId,
-            imagePath: imagePath,
-            languageCode: qzJson['languageCode'] as String?,
-          );
+          quizLocalId = await _db!.insertQuiz(QuizzesCompanion(
+            id: Value(id),
+            folderId: Value(folderLocalId),
+            title: Value(qzJson['title'] as String),
+            imagePath: Value(imagePath),
+            languageCode: Value(qzJson['languageCode'] as String?),
+          ));
           quizzesAdded++;
         }
 
         int order = 0;
-        for (final qSyncId
-            in (qzJson['questionSyncIds'] as List).map((e) => e as String)) {
-          final qLocalId = questionIdMap[qSyncId];
+        for (final qId
+            in (qzJson['questionIds'] as List).map((e) => e as String)) {
+          final qLocalId = questionIdMap[qId];
           if (qLocalId == null) continue;
           await _db!.insertJunctionRowSafe(quizLocalId, qLocalId, order++);
         }
@@ -680,21 +649,14 @@ class SyncService {
 
     // SRS (outside transaction — Hive)
     for (final srsJson in payload.srsData) {
-      final questionSyncId = srsJson['questionSyncId'] as String;
-      String localKey;
+      final questionId = srsJson['questionId'] as String;
 
-      if (int.tryParse(questionSyncId) != null) {
-        // Legacy int-string key — pass through as-is
-        localKey = questionSyncId;
-      } else {
-        // UUID syncId — resolve to local int ID
-        final question = await _db!.getQuestionBySyncId(questionSyncId);
-        if (question == null) continue;
-        localKey = question.id.toString();
-      }
+      // Verify question exists locally before storing SRS data
+      final question = await _db!.getQuestionById(questionId);
+      if (question == null) continue;
 
       final incoming = UserQuestionData(
-        questionId: localKey,
+        questionId: questionId,
         streak: (srsJson['streak'] as num).toInt(),
         easeFactor: (srsJson['easeFactor'] as num).toDouble(),
         intervalSeconds: (srsJson['intervalSeconds'] as num).toDouble(),
@@ -705,6 +667,14 @@ class SyncService {
       );
       await SrsService().upsertUserData(incoming);
       srsUpdated++;
+    }
+
+    // Favorites (outside transaction — Hive)
+    for (final favId in payload.favoriteSyncIds) {
+      if (!FavoritesService().isFavorite(favId)) {
+        await FavoritesService().addFavorite(favId);
+        favoritesAdded++;
+      }
     }
 
     return SyncResult(

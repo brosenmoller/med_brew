@@ -27,7 +27,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
+
+  // UUID generation expression for SQLite
+  static const _uuidExpr =
+      "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || "
+      "substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(2))) || "
+      "'-' || lower(hex(randomblob(6)))";
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,25 +84,20 @@ class AppDatabase extends _$AppDatabase {
       }
 
       if (from < 5) {
-        await m.addColumn(folders, folders.syncId);
-        await m.addColumn(quizzes, quizzes.syncId);
-        await m.addColumn(questions, questions.syncId);
-        // Back-fill UUIDs for all rows (is_permanent distinction is removed in v6)
-        const uuidExpr =
-            "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || "
-            "substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(2))) || "
-            "'-' || lower(hex(randomblob(6)))";
+        // Add sync_id columns and back-fill UUIDs
+        await customStatement('ALTER TABLE folders ADD COLUMN sync_id TEXT');
+        await customStatement('ALTER TABLE quizzes ADD COLUMN sync_id TEXT');
+        await customStatement('ALTER TABLE questions ADD COLUMN sync_id TEXT');
         await customStatement(
-            'UPDATE folders SET sync_id = $uuidExpr WHERE sync_id IS NULL');
+            'UPDATE folders SET sync_id = $_uuidExpr WHERE sync_id IS NULL');
         await customStatement(
-            'UPDATE quizzes SET sync_id = $uuidExpr WHERE sync_id IS NULL');
+            'UPDATE quizzes SET sync_id = $_uuidExpr WHERE sync_id IS NULL');
         await customStatement(
-            'UPDATE questions SET sync_id = $uuidExpr WHERE sync_id IS NULL');
+            'UPDATE questions SET sync_id = $_uuidExpr WHERE sync_id IS NULL');
       }
 
       if (from < 6) {
         // Drop is_permanent from all three tables via table reconstruction.
-        // SQLite does not support DROP COLUMN reliably on older versions.
         await customStatement('''
           CREATE TABLE folders_new (
             "id"               INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -151,6 +152,124 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('DROP TABLE questions');
         await customStatement('ALTER TABLE questions_new RENAME TO questions');
       }
+
+      if (from < 7) {
+        // Promote syncId to be the primary key (UUID-only IDs).
+        // Drop old int autoincrement PKs; TEXT UUIDs become the sole identity.
+        await customStatement('PRAGMA foreign_keys = OFF');
+
+        // Step 1: rename old tables
+        await customStatement('ALTER TABLE folders RENAME TO folders_v6');
+        await customStatement('ALTER TABLE quizzes RENAME TO quizzes_v6');
+        await customStatement('ALTER TABLE questions RENAME TO questions_v6');
+        await customStatement(
+            'ALTER TABLE quiz_questions RENAME TO quiz_questions_v6');
+
+        // Step 2: create new tables with TEXT PKs
+        await customStatement('''
+          CREATE TABLE "folders" (
+            "id"               TEXT NOT NULL,
+            "parent_folder_id" TEXT,
+            "title"            TEXT NOT NULL,
+            "image_path"       TEXT,
+            "created_at"       INTEGER NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+            PRIMARY KEY ("id")
+          )
+        ''');
+        await customStatement('''
+          CREATE TABLE "questions" (
+            "id"                TEXT NOT NULL,
+            "question_text"     TEXT NOT NULL,
+            "question_variants" TEXT,
+            "answer_type"       TEXT NOT NULL,
+            "answer_config"     TEXT NOT NULL,
+            "explanation"       TEXT,
+            "image_path"        TEXT,
+            PRIMARY KEY ("id")
+          )
+        ''');
+        await customStatement('''
+          CREATE TABLE "quizzes" (
+            "id"            TEXT NOT NULL,
+            "folder_id"     TEXT,
+            "title"         TEXT NOT NULL,
+            "image_path"    TEXT,
+            "created_at"    INTEGER NOT NULL DEFAULT (strftime('%s', CURRENT_TIMESTAMP)),
+            "language_code" TEXT,
+            PRIMARY KEY ("id")
+          )
+        ''');
+        await customStatement('''
+          CREATE TABLE "quiz_questions" (
+            "quiz_id"     TEXT NOT NULL REFERENCES "quizzes"("id"),
+            "question_id" TEXT NOT NULL REFERENCES "questions"("id"),
+            "sort_order"  INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY ("quiz_id", "question_id")
+          )
+        ''');
+
+        // Step 3: copy data — use COALESCE(sync_id, new uuid) as new TEXT id
+        // Folders: resolve parent_folder_id via JOIN on old int id
+        await customStatement('''
+          INSERT INTO "folders" (id, parent_folder_id, title, image_path, created_at)
+          SELECT
+            COALESCE(f.sync_id, $_uuidExpr),
+            p.sync_id,
+            f.title,
+            f.image_path,
+            f.created_at
+          FROM folders_v6 f
+          LEFT JOIN folders_v6 p ON f.parent_folder_id = p.id
+        ''');
+
+        // Questions (no FK dependencies)
+        await customStatement('''
+          INSERT INTO "questions" (id, question_text, question_variants, answer_type, answer_config, explanation, image_path)
+          SELECT
+            COALESCE(sync_id, $_uuidExpr),
+            question_text,
+            question_variants,
+            answer_type,
+            answer_config,
+            explanation,
+            image_path
+          FROM questions_v6
+        ''');
+
+        // Quizzes: resolve folder_id via JOIN on old int id
+        await customStatement('''
+          INSERT INTO "quizzes" (id, folder_id, title, image_path, created_at, language_code)
+          SELECT
+            COALESCE(qz.sync_id, $_uuidExpr),
+            f.sync_id,
+            qz.title,
+            qz.image_path,
+            qz.created_at,
+            qz.language_code
+          FROM quizzes_v6 qz
+          LEFT JOIN folders_v6 f ON qz.folder_id = f.id
+        ''');
+
+        // QuizQuestions: resolve both FKs via JOIN
+        await customStatement('''
+          INSERT INTO "quiz_questions" (quiz_id, question_id, sort_order)
+          SELECT
+            qz.sync_id,
+            q.sync_id,
+            qq.sort_order
+          FROM quiz_questions_v6 qq
+          JOIN quizzes_v6 qz ON qq.quiz_id = qz.id
+          JOIN questions_v6 q ON qq.question_id = q.id
+        ''');
+
+        // Step 4: drop old tables
+        await customStatement('DROP TABLE quiz_questions_v6');
+        await customStatement('DROP TABLE quizzes_v6');
+        await customStatement('DROP TABLE questions_v6');
+        await customStatement('DROP TABLE folders_v6');
+
+        await customStatement('PRAGMA foreign_keys = ON');
+      }
     },
   );
 
@@ -161,9 +280,8 @@ class AppDatabase extends _$AppDatabase {
     final allQuizzes = await getAllQuizzes();
 
     final foldersJson = allFolders.map((f) => {
-      'id': f.id.toString(),
-      'syncId': f.syncId,
-      'parentFolderId': f.parentFolderId?.toString(),
+      'id': f.id,
+      'parentFolderId': f.parentFolderId,
       'title': f.title,
       'imagePath': f.imagePath,
     }).toList();
@@ -177,7 +295,7 @@ class AppDatabase extends _$AppDatabase {
     };
   }
 
-  Future<Map<String, dynamic>> exportFolderToJsonMap(int folderId) async {
+  Future<Map<String, dynamic>> exportFolderToJsonMap(String folderId) async {
     final folderIds = await _collectFolderSubtree(folderId);
     final folderList = <Folder>[];
     for (final id in folderIds) {
@@ -189,9 +307,8 @@ class AppDatabase extends _$AppDatabase {
       ..where((t) => t.folderId.isIn(folderIdsList))).get();
 
     final foldersJson = folderList.map((f) => {
-      'id': f.id.toString(),
-      'syncId': f.syncId,
-      'parentFolderId': f.parentFolderId?.toString(),
+      'id': f.id,
+      'parentFolderId': f.parentFolderId,
       'title': f.title,
       'imagePath': f.imagePath,
     }).toList();
@@ -205,7 +322,7 @@ class AppDatabase extends _$AppDatabase {
     };
   }
 
-  Future<Map<String, dynamic>> exportQuizToJsonMap(int quizId) async {
+  Future<Map<String, dynamic>> exportQuizToJsonMap(String quizId) async {
     final quiz = await (select(quizzes)..where((t) => t.id.equals(quizId))).getSingleOrNull();
     if (quiz == null) return {'folders': [], 'quizzes': [], 'questions': []};
     final quizzesAndQuestions = await _buildJsonForQuizzes([quiz]);
@@ -217,8 +334,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// Collects the given folder and all its descendants, returning their IDs.
-  Future<Set<int>> _collectFolderSubtree(int folderId) async {
-    final result = <int>{folderId};
+  Future<Set<String>> _collectFolderSubtree(String folderId) async {
+    final result = <String>{folderId};
     final children = await (select(folders)
       ..where((t) => t.parentFolderId.equals(folderId))).get();
     for (final child in children) {
@@ -230,21 +347,19 @@ class AppDatabase extends _$AppDatabase {
   /// Builds the quizzes + questions JSON for the given list of quizzes.
   Future<Map<String, List<Map<String, dynamic>>>> _buildJsonForQuizzes(
       List<Quiz> quizList) async {
-    final seenQuestionIds = <int>{};
+    final seenQuestionIds = <String>{};
     final quizzesJson = <Map<String, dynamic>>[];
     final questionsJson = <Map<String, dynamic>>[];
 
     for (final quiz in quizList) {
       final questionList = await getQuestionsForQuiz(quiz.id);
       quizzesJson.add({
-        'id': quiz.id.toString(),
-        'syncId': quiz.syncId,
-        'folderId': quiz.folderId?.toString(),
+        'id': quiz.id,
+        'folderId': quiz.folderId,
         'title': quiz.title,
         'imagePath': quiz.imagePath,
         'languageCode': quiz.languageCode,
-        'questionIds': questionList.map((q) => q.id.toString()).toList(),
-        'questionSyncIds': questionList.map((q) => q.syncId).toList(),
+        'questionIds': questionList.map((q) => q.id).toList(),
       });
 
       for (final question in questionList) {
@@ -253,8 +368,7 @@ class AppDatabase extends _$AppDatabase {
 
         final config = jsonDecode(question.answerConfig) as Map<String, dynamic>;
         final questionJson = <String, dynamic>{
-          'id': question.id.toString(),
-          'syncId': question.syncId,
+          'id': question.id,
           'questionVariants': question.questionVariants != null
               ? jsonDecode(question.questionVariants!)
               : [question.questionText],
@@ -285,7 +399,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Imports content from a JSON map.
   /// Returns the number of new items inserted.
-  /// Items whose syncId is already present in the DB are skipped (idempotent).
+  /// Items whose id is already present in the DB are skipped (idempotent).
   Future<int> importFromJson(Map<String, dynamic> data) async {
     int inserted = 0;
 
@@ -293,20 +407,17 @@ class AppDatabase extends _$AppDatabase {
       final questionsRaw = data['questions'] as List;
       final quizzesRaw = data['quizzes'] as List;
 
-      final Map<String, int> questionIdMap = {};
-      final Map<String, int> folderIdMap = {};
+      final Map<String, String> questionIdMap = {};
+      final Map<String, String> folderIdMap = {};
 
       // 1 — Questions (no dependencies)
       for (final q in questionsRaw) {
         final importedId = q['id'] as String;
-        final syncId = q['syncId'] as String?;
 
-        if (syncId != null) {
-          final existing = await getQuestionBySyncId(syncId);
-          if (existing != null) {
-            questionIdMap[importedId] = existing.id;
-            continue;
-          }
+        final existing = await getQuestionById(importedId);
+        if (existing != null) {
+          questionIdMap[importedId] = existing.id;
+          continue;
         }
 
         final answerType = q['answerType'] as String;
@@ -321,16 +432,16 @@ class AppDatabase extends _$AppDatabase {
         final variants = (q['questionVariants'] as List?)?.cast<String>();
         final questionText = variants?.first ?? '';
 
-        final newId = await insertQuestion(QuestionsCompanion.insert(
-          questionText: questionText,
+        final newId = await insertQuestion(QuestionsCompanion(
+          id: Value(importedId),
+          questionText: Value(questionText),
           questionVariants: variants != null && variants.length > 1
               ? Value(jsonEncode(variants))
               : const Value.absent(),
-          answerType: answerType,
-          answerConfig: answerConfig,
+          answerType: Value(answerType),
+          answerConfig: Value(answerConfig),
           explanation: Value(q['explanation'] as String?),
           imagePath: Value(q['imagePath'] as String?),
-          syncId: syncId != null ? Value(syncId) : const Value.absent(),
         ));
         questionIdMap[importedId] = newId;
         inserted++;
@@ -342,20 +453,17 @@ class AppDatabase extends _$AppDatabase {
         // First pass: insert all folders without parent
         for (final f in foldersRaw) {
           final importedId = f['id'] as String;
-          final syncId = f['syncId'] as String?;
 
-          if (syncId != null) {
-            final existing = await getFolderBySyncId(syncId);
-            if (existing != null) {
-              folderIdMap[importedId] = existing.id;
-              continue;
-            }
+          final existing = await getFolderById(importedId);
+          if (existing != null) {
+            folderIdMap[importedId] = existing.id;
+            continue;
           }
 
-          final newId = await insertFolder(FoldersCompanion.insert(
-            title: f['title'] as String,
+          final newId = await insertFolder(FoldersCompanion(
+            id: Value(importedId),
+            title: Value(f['title'] as String),
             imagePath: Value(f['imagePath'] as String?),
-            syncId: syncId != null ? Value(syncId) : const Value.absent(),
           ));
           folderIdMap[importedId] = newId;
           inserted++;
@@ -376,8 +484,8 @@ class AppDatabase extends _$AppDatabase {
         // Legacy format — import categories as root folders
         final categoriesRaw = data['categories'] as List;
         for (final c in categoriesRaw) {
-          final newId = await insertFolder(FoldersCompanion.insert(
-            title: c['title'] as String,
+          final newId = await insertFolder(FoldersCompanion(
+            title: Value(c['title'] as String),
             imagePath: Value(c['imagePath'] as String?),
           ));
           folderIdMap[c['id'] as String] = newId;
@@ -388,17 +496,14 @@ class AppDatabase extends _$AppDatabase {
       // 3 — Quizzes + junction rows
       for (final quiz in quizzesRaw) {
         final importedId = quiz['id'] as String;
-        final syncId = quiz['syncId'] as String?;
 
-        if (syncId != null) {
-          final existing = await getQuizBySyncId(syncId);
-          if (existing != null) {
-            // Quiz already exists — skip entirely (junction rows already set)
-            continue;
-          }
+        final existing = await getQuizById(importedId);
+        if (existing != null) {
+          // Quiz already exists — skip entirely (junction rows already set)
+          continue;
         }
 
-        int? targetFolderId;
+        String? targetFolderId;
         if (quiz.containsKey('folderId') && quiz['folderId'] != null) {
           targetFolderId = folderIdMap[quiz['folderId'] as String];
         } else if (data.containsKey('categories')) {
@@ -415,22 +520,24 @@ class AppDatabase extends _$AppDatabase {
           }
         }
 
-        final newQuizId = await insertQuiz(QuizzesCompanion.insert(
+        final newQuizId = await insertQuiz(QuizzesCompanion(
+          id: Value(importedId),
           folderId: Value(targetFolderId),
-          title: quiz['title'] as String,
+          title: Value(quiz['title'] as String),
           imagePath: Value(quiz['imagePath'] as String?),
           languageCode: Value(quiz['languageCode'] as String?),
-          syncId: syncId != null ? Value(syncId) : const Value.absent(),
         ));
         inserted++;
 
+        // Support both new 'questionIds' and legacy 'questionSyncIds'
+        final questionIdList = (quiz['questionIds'] ?? quiz['questionSyncIds']) as List? ?? [];
         int order = 0;
-        for (final qStringId in (quiz['questionIds'] as List)) {
-          final qIntId = questionIdMap[qStringId as String];
-          if (qIntId == null) continue;
+        for (final qStringId in questionIdList) {
+          final qId = questionIdMap[qStringId as String];
+          if (qId == null) continue;
           await into(quizQuestions).insert(QuizQuestionsCompanion.insert(
             quizId: newQuizId,
-            questionId: qIntId,
+            questionId: qId,
             sortOrder: Value(order++),
           ));
         }
@@ -446,27 +553,23 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<Folder>> watchAllFolders() => select(folders).watch();
 
-  Stream<List<Folder>> watchSubfolders(int? parentId) {
+  Stream<List<Folder>> watchSubfolders(String? parentId) {
     if (parentId == null) {
       return (select(folders)..where((t) => t.parentFolderId.isNull())).watch();
     }
     return (select(folders)..where((t) => t.parentFolderId.equals(parentId))).watch();
   }
 
-  Future<int> insertFolder(FoldersCompanion entry) async {
-    final id = await into(folders).insert(entry);
-    // Auto-assign UUID if syncId was not provided
-    if (!entry.syncId.present) {
-      await (update(folders)..where((t) => t.id.equals(id)))
-          .write(FoldersCompanion(syncId: Value(const Uuid().v4())));
-    }
+  Future<String> insertFolder(FoldersCompanion entry) async {
+    final id = entry.id.present ? entry.id.value : const Uuid().v4();
+    await into(folders).insert(entry.copyWith(id: Value(id)));
     return id;
   }
 
   Future<bool> updateFolder(FoldersCompanion entry) =>
       update(folders).replace(entry);
 
-  Future<void> deleteFolder(int id) async {
+  Future<void> deleteFolder(String id) async {
     // Recursively delete subfolders
     final subs = await (select(folders)
       ..where((t) => t.parentFolderId.equals(id))).get();
@@ -486,26 +589,23 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<Quiz>> getAllQuizzes() => select(quizzes).get();
 
-  Stream<List<Quiz>> watchQuizzesInFolder(int? folderId) {
+  Stream<List<Quiz>> watchQuizzesInFolder(String? folderId) {
     if (folderId == null) {
       return (select(quizzes)..where((t) => t.folderId.isNull())).watch();
     }
     return (select(quizzes)..where((t) => t.folderId.equals(folderId))).watch();
   }
 
-  Future<int> insertQuiz(QuizzesCompanion entry) async {
-    final id = await into(quizzes).insert(entry);
-    if (!entry.syncId.present) {
-      await (update(quizzes)..where((t) => t.id.equals(id)))
-          .write(QuizzesCompanion(syncId: Value(const Uuid().v4())));
-    }
+  Future<String> insertQuiz(QuizzesCompanion entry) async {
+    final id = entry.id.present ? entry.id.value : const Uuid().v4();
+    await into(quizzes).insert(entry.copyWith(id: Value(id)));
     return id;
   }
 
   Future<bool> updateQuiz(QuizzesCompanion entry) =>
       update(quizzes).replace(entry);
 
-  Future<void> deleteQuiz(int id) async {
+  Future<void> deleteQuiz(String id) async {
     await (delete(quizQuestions)..where((t) => t.quizId.equals(id))).go();
     await (delete(quizzes)..where((t) => t.id.equals(id))).go();
   }
@@ -514,7 +614,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<Question>> getAllQuestions() => select(questions).get();
 
-  Future<List<Question>> getQuestionsForQuiz(int quizId) {
+  Future<List<Question>> getQuestionsForQuiz(String quizId) {
     final query = select(questions).join([
       innerJoin(
         quizQuestions,
@@ -527,7 +627,7 @@ class AppDatabase extends _$AppDatabase {
     return query.map((row) => row.readTable(questions)).get();
   }
 
-  Stream<List<Question>> watchQuestionsForQuiz(int quizId) {
+  Stream<List<Question>> watchQuestionsForQuiz(String quizId) {
     final query = select(questions).join([
       innerJoin(
         quizQuestions,
@@ -541,8 +641,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> reorderQuestion({
-    required int quizId,
-    required int questionId,
+    required String quizId,
+    required String questionId,
     required int newIndex,
   }) async {
     await (update(quizQuestions)
@@ -551,18 +651,15 @@ class AppDatabase extends _$AppDatabase {
         .write(QuizQuestionsCompanion(sortOrder: Value(newIndex)));
   }
 
-  Future<int> insertQuestion(QuestionsCompanion question) async {
-    final questionId = await into(questions).insert(question);
-    if (!question.syncId.present) {
-      await (update(questions)..where((t) => t.id.equals(questionId)))
-          .write(QuestionsCompanion(syncId: Value(const Uuid().v4())));
-    }
-    return questionId;
+  Future<String> insertQuestion(QuestionsCompanion question) async {
+    final id = question.id.present ? question.id.value : const Uuid().v4();
+    await into(questions).insert(question.copyWith(id: Value(id)));
+    return id;
   }
 
   Future<void> insertQuestionIntoQuiz({
     required QuestionsCompanion question,
-    required int quizId,
+    required String quizId,
   }) async {
     final questionId = await insertQuestion(question);
     await into(quizQuestions).insert(
@@ -573,82 +670,21 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<int> deleteQuestion(int id) =>
+  Future<int> deleteQuestion(String id) =>
       (delete(questions)..where((t) => t.id.equals(id))).go();
 
-  // ─── Sync helpers ─────────────────────────────────────────────
+  // ─── Lookup helpers ───────────────────────────────────────────
 
-  Future<Folder?> getFolderBySyncId(String syncId) =>
-      (select(folders)..where((t) => t.syncId.equals(syncId))).getSingleOrNull();
+  Future<Folder?> getFolderById(String id) =>
+      (select(folders)..where((t) => t.id.equals(id))).getSingleOrNull();
 
-  Future<Quiz?> getQuizBySyncId(String syncId) =>
-      (select(quizzes)..where((t) => t.syncId.equals(syncId))).getSingleOrNull();
+  Future<Quiz?> getQuizById(String id) =>
+      (select(quizzes)..where((t) => t.id.equals(id))).getSingleOrNull();
 
-  Future<Question?> getQuestionBySyncId(String syncId) =>
-      (select(questions)..where((t) => t.syncId.equals(syncId))).getSingleOrNull();
+  Future<Question?> getQuestionById(String id) =>
+      (select(questions)..where((t) => t.id.equals(id))).getSingleOrNull();
 
-  Future<String?> getFolderSyncIdById(int id) async {
-    final row = await (select(folders)..where((t) => t.id.equals(id))).getSingleOrNull();
-    return row?.syncId;
-  }
-
-  Future<String?> getQuizSyncIdById(int id) async {
-    final row = await (select(quizzes)..where((t) => t.id.equals(id))).getSingleOrNull();
-    return row?.syncId;
-  }
-
-  Future<String?> getQuestionSyncIdById(int id) async {
-    final row = await (select(questions)..where((t) => t.id.equals(id))).getSingleOrNull();
-    return row?.syncId;
-  }
-
-  Future<int> insertFolderForSync({
-    required String syncId,
-    required String title,
-    String? imagePath,
-  }) =>
-      into(folders).insert(FoldersCompanion.insert(
-        title: title,
-        imagePath: Value(imagePath),
-        syncId: Value(syncId),
-      ));
-
-  Future<int> insertQuizForSync({
-    required String syncId,
-    required String title,
-    int? folderId,
-    String? imagePath,
-    String? languageCode,
-  }) =>
-      into(quizzes).insert(QuizzesCompanion.insert(
-        title: title,
-        folderId: Value(folderId),
-        imagePath: Value(imagePath),
-        languageCode: Value(languageCode),
-        syncId: Value(syncId),
-      ));
-
-  Future<int> insertQuestionForSync({
-    required String syncId,
-    required String questionText,
-    String? questionVariants,
-    required String answerType,
-    required String answerConfig,
-    String? explanation,
-    String? imagePath,
-  }) =>
-      into(questions).insert(QuestionsCompanion.insert(
-        questionText: questionText,
-        questionVariants:
-            questionVariants != null ? Value(questionVariants) : const Value.absent(),
-        answerType: answerType,
-        answerConfig: answerConfig,
-        explanation: Value(explanation),
-        imagePath: Value(imagePath),
-        syncId: Value(syncId),
-      ));
-
-  Future<void> updateFolderParentId(int folderId, int parentFolderId) =>
+  Future<void> updateFolderParentId(String folderId, String parentFolderId) =>
       (update(folders)..where((t) => t.id.equals(folderId)))
           .write(FoldersCompanion(parentFolderId: Value(parentFolderId)));
 
@@ -660,7 +696,7 @@ class AppDatabase extends _$AppDatabase {
         await delete(folders).go();
       });
 
-  Future<void> insertJunctionRowSafe(int quizId, int questionId, int sortOrder) async {
+  Future<void> insertJunctionRowSafe(String quizId, String questionId, int sortOrder) async {
     try {
       await into(quizQuestions).insert(QuizQuestionsCompanion.insert(
         quizId: quizId,

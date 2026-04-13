@@ -21,18 +21,18 @@ class SyncPeer {
 }
 
 class SyncEntry {
-  final String syncId;
+  final String id;
   final DateTime createdAt;
 
-  const SyncEntry({required this.syncId, required this.createdAt});
+  const SyncEntry({required this.id, required this.createdAt});
 
   Map<String, dynamic> toJson() => {
-        'syncId': syncId,
+        'id': id,
         'createdAt': createdAt.toIso8601String(),
       };
 
   factory SyncEntry.fromJson(Map<String, dynamic> json) => SyncEntry(
-        syncId: json['syncId'] as String,
+        id: json['id'] as String,
         createdAt: DateTime.parse(json['createdAt'] as String),
       );
 }

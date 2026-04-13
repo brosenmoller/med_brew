@@ -9,7 +9,7 @@ class EditFolderScreen extends StatefulWidget {
   final AppDatabase db;
   final Folder? existing;
   /// The parent folder to create inside; null means root level.
-  final int? parentFolderId;
+  final String? parentFolderId;
 
   const EditFolderScreen({
     super.key,
@@ -97,8 +97,8 @@ class _EditFolderScreenState extends State<EditFolderScreen> {
             _imagePath;
     final existing = widget.existing;
     if (existing == null) {
-      await widget.db.insertFolder(FoldersCompanion.insert(
-        title: title,
+      await widget.db.insertFolder(FoldersCompanion(
+        title: Value(title),
         imagePath: Value(imagePath),
         parentFolderId: Value(widget.parentFolderId),
       ));

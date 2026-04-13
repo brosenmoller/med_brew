@@ -88,7 +88,7 @@ String? _displayToCode(String text) {
 class EditQuizScreen extends StatefulWidget {
   final AppDatabase db;
   /// The folder this quiz belongs to; null means root level.
-  final int? folderId;
+  final String? folderId;
   final Quiz? existing;
 
   const EditQuizScreen({
@@ -208,9 +208,9 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
             _imagePath;
     final existing = widget.existing;
     if (existing == null) {
-      await widget.db.insertQuiz(QuizzesCompanion.insert(
+      await widget.db.insertQuiz(QuizzesCompanion(
         folderId: Value(widget.folderId),
-        title: title,
+        title: Value(title),
         imagePath: Value(imagePath),
         languageCode: Value(languageCode),
       ));

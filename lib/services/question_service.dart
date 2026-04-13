@@ -37,9 +37,9 @@ class QuestionService {
     // ── Folders ──────────────────────────────────────────────────
     final allFolderRows = await _db.getAllFolders();
     for (final row in allFolderRows) {
-      _folders[row.id.toString()] = FolderData(
-        id: row.id.toString(),
-        parentFolderId: row.parentFolderId?.toString(),
+      _folders[row.id] = FolderData(
+        id: row.id,
+        parentFolderId: row.parentFolderId,
         title: row.title,
         imagePath: row.imagePath,
         subfolderIds: [],
@@ -49,20 +49,20 @@ class QuestionService {
     // Wire up parent → child relationships
     for (final row in allFolderRows) {
       if (row.parentFolderId != null) {
-        _folders[row.parentFolderId.toString()]
-            ?.subfolderIds.add(row.id.toString());
+        _folders[row.parentFolderId!]
+            ?.subfolderIds.add(row.id);
       }
     }
 
     // ── Quizzes + Questions ───────────────────────────────────────
     final allQuizRows = await _db.getAllQuizzes();
     for (final quizRow in allQuizRows) {
-      final quizId = quizRow.id.toString();
+      final quizId = quizRow.id;
       final questionRows = await _db.getQuestionsForQuiz(quizRow.id);
       final questionIds = <String>[];
 
       for (final qRow in questionRows) {
-        final questionId = qRow.id.toString();
+        final questionId = qRow.id;
 
         AnswerType answerType;
         try {
@@ -109,7 +109,7 @@ class QuestionService {
         );
       }
 
-      final folderId = quizRow.folderId?.toString();
+      final folderId = quizRow.folderId;
       _quizzes[quizId] = QuizData(
         id: quizId,
         parentFolderId: folderId,

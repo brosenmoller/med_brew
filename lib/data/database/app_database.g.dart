@@ -10,19 +10,15 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
   $FoldersTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _parentFolderIdMeta =
       const VerificationMeta('parentFolderId');
   @override
-  late final GeneratedColumn<int> parentFolderId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> parentFolderId = GeneratedColumn<String>(
       'parent_folder_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -42,14 +38,9 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
-  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
-  @override
-  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
-      'sync_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, parentFolderId, title, imagePath, createdAt, syncId];
+      [id, parentFolderId, title, imagePath, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -62,6 +53,8 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('parent_folder_id')) {
       context.handle(
@@ -83,10 +76,6 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
-    if (data.containsKey('sync_id')) {
-      context.handle(_syncIdMeta,
-          syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta));
-    }
     return context;
   }
 
@@ -97,17 +86,15 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Folder(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      parentFolderId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}parent_folder_id']),
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      parentFolderId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}parent_folder_id']),
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       imagePath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}image_path']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      syncId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_id']),
     );
   }
 
@@ -118,34 +105,29 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
 }
 
 class Folder extends DataClass implements Insertable<Folder> {
-  final int id;
-  final int? parentFolderId;
+  final String id;
+  final String? parentFolderId;
   final String title;
   final String? imagePath;
   final DateTime createdAt;
-  final String? syncId;
   const Folder(
       {required this.id,
       this.parentFolderId,
       required this.title,
       this.imagePath,
-      required this.createdAt,
-      this.syncId});
+      required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     if (!nullToAbsent || parentFolderId != null) {
-      map['parent_folder_id'] = Variable<int>(parentFolderId);
+      map['parent_folder_id'] = Variable<String>(parentFolderId);
     }
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || imagePath != null) {
       map['image_path'] = Variable<String>(imagePath);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || syncId != null) {
-      map['sync_id'] = Variable<String>(syncId);
-    }
     return map;
   }
 
@@ -160,8 +142,6 @@ class Folder extends DataClass implements Insertable<Folder> {
           ? const Value.absent()
           : Value(imagePath),
       createdAt: Value(createdAt),
-      syncId:
-          syncId == null && nullToAbsent ? const Value.absent() : Value(syncId),
     );
   }
 
@@ -169,34 +149,31 @@ class Folder extends DataClass implements Insertable<Folder> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Folder(
-      id: serializer.fromJson<int>(json['id']),
-      parentFolderId: serializer.fromJson<int?>(json['parentFolderId']),
+      id: serializer.fromJson<String>(json['id']),
+      parentFolderId: serializer.fromJson<String?>(json['parentFolderId']),
       title: serializer.fromJson<String>(json['title']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      syncId: serializer.fromJson<String?>(json['syncId']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'parentFolderId': serializer.toJson<int?>(parentFolderId),
+      'id': serializer.toJson<String>(id),
+      'parentFolderId': serializer.toJson<String?>(parentFolderId),
       'title': serializer.toJson<String>(title),
       'imagePath': serializer.toJson<String?>(imagePath),
       'createdAt': serializer.toJson<DateTime>(createdAt),
-      'syncId': serializer.toJson<String?>(syncId),
     };
   }
 
   Folder copyWith(
-          {int? id,
-          Value<int?> parentFolderId = const Value.absent(),
+          {String? id,
+          Value<String?> parentFolderId = const Value.absent(),
           String? title,
           Value<String?> imagePath = const Value.absent(),
-          DateTime? createdAt,
-          Value<String?> syncId = const Value.absent()}) =>
+          DateTime? createdAt}) =>
       Folder(
         id: id ?? this.id,
         parentFolderId:
@@ -204,7 +181,6 @@ class Folder extends DataClass implements Insertable<Folder> {
         title: title ?? this.title,
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
         createdAt: createdAt ?? this.createdAt,
-        syncId: syncId.present ? syncId.value : this.syncId,
       );
   Folder copyWithCompanion(FoldersCompanion data) {
     return Folder(
@@ -215,7 +191,6 @@ class Folder extends DataClass implements Insertable<Folder> {
       title: data.title.present ? data.title.value : this.title,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      syncId: data.syncId.present ? data.syncId.value : this.syncId,
     );
   }
 
@@ -226,15 +201,14 @@ class Folder extends DataClass implements Insertable<Folder> {
           ..write('parentFolderId: $parentFolderId, ')
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('syncId: $syncId')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, parentFolderId, title, imagePath, createdAt, syncId);
+      Object.hash(id, parentFolderId, title, imagePath, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -243,40 +217,40 @@ class Folder extends DataClass implements Insertable<Folder> {
           other.parentFolderId == this.parentFolderId &&
           other.title == this.title &&
           other.imagePath == this.imagePath &&
-          other.createdAt == this.createdAt &&
-          other.syncId == this.syncId);
+          other.createdAt == this.createdAt);
 }
 
 class FoldersCompanion extends UpdateCompanion<Folder> {
-  final Value<int> id;
-  final Value<int?> parentFolderId;
+  final Value<String> id;
+  final Value<String?> parentFolderId;
   final Value<String> title;
   final Value<String?> imagePath;
   final Value<DateTime> createdAt;
-  final Value<String?> syncId;
+  final Value<int> rowid;
   const FoldersCompanion({
     this.id = const Value.absent(),
     this.parentFolderId = const Value.absent(),
     this.title = const Value.absent(),
     this.imagePath = const Value.absent(),
     this.createdAt = const Value.absent(),
-    this.syncId = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   FoldersCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     this.parentFolderId = const Value.absent(),
     required String title,
     this.imagePath = const Value.absent(),
     this.createdAt = const Value.absent(),
-    this.syncId = const Value.absent(),
-  }) : title = Value(title);
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        title = Value(title);
   static Insertable<Folder> custom({
-    Expression<int>? id,
-    Expression<int>? parentFolderId,
+    Expression<String>? id,
+    Expression<String>? parentFolderId,
     Expression<String>? title,
     Expression<String>? imagePath,
     Expression<DateTime>? createdAt,
-    Expression<String>? syncId,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -284,24 +258,24 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
       if (title != null) 'title': title,
       if (imagePath != null) 'image_path': imagePath,
       if (createdAt != null) 'created_at': createdAt,
-      if (syncId != null) 'sync_id': syncId,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   FoldersCompanion copyWith(
-      {Value<int>? id,
-      Value<int?>? parentFolderId,
+      {Value<String>? id,
+      Value<String?>? parentFolderId,
       Value<String>? title,
       Value<String?>? imagePath,
       Value<DateTime>? createdAt,
-      Value<String?>? syncId}) {
+      Value<int>? rowid}) {
     return FoldersCompanion(
       id: id ?? this.id,
       parentFolderId: parentFolderId ?? this.parentFolderId,
       title: title ?? this.title,
       imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt ?? this.createdAt,
-      syncId: syncId ?? this.syncId,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -309,10 +283,10 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (parentFolderId.present) {
-      map['parent_folder_id'] = Variable<int>(parentFolderId.value);
+      map['parent_folder_id'] = Variable<String>(parentFolderId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -323,8 +297,8 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (syncId.present) {
-      map['sync_id'] = Variable<String>(syncId.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -337,7 +311,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
           ..write('createdAt: $createdAt, ')
-          ..write('syncId: $syncId')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -350,19 +324,15 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
   $QuizzesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _folderIdMeta =
       const VerificationMeta('folderId');
   @override
-  late final GeneratedColumn<int> folderId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> folderId = GeneratedColumn<String>(
       'folder_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -388,14 +358,9 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
   late final GeneratedColumn<String> languageCode = GeneratedColumn<String>(
       'language_code', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
-  @override
-  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
-      'sync_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, folderId, title, imagePath, createdAt, languageCode, syncId];
+      [id, folderId, title, imagePath, createdAt, languageCode];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -408,6 +373,8 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('folder_id')) {
       context.handle(_folderIdMeta,
@@ -433,10 +400,6 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
           languageCode.isAcceptableOrUnknown(
               data['language_code']!, _languageCodeMeta));
     }
-    if (data.containsKey('sync_id')) {
-      context.handle(_syncIdMeta,
-          syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta));
-    }
     return context;
   }
 
@@ -447,9 +410,9 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Quiz(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       folderId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}folder_id']),
+          .read(DriftSqlType.string, data['${effectivePrefix}folder_id']),
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       imagePath: attachedDatabase.typeMapping
@@ -458,8 +421,6 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       languageCode: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}language_code']),
-      syncId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_id']),
     );
   }
 
@@ -470,27 +431,25 @@ class $QuizzesTable extends Quizzes with TableInfo<$QuizzesTable, Quiz> {
 }
 
 class Quiz extends DataClass implements Insertable<Quiz> {
-  final int id;
-  final int? folderId;
+  final String id;
+  final String? folderId;
   final String title;
   final String? imagePath;
   final DateTime createdAt;
   final String? languageCode;
-  final String? syncId;
   const Quiz(
       {required this.id,
       this.folderId,
       required this.title,
       this.imagePath,
       required this.createdAt,
-      this.languageCode,
-      this.syncId});
+      this.languageCode});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     if (!nullToAbsent || folderId != null) {
-      map['folder_id'] = Variable<int>(folderId);
+      map['folder_id'] = Variable<String>(folderId);
     }
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || imagePath != null) {
@@ -499,9 +458,6 @@ class Quiz extends DataClass implements Insertable<Quiz> {
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || languageCode != null) {
       map['language_code'] = Variable<String>(languageCode);
-    }
-    if (!nullToAbsent || syncId != null) {
-      map['sync_id'] = Variable<String>(syncId);
     }
     return map;
   }
@@ -520,8 +476,6 @@ class Quiz extends DataClass implements Insertable<Quiz> {
       languageCode: languageCode == null && nullToAbsent
           ? const Value.absent()
           : Value(languageCode),
-      syncId:
-          syncId == null && nullToAbsent ? const Value.absent() : Value(syncId),
     );
   }
 
@@ -529,37 +483,34 @@ class Quiz extends DataClass implements Insertable<Quiz> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Quiz(
-      id: serializer.fromJson<int>(json['id']),
-      folderId: serializer.fromJson<int?>(json['folderId']),
+      id: serializer.fromJson<String>(json['id']),
+      folderId: serializer.fromJson<String?>(json['folderId']),
       title: serializer.fromJson<String>(json['title']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       languageCode: serializer.fromJson<String?>(json['languageCode']),
-      syncId: serializer.fromJson<String?>(json['syncId']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'folderId': serializer.toJson<int?>(folderId),
+      'id': serializer.toJson<String>(id),
+      'folderId': serializer.toJson<String?>(folderId),
       'title': serializer.toJson<String>(title),
       'imagePath': serializer.toJson<String?>(imagePath),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'languageCode': serializer.toJson<String?>(languageCode),
-      'syncId': serializer.toJson<String?>(syncId),
     };
   }
 
   Quiz copyWith(
-          {int? id,
-          Value<int?> folderId = const Value.absent(),
+          {String? id,
+          Value<String?> folderId = const Value.absent(),
           String? title,
           Value<String?> imagePath = const Value.absent(),
           DateTime? createdAt,
-          Value<String?> languageCode = const Value.absent(),
-          Value<String?> syncId = const Value.absent()}) =>
+          Value<String?> languageCode = const Value.absent()}) =>
       Quiz(
         id: id ?? this.id,
         folderId: folderId.present ? folderId.value : this.folderId,
@@ -568,7 +519,6 @@ class Quiz extends DataClass implements Insertable<Quiz> {
         createdAt: createdAt ?? this.createdAt,
         languageCode:
             languageCode.present ? languageCode.value : this.languageCode,
-        syncId: syncId.present ? syncId.value : this.syncId,
       );
   Quiz copyWithCompanion(QuizzesCompanion data) {
     return Quiz(
@@ -580,7 +530,6 @@ class Quiz extends DataClass implements Insertable<Quiz> {
       languageCode: data.languageCode.present
           ? data.languageCode.value
           : this.languageCode,
-      syncId: data.syncId.present ? data.syncId.value : this.syncId,
     );
   }
 
@@ -592,15 +541,14 @@ class Quiz extends DataClass implements Insertable<Quiz> {
           ..write('title: $title, ')
           ..write('imagePath: $imagePath, ')
           ..write('createdAt: $createdAt, ')
-          ..write('languageCode: $languageCode, ')
-          ..write('syncId: $syncId')
+          ..write('languageCode: $languageCode')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, folderId, title, imagePath, createdAt, languageCode, syncId);
+  int get hashCode =>
+      Object.hash(id, folderId, title, imagePath, createdAt, languageCode);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -610,18 +558,17 @@ class Quiz extends DataClass implements Insertable<Quiz> {
           other.title == this.title &&
           other.imagePath == this.imagePath &&
           other.createdAt == this.createdAt &&
-          other.languageCode == this.languageCode &&
-          other.syncId == this.syncId);
+          other.languageCode == this.languageCode);
 }
 
 class QuizzesCompanion extends UpdateCompanion<Quiz> {
-  final Value<int> id;
-  final Value<int?> folderId;
+  final Value<String> id;
+  final Value<String?> folderId;
   final Value<String> title;
   final Value<String?> imagePath;
   final Value<DateTime> createdAt;
   final Value<String?> languageCode;
-  final Value<String?> syncId;
+  final Value<int> rowid;
   const QuizzesCompanion({
     this.id = const Value.absent(),
     this.folderId = const Value.absent(),
@@ -629,25 +576,26 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
     this.imagePath = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.languageCode = const Value.absent(),
-    this.syncId = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   QuizzesCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     this.folderId = const Value.absent(),
     required String title,
     this.imagePath = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.languageCode = const Value.absent(),
-    this.syncId = const Value.absent(),
-  }) : title = Value(title);
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        title = Value(title);
   static Insertable<Quiz> custom({
-    Expression<int>? id,
-    Expression<int>? folderId,
+    Expression<String>? id,
+    Expression<String>? folderId,
     Expression<String>? title,
     Expression<String>? imagePath,
     Expression<DateTime>? createdAt,
     Expression<String>? languageCode,
-    Expression<String>? syncId,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -656,18 +604,18 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
       if (imagePath != null) 'image_path': imagePath,
       if (createdAt != null) 'created_at': createdAt,
       if (languageCode != null) 'language_code': languageCode,
-      if (syncId != null) 'sync_id': syncId,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   QuizzesCompanion copyWith(
-      {Value<int>? id,
-      Value<int?>? folderId,
+      {Value<String>? id,
+      Value<String?>? folderId,
       Value<String>? title,
       Value<String?>? imagePath,
       Value<DateTime>? createdAt,
       Value<String?>? languageCode,
-      Value<String?>? syncId}) {
+      Value<int>? rowid}) {
     return QuizzesCompanion(
       id: id ?? this.id,
       folderId: folderId ?? this.folderId,
@@ -675,7 +623,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
       imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt ?? this.createdAt,
       languageCode: languageCode ?? this.languageCode,
-      syncId: syncId ?? this.syncId,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -683,10 +631,10 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (folderId.present) {
-      map['folder_id'] = Variable<int>(folderId.value);
+      map['folder_id'] = Variable<String>(folderId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -700,8 +648,8 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
     if (languageCode.present) {
       map['language_code'] = Variable<String>(languageCode.value);
     }
-    if (syncId.present) {
-      map['sync_id'] = Variable<String>(syncId.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -715,7 +663,7 @@ class QuizzesCompanion extends UpdateCompanion<Quiz> {
           ..write('imagePath: $imagePath, ')
           ..write('createdAt: $createdAt, ')
           ..write('languageCode: $languageCode, ')
-          ..write('syncId: $syncId')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -729,13 +677,9 @@ class $QuestionsTable extends Questions
   $QuestionsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _questionTextMeta =
       const VerificationMeta('questionText');
   @override
@@ -772,11 +716,6 @@ class $QuestionsTable extends Questions
   late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
       'image_path', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
-  @override
-  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
-      'sync_id', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -785,8 +724,7 @@ class $QuestionsTable extends Questions
         answerType,
         answerConfig,
         explanation,
-        imagePath,
-        syncId
+        imagePath
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -800,6 +738,8 @@ class $QuestionsTable extends Questions
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('question_text')) {
       context.handle(
@@ -841,10 +781,6 @@ class $QuestionsTable extends Questions
       context.handle(_imagePathMeta,
           imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta));
     }
-    if (data.containsKey('sync_id')) {
-      context.handle(_syncIdMeta,
-          syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta));
-    }
     return context;
   }
 
@@ -855,7 +791,7 @@ class $QuestionsTable extends Questions
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Question(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       questionText: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}question_text'])!,
       questionVariants: attachedDatabase.typeMapping.read(
@@ -868,8 +804,6 @@ class $QuestionsTable extends Questions
           .read(DriftSqlType.string, data['${effectivePrefix}explanation']),
       imagePath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}image_path']),
-      syncId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}sync_id']),
     );
   }
 
@@ -880,14 +814,13 @@ class $QuestionsTable extends Questions
 }
 
 class Question extends DataClass implements Insertable<Question> {
-  final int id;
+  final String id;
   final String questionText;
   final String? questionVariants;
   final String answerType;
   final String answerConfig;
   final String? explanation;
   final String? imagePath;
-  final String? syncId;
   const Question(
       {required this.id,
       required this.questionText,
@@ -895,12 +828,11 @@ class Question extends DataClass implements Insertable<Question> {
       required this.answerType,
       required this.answerConfig,
       this.explanation,
-      this.imagePath,
-      this.syncId});
+      this.imagePath});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['question_text'] = Variable<String>(questionText);
     if (!nullToAbsent || questionVariants != null) {
       map['question_variants'] = Variable<String>(questionVariants);
@@ -912,9 +844,6 @@ class Question extends DataClass implements Insertable<Question> {
     }
     if (!nullToAbsent || imagePath != null) {
       map['image_path'] = Variable<String>(imagePath);
-    }
-    if (!nullToAbsent || syncId != null) {
-      map['sync_id'] = Variable<String>(syncId);
     }
     return map;
   }
@@ -934,8 +863,6 @@ class Question extends DataClass implements Insertable<Question> {
       imagePath: imagePath == null && nullToAbsent
           ? const Value.absent()
           : Value(imagePath),
-      syncId:
-          syncId == null && nullToAbsent ? const Value.absent() : Value(syncId),
     );
   }
 
@@ -943,40 +870,37 @@ class Question extends DataClass implements Insertable<Question> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Question(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       questionText: serializer.fromJson<String>(json['questionText']),
       questionVariants: serializer.fromJson<String?>(json['questionVariants']),
       answerType: serializer.fromJson<String>(json['answerType']),
       answerConfig: serializer.fromJson<String>(json['answerConfig']),
       explanation: serializer.fromJson<String?>(json['explanation']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
-      syncId: serializer.fromJson<String?>(json['syncId']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'questionText': serializer.toJson<String>(questionText),
       'questionVariants': serializer.toJson<String?>(questionVariants),
       'answerType': serializer.toJson<String>(answerType),
       'answerConfig': serializer.toJson<String>(answerConfig),
       'explanation': serializer.toJson<String?>(explanation),
       'imagePath': serializer.toJson<String?>(imagePath),
-      'syncId': serializer.toJson<String?>(syncId),
     };
   }
 
   Question copyWith(
-          {int? id,
+          {String? id,
           String? questionText,
           Value<String?> questionVariants = const Value.absent(),
           String? answerType,
           String? answerConfig,
           Value<String?> explanation = const Value.absent(),
-          Value<String?> imagePath = const Value.absent(),
-          Value<String?> syncId = const Value.absent()}) =>
+          Value<String?> imagePath = const Value.absent()}) =>
       Question(
         id: id ?? this.id,
         questionText: questionText ?? this.questionText,
@@ -987,7 +911,6 @@ class Question extends DataClass implements Insertable<Question> {
         answerConfig: answerConfig ?? this.answerConfig,
         explanation: explanation.present ? explanation.value : this.explanation,
         imagePath: imagePath.present ? imagePath.value : this.imagePath,
-        syncId: syncId.present ? syncId.value : this.syncId,
       );
   Question copyWithCompanion(QuestionsCompanion data) {
     return Question(
@@ -1006,7 +929,6 @@ class Question extends DataClass implements Insertable<Question> {
       explanation:
           data.explanation.present ? data.explanation.value : this.explanation,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
-      syncId: data.syncId.present ? data.syncId.value : this.syncId,
     );
   }
 
@@ -1019,15 +941,14 @@ class Question extends DataClass implements Insertable<Question> {
           ..write('answerType: $answerType, ')
           ..write('answerConfig: $answerConfig, ')
           ..write('explanation: $explanation, ')
-          ..write('imagePath: $imagePath, ')
-          ..write('syncId: $syncId')
+          ..write('imagePath: $imagePath')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, questionText, questionVariants,
-      answerType, answerConfig, explanation, imagePath, syncId);
+      answerType, answerConfig, explanation, imagePath);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1038,19 +959,18 @@ class Question extends DataClass implements Insertable<Question> {
           other.answerType == this.answerType &&
           other.answerConfig == this.answerConfig &&
           other.explanation == this.explanation &&
-          other.imagePath == this.imagePath &&
-          other.syncId == this.syncId);
+          other.imagePath == this.imagePath);
 }
 
 class QuestionsCompanion extends UpdateCompanion<Question> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> questionText;
   final Value<String?> questionVariants;
   final Value<String> answerType;
   final Value<String> answerConfig;
   final Value<String?> explanation;
   final Value<String?> imagePath;
-  final Value<String?> syncId;
+  final Value<int> rowid;
   const QuestionsCompanion({
     this.id = const Value.absent(),
     this.questionText = const Value.absent(),
@@ -1059,29 +979,30 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     this.answerConfig = const Value.absent(),
     this.explanation = const Value.absent(),
     this.imagePath = const Value.absent(),
-    this.syncId = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   QuestionsCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     required String questionText,
     this.questionVariants = const Value.absent(),
     required String answerType,
     required String answerConfig,
     this.explanation = const Value.absent(),
     this.imagePath = const Value.absent(),
-    this.syncId = const Value.absent(),
-  })  : questionText = Value(questionText),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        questionText = Value(questionText),
         answerType = Value(answerType),
         answerConfig = Value(answerConfig);
   static Insertable<Question> custom({
-    Expression<int>? id,
+    Expression<String>? id,
     Expression<String>? questionText,
     Expression<String>? questionVariants,
     Expression<String>? answerType,
     Expression<String>? answerConfig,
     Expression<String>? explanation,
     Expression<String>? imagePath,
-    Expression<String>? syncId,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1091,19 +1012,19 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
       if (answerConfig != null) 'answer_config': answerConfig,
       if (explanation != null) 'explanation': explanation,
       if (imagePath != null) 'image_path': imagePath,
-      if (syncId != null) 'sync_id': syncId,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   QuestionsCompanion copyWith(
-      {Value<int>? id,
+      {Value<String>? id,
       Value<String>? questionText,
       Value<String?>? questionVariants,
       Value<String>? answerType,
       Value<String>? answerConfig,
       Value<String?>? explanation,
       Value<String?>? imagePath,
-      Value<String?>? syncId}) {
+      Value<int>? rowid}) {
     return QuestionsCompanion(
       id: id ?? this.id,
       questionText: questionText ?? this.questionText,
@@ -1112,7 +1033,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
       answerConfig: answerConfig ?? this.answerConfig,
       explanation: explanation ?? this.explanation,
       imagePath: imagePath ?? this.imagePath,
-      syncId: syncId ?? this.syncId,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -1120,7 +1041,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (questionText.present) {
       map['question_text'] = Variable<String>(questionText.value);
@@ -1140,8 +1061,8 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
     if (imagePath.present) {
       map['image_path'] = Variable<String>(imagePath.value);
     }
-    if (syncId.present) {
-      map['sync_id'] = Variable<String>(syncId.value);
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -1156,7 +1077,7 @@ class QuestionsCompanion extends UpdateCompanion<Question> {
           ..write('answerConfig: $answerConfig, ')
           ..write('explanation: $explanation, ')
           ..write('imagePath: $imagePath, ')
-          ..write('syncId: $syncId')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -1170,18 +1091,18 @@ class $QuizQuestionsTable extends QuizQuestions
   $QuizQuestionsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _quizIdMeta = const VerificationMeta('quizId');
   @override
-  late final GeneratedColumn<int> quizId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> quizId = GeneratedColumn<String>(
       'quiz_id', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.string,
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES quizzes (id)'));
   static const VerificationMeta _questionIdMeta =
       const VerificationMeta('questionId');
   @override
-  late final GeneratedColumn<int> questionId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> questionId = GeneratedColumn<String>(
       'question_id', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.string,
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES questions (id)'));
@@ -1233,9 +1154,9 @@ class $QuizQuestionsTable extends QuizQuestions
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return QuizQuestion(
       quizId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}quiz_id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}quiz_id'])!,
       questionId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}question_id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}question_id'])!,
       sortOrder: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
     );
@@ -1248,8 +1169,8 @@ class $QuizQuestionsTable extends QuizQuestions
 }
 
 class QuizQuestion extends DataClass implements Insertable<QuizQuestion> {
-  final int quizId;
-  final int questionId;
+  final String quizId;
+  final String questionId;
   final int sortOrder;
   const QuizQuestion(
       {required this.quizId,
@@ -1258,8 +1179,8 @@ class QuizQuestion extends DataClass implements Insertable<QuizQuestion> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['quiz_id'] = Variable<int>(quizId);
-    map['question_id'] = Variable<int>(questionId);
+    map['quiz_id'] = Variable<String>(quizId);
+    map['question_id'] = Variable<String>(questionId);
     map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
@@ -1276,8 +1197,8 @@ class QuizQuestion extends DataClass implements Insertable<QuizQuestion> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return QuizQuestion(
-      quizId: serializer.fromJson<int>(json['quizId']),
-      questionId: serializer.fromJson<int>(json['questionId']),
+      quizId: serializer.fromJson<String>(json['quizId']),
+      questionId: serializer.fromJson<String>(json['questionId']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
@@ -1285,13 +1206,13 @@ class QuizQuestion extends DataClass implements Insertable<QuizQuestion> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'quizId': serializer.toJson<int>(quizId),
-      'questionId': serializer.toJson<int>(questionId),
+      'quizId': serializer.toJson<String>(quizId),
+      'questionId': serializer.toJson<String>(questionId),
       'sortOrder': serializer.toJson<int>(sortOrder),
     };
   }
 
-  QuizQuestion copyWith({int? quizId, int? questionId, int? sortOrder}) =>
+  QuizQuestion copyWith({String? quizId, String? questionId, int? sortOrder}) =>
       QuizQuestion(
         quizId: quizId ?? this.quizId,
         questionId: questionId ?? this.questionId,
@@ -1328,8 +1249,8 @@ class QuizQuestion extends DataClass implements Insertable<QuizQuestion> {
 }
 
 class QuizQuestionsCompanion extends UpdateCompanion<QuizQuestion> {
-  final Value<int> quizId;
-  final Value<int> questionId;
+  final Value<String> quizId;
+  final Value<String> questionId;
   final Value<int> sortOrder;
   final Value<int> rowid;
   const QuizQuestionsCompanion({
@@ -1339,15 +1260,15 @@ class QuizQuestionsCompanion extends UpdateCompanion<QuizQuestion> {
     this.rowid = const Value.absent(),
   });
   QuizQuestionsCompanion.insert({
-    required int quizId,
-    required int questionId,
+    required String quizId,
+    required String questionId,
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : quizId = Value(quizId),
         questionId = Value(questionId);
   static Insertable<QuizQuestion> custom({
-    Expression<int>? quizId,
-    Expression<int>? questionId,
+    Expression<String>? quizId,
+    Expression<String>? questionId,
     Expression<int>? sortOrder,
     Expression<int>? rowid,
   }) {
@@ -1360,8 +1281,8 @@ class QuizQuestionsCompanion extends UpdateCompanion<QuizQuestion> {
   }
 
   QuizQuestionsCompanion copyWith(
-      {Value<int>? quizId,
-      Value<int>? questionId,
+      {Value<String>? quizId,
+      Value<String>? questionId,
       Value<int>? sortOrder,
       Value<int>? rowid}) {
     return QuizQuestionsCompanion(
@@ -1376,10 +1297,10 @@ class QuizQuestionsCompanion extends UpdateCompanion<QuizQuestion> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (quizId.present) {
-      map['quiz_id'] = Variable<int>(quizId.value);
+      map['quiz_id'] = Variable<String>(quizId.value);
     }
     if (questionId.present) {
-      map['question_id'] = Variable<int>(questionId.value);
+      map['question_id'] = Variable<String>(questionId.value);
     }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
@@ -1418,20 +1339,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 }
 
 typedef $$FoldersTableCreateCompanionBuilder = FoldersCompanion Function({
-  Value<int> id,
-  Value<int?> parentFolderId,
+  required String id,
+  Value<String?> parentFolderId,
   required String title,
   Value<String?> imagePath,
   Value<DateTime> createdAt,
-  Value<String?> syncId,
+  Value<int> rowid,
 });
 typedef $$FoldersTableUpdateCompanionBuilder = FoldersCompanion Function({
-  Value<int> id,
-  Value<int?> parentFolderId,
+  Value<String> id,
+  Value<String?> parentFolderId,
   Value<String> title,
   Value<String?> imagePath,
   Value<DateTime> createdAt,
-  Value<String?> syncId,
+  Value<int> rowid,
 });
 
 class $$FoldersTableFilterComposer
@@ -1443,10 +1364,10 @@ class $$FoldersTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get parentFolderId => $composableBuilder(
+  ColumnFilters<String> get parentFolderId => $composableBuilder(
       column: $table.parentFolderId,
       builder: (column) => ColumnFilters(column));
 
@@ -1458,9 +1379,6 @@ class $$FoldersTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncId => $composableBuilder(
-      column: $table.syncId, builder: (column) => ColumnFilters(column));
 }
 
 class $$FoldersTableOrderingComposer
@@ -1472,10 +1390,10 @@ class $$FoldersTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get parentFolderId => $composableBuilder(
+  ColumnOrderings<String> get parentFolderId => $composableBuilder(
       column: $table.parentFolderId,
       builder: (column) => ColumnOrderings(column));
 
@@ -1487,9 +1405,6 @@ class $$FoldersTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncId => $composableBuilder(
-      column: $table.syncId, builder: (column) => ColumnOrderings(column));
 }
 
 class $$FoldersTableAnnotationComposer
@@ -1501,10 +1416,10 @@ class $$FoldersTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<int> get parentFolderId => $composableBuilder(
+  GeneratedColumn<String> get parentFolderId => $composableBuilder(
       column: $table.parentFolderId, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
@@ -1515,9 +1430,6 @@ class $$FoldersTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<String> get syncId =>
-      $composableBuilder(column: $table.syncId, builder: (column) => column);
 }
 
 class $$FoldersTableTableManager extends RootTableManager<
@@ -1543,12 +1455,12 @@ class $$FoldersTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$FoldersTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> parentFolderId = const Value.absent(),
+            Value<String> id = const Value.absent(),
+            Value<String?> parentFolderId = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
-            Value<String?> syncId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               FoldersCompanion(
             id: id,
@@ -1556,15 +1468,15 @@ class $$FoldersTableTableManager extends RootTableManager<
             title: title,
             imagePath: imagePath,
             createdAt: createdAt,
-            syncId: syncId,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> parentFolderId = const Value.absent(),
+            required String id,
+            Value<String?> parentFolderId = const Value.absent(),
             required String title,
             Value<String?> imagePath = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
-            Value<String?> syncId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               FoldersCompanion.insert(
             id: id,
@@ -1572,7 +1484,7 @@ class $$FoldersTableTableManager extends RootTableManager<
             title: title,
             imagePath: imagePath,
             createdAt: createdAt,
-            syncId: syncId,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -1594,22 +1506,22 @@ typedef $$FoldersTableProcessedTableManager = ProcessedTableManager<
     Folder,
     PrefetchHooks Function()>;
 typedef $$QuizzesTableCreateCompanionBuilder = QuizzesCompanion Function({
-  Value<int> id,
-  Value<int?> folderId,
+  required String id,
+  Value<String?> folderId,
   required String title,
   Value<String?> imagePath,
   Value<DateTime> createdAt,
   Value<String?> languageCode,
-  Value<String?> syncId,
+  Value<int> rowid,
 });
 typedef $$QuizzesTableUpdateCompanionBuilder = QuizzesCompanion Function({
-  Value<int> id,
-  Value<int?> folderId,
+  Value<String> id,
+  Value<String?> folderId,
   Value<String> title,
   Value<String?> imagePath,
   Value<DateTime> createdAt,
   Value<String?> languageCode,
-  Value<String?> syncId,
+  Value<int> rowid,
 });
 
 final class $$QuizzesTableReferences
@@ -1641,10 +1553,10 @@ class $$QuizzesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get folderId => $composableBuilder(
+  ColumnFilters<String> get folderId => $composableBuilder(
       column: $table.folderId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get title => $composableBuilder(
@@ -1658,9 +1570,6 @@ class $$QuizzesTableFilterComposer
 
   ColumnFilters<String> get languageCode => $composableBuilder(
       column: $table.languageCode, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncId => $composableBuilder(
-      column: $table.syncId, builder: (column) => ColumnFilters(column));
 
   Expression<bool> quizQuestionsRefs(
       Expression<bool> Function($$QuizQuestionsTableFilterComposer f) f) {
@@ -1693,10 +1602,10 @@ class $$QuizzesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get folderId => $composableBuilder(
+  ColumnOrderings<String> get folderId => $composableBuilder(
       column: $table.folderId, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get title => $composableBuilder(
@@ -1711,9 +1620,6 @@ class $$QuizzesTableOrderingComposer
   ColumnOrderings<String> get languageCode => $composableBuilder(
       column: $table.languageCode,
       builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncId => $composableBuilder(
-      column: $table.syncId, builder: (column) => ColumnOrderings(column));
 }
 
 class $$QuizzesTableAnnotationComposer
@@ -1725,10 +1631,10 @@ class $$QuizzesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<int> get folderId =>
+  GeneratedColumn<String> get folderId =>
       $composableBuilder(column: $table.folderId, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
@@ -1742,9 +1648,6 @@ class $$QuizzesTableAnnotationComposer
 
   GeneratedColumn<String> get languageCode => $composableBuilder(
       column: $table.languageCode, builder: (column) => column);
-
-  GeneratedColumn<String> get syncId =>
-      $composableBuilder(column: $table.syncId, builder: (column) => column);
 
   Expression<T> quizQuestionsRefs<T extends Object>(
       Expression<T> Function($$QuizQuestionsTableAnnotationComposer a) f) {
@@ -1791,13 +1694,13 @@ class $$QuizzesTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$QuizzesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> folderId = const Value.absent(),
+            Value<String> id = const Value.absent(),
+            Value<String?> folderId = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> languageCode = const Value.absent(),
-            Value<String?> syncId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               QuizzesCompanion(
             id: id,
@@ -1806,16 +1709,16 @@ class $$QuizzesTableTableManager extends RootTableManager<
             imagePath: imagePath,
             createdAt: createdAt,
             languageCode: languageCode,
-            syncId: syncId,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> folderId = const Value.absent(),
+            required String id,
+            Value<String?> folderId = const Value.absent(),
             required String title,
             Value<String?> imagePath = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> languageCode = const Value.absent(),
-            Value<String?> syncId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               QuizzesCompanion.insert(
             id: id,
@@ -1824,7 +1727,7 @@ class $$QuizzesTableTableManager extends RootTableManager<
             imagePath: imagePath,
             createdAt: createdAt,
             languageCode: languageCode,
-            syncId: syncId,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
@@ -1871,24 +1774,24 @@ typedef $$QuizzesTableProcessedTableManager = ProcessedTableManager<
     Quiz,
     PrefetchHooks Function({bool quizQuestionsRefs})>;
 typedef $$QuestionsTableCreateCompanionBuilder = QuestionsCompanion Function({
-  Value<int> id,
+  required String id,
   required String questionText,
   Value<String?> questionVariants,
   required String answerType,
   required String answerConfig,
   Value<String?> explanation,
   Value<String?> imagePath,
-  Value<String?> syncId,
+  Value<int> rowid,
 });
 typedef $$QuestionsTableUpdateCompanionBuilder = QuestionsCompanion Function({
-  Value<int> id,
+  Value<String> id,
   Value<String> questionText,
   Value<String?> questionVariants,
   Value<String> answerType,
   Value<String> answerConfig,
   Value<String?> explanation,
   Value<String?> imagePath,
-  Value<String?> syncId,
+  Value<int> rowid,
 });
 
 final class $$QuestionsTableReferences
@@ -1920,7 +1823,7 @@ class $$QuestionsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get questionText => $composableBuilder(
@@ -1941,9 +1844,6 @@ class $$QuestionsTableFilterComposer
 
   ColumnFilters<String> get imagePath => $composableBuilder(
       column: $table.imagePath, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get syncId => $composableBuilder(
-      column: $table.syncId, builder: (column) => ColumnFilters(column));
 
   Expression<bool> quizQuestionsRefs(
       Expression<bool> Function($$QuizQuestionsTableFilterComposer f) f) {
@@ -1976,7 +1876,7 @@ class $$QuestionsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get questionText => $composableBuilder(
@@ -1999,9 +1899,6 @@ class $$QuestionsTableOrderingComposer
 
   ColumnOrderings<String> get imagePath => $composableBuilder(
       column: $table.imagePath, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get syncId => $composableBuilder(
-      column: $table.syncId, builder: (column) => ColumnOrderings(column));
 }
 
 class $$QuestionsTableAnnotationComposer
@@ -2013,7 +1910,7 @@ class $$QuestionsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get questionText => $composableBuilder(
@@ -2033,9 +1930,6 @@ class $$QuestionsTableAnnotationComposer
 
   GeneratedColumn<String> get imagePath =>
       $composableBuilder(column: $table.imagePath, builder: (column) => column);
-
-  GeneratedColumn<String> get syncId =>
-      $composableBuilder(column: $table.syncId, builder: (column) => column);
 
   Expression<T> quizQuestionsRefs<T extends Object>(
       Expression<T> Function($$QuizQuestionsTableAnnotationComposer a) f) {
@@ -2082,14 +1976,14 @@ class $$QuestionsTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$QuestionsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            Value<String> id = const Value.absent(),
             Value<String> questionText = const Value.absent(),
             Value<String?> questionVariants = const Value.absent(),
             Value<String> answerType = const Value.absent(),
             Value<String> answerConfig = const Value.absent(),
             Value<String?> explanation = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
-            Value<String?> syncId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               QuestionsCompanion(
             id: id,
@@ -2099,17 +1993,17 @@ class $$QuestionsTableTableManager extends RootTableManager<
             answerConfig: answerConfig,
             explanation: explanation,
             imagePath: imagePath,
-            syncId: syncId,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            required String id,
             required String questionText,
             Value<String?> questionVariants = const Value.absent(),
             required String answerType,
             required String answerConfig,
             Value<String?> explanation = const Value.absent(),
             Value<String?> imagePath = const Value.absent(),
-            Value<String?> syncId = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               QuestionsCompanion.insert(
             id: id,
@@ -2119,7 +2013,7 @@ class $$QuestionsTableTableManager extends RootTableManager<
             answerConfig: answerConfig,
             explanation: explanation,
             imagePath: imagePath,
-            syncId: syncId,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -2169,15 +2063,15 @@ typedef $$QuestionsTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function({bool quizQuestionsRefs})>;
 typedef $$QuizQuestionsTableCreateCompanionBuilder = QuizQuestionsCompanion
     Function({
-  required int quizId,
-  required int questionId,
+  required String quizId,
+  required String questionId,
   Value<int> sortOrder,
   Value<int> rowid,
 });
 typedef $$QuizQuestionsTableUpdateCompanionBuilder = QuizQuestionsCompanion
     Function({
-  Value<int> quizId,
-  Value<int> questionId,
+  Value<String> quizId,
+  Value<String> questionId,
   Value<int> sortOrder,
   Value<int> rowid,
 });
@@ -2397,8 +2291,8 @@ class $$QuizQuestionsTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$QuizQuestionsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> quizId = const Value.absent(),
-            Value<int> questionId = const Value.absent(),
+            Value<String> quizId = const Value.absent(),
+            Value<String> questionId = const Value.absent(),
             Value<int> sortOrder = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -2409,8 +2303,8 @@ class $$QuizQuestionsTableTableManager extends RootTableManager<
             rowid: rowid,
           ),
           createCompanionCallback: ({
-            required int quizId,
-            required int questionId,
+            required String quizId,
+            required String questionId,
             Value<int> sortOrder = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>

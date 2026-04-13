@@ -15,7 +15,7 @@ import 'edit_question/flashcard_section.dart';
 import 'edit_question/sorting_section.dart';
 
 class EditQuestionScreen extends StatefulWidget {
-  final int quizId;
+  final String quizId;
   final AppDatabase db;
   final Question? question; // If provided → edit mode; if null → add mode
 
@@ -463,10 +463,10 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     } else {
       await widget.db.insertQuestionIntoQuiz(
         quizId: widget.quizId,
-        question: QuestionsCompanion.insert(
-          questionText: questionText,
-          answerType: _answerType,
-          answerConfig: answerConfig,
+        question: QuestionsCompanion(
+          questionText: Value(questionText),
+          answerType: Value(_answerType),
+          answerConfig: Value(answerConfig),
           explanation: Value(explanation.isEmpty ? null : explanation),
           imagePath: Value(savedImagePath),
         ),

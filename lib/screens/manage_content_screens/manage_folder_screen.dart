@@ -169,7 +169,7 @@ class _FolderTileState extends State<_FolderTile> {
   }
 
   Future<void> _checkManifest() async {
-    final result = await _isPackInManifest(f.syncId, _fileName);
+    final result = await _isPackInManifest(f.id, _fileName);
     if (mounted) setState(() => _inManifest = result);
   }
 
@@ -242,7 +242,7 @@ class _FolderTileState extends State<_FolderTile> {
       data: data,
       fileName: _fileName,
       title: f.title,
-      syncId: f.syncId,
+      syncId: f.id,
       wasInManifest: _inManifest,
     );
     if (ok && mounted) setState(() => _inManifest = true);
@@ -329,7 +329,7 @@ class _QuizTileState extends State<_QuizTile> {
   }
 
   Future<void> _checkManifest() async {
-    final result = await _isPackInManifest(q.syncId, _fileName);
+    final result = await _isPackInManifest(q.id, _fileName);
     if (mounted) setState(() => _inManifest = result);
   }
 
@@ -406,7 +406,7 @@ class _QuizTileState extends State<_QuizTile> {
       data: data,
       fileName: _fileName,
       title: q.title,
-      syncId: q.syncId,
+      syncId: q.id,
       wasInManifest: _inManifest,
     );
     if (ok && mounted) setState(() => _inManifest = true);
@@ -477,7 +477,7 @@ Future<bool> _isPackInManifest(String? syncId, String fileName) async {
     final manifest = jsonDecode(await manifestFile.readAsString()) as List;
     return manifest.any((e) {
       final entry = e as Map<String, dynamic>;
-      if (syncId != null && entry['syncId'] == syncId) return true;
+      if (syncId != null && entry['id'] == syncId) return true;
       return entry['file'] == fileName;
     });
   } catch (_) {
@@ -511,12 +511,12 @@ Future<bool> _writePackToManifest(
     final newEntry = <String, dynamic>{
       'file': fileName,
       'title': title,
-      if (syncId != null) 'syncId': syncId,
+      if (syncId != null) 'id': syncId,
     };
 
     final idx = manifest.indexWhere((e) {
       final entry = e as Map<String, dynamic>;
-      if (syncId != null && entry['syncId'] == syncId) return true;
+      if (syncId != null && entry['id'] == syncId) return true;
       return entry['file'] == fileName;
     });
     if (idx >= 0) {
