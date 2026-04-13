@@ -142,10 +142,36 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _FolderTile extends StatelessWidget {
+// ── Folder tile ────────────────────────────────────────────────────────────────
+
+class _FolderTile extends StatefulWidget {
   final AppDatabase db;
   final Folder f;
   const _FolderTile({required this.db, required this.f});
+
+  @override
+  State<_FolderTile> createState() => _FolderTileState();
+}
+
+class _FolderTileState extends State<_FolderTile> {
+  bool _inManifest = false;
+
+  AppDatabase get db => widget.db;
+  Folder get f => widget.f;
+
+  String get _fileName =>
+      'folder_${f.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.json';
+
+  @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) _checkManifest();
+  }
+
+  Future<void> _checkManifest() async {
+    final result = await _isPackInManifest(f.syncId, _fileName);
+    if (mounted) setState(() => _inManifest = result);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -169,8 +195,12 @@ class _FolderTile extends StatelessWidget {
         children: [
           if (kDebugMode)
             IconButton(
-              icon: const Icon(Icons.library_add_outlined),
-              tooltip: 'Add to content packs manifest',
+              icon: _inManifest
+                  ? const Icon(Icons.library_add, color: Colors.orange)
+                  : const Icon(Icons.library_add_outlined),
+              tooltip: _inManifest
+                  ? 'Update in content packs'
+                  : 'Add to content packs',
               onPressed: () => _addToManifest(context),
             ),
           IconButton(
@@ -207,8 +237,15 @@ class _FolderTile extends StatelessWidget {
 
   Future<void> _addToManifest(BuildContext context) async {
     final data = await db.exportFolderToJsonMap(f.id);
-    final fileName = 'folder_${f.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.json';
-    await _writePackToManifest(context, data: data, fileName: fileName, title: f.title, syncId: f.syncId);
+    final ok = await _writePackToManifest(
+      context,
+      data: data,
+      fileName: _fileName,
+      title: f.title,
+      syncId: f.syncId,
+      wasInManifest: _inManifest,
+    );
+    if (ok && mounted) setState(() => _inManifest = true);
   }
 
   Future<void> _exportFolder(BuildContext context) async {
@@ -216,8 +253,7 @@ class _FolderTile extends StatelessWidget {
       final data = await db.exportFolderToJsonMap(f.id);
       final jsonString = const JsonEncoder.withIndent('  ').convert(data);
       final dir = await getApplicationDocumentsDirectory();
-      final fileName = 'folder_${f.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}.json';
-      final file = File(p.join(dir.path, fileName));
+      final file = File(p.join(dir.path, _fileName));
       await file.writeAsString(jsonString);
 
       if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
@@ -266,10 +302,36 @@ class _FolderTile extends StatelessWidget {
   }
 }
 
-class _QuizTile extends StatelessWidget {
+// ── Quiz tile ──────────────────────────────────────────────────────────────────
+
+class _QuizTile extends StatefulWidget {
   final AppDatabase db;
   final Quiz q;
   const _QuizTile({required this.db, required this.q});
+
+  @override
+  State<_QuizTile> createState() => _QuizTileState();
+}
+
+class _QuizTileState extends State<_QuizTile> {
+  bool _inManifest = false;
+
+  AppDatabase get db => widget.db;
+  Quiz get q => widget.q;
+
+  String get _fileName =>
+      'quiz_${q.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.json';
+
+  @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) _checkManifest();
+  }
+
+  Future<void> _checkManifest() async {
+    final result = await _isPackInManifest(q.syncId, _fileName);
+    if (mounted) setState(() => _inManifest = result);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -293,8 +355,12 @@ class _QuizTile extends StatelessWidget {
         children: [
           if (kDebugMode)
             IconButton(
-              icon: const Icon(Icons.library_add_outlined),
-              tooltip: 'Add to content packs manifest',
+              icon: _inManifest
+                  ? const Icon(Icons.library_add, color: Colors.orange)
+                  : const Icon(Icons.library_add_outlined),
+              tooltip: _inManifest
+                  ? 'Update in content packs'
+                  : 'Add to content packs',
               onPressed: () => _addToManifest(context),
             ),
           IconButton(
@@ -335,8 +401,15 @@ class _QuizTile extends StatelessWidget {
 
   Future<void> _addToManifest(BuildContext context) async {
     final data = await db.exportQuizToJsonMap(q.id);
-    final fileName = 'quiz_${q.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.json';
-    await _writePackToManifest(context, data: data, fileName: fileName, title: q.title, syncId: q.syncId);
+    final ok = await _writePackToManifest(
+      context,
+      data: data,
+      fileName: _fileName,
+      title: q.title,
+      syncId: q.syncId,
+      wasInManifest: _inManifest,
+    );
+    if (ok && mounted) setState(() => _inManifest = true);
   }
 
   Future<void> _exportQuiz(BuildContext context) async {
@@ -344,8 +417,7 @@ class _QuizTile extends StatelessWidget {
       final data = await db.exportQuizToJsonMap(q.id);
       final jsonString = const JsonEncoder.withIndent('  ').convert(data);
       final dir = await getApplicationDocumentsDirectory();
-      final fileName = 'quiz_${q.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}.json';
-      final file = File(p.join(dir.path, fileName));
+      final file = File(p.join(dir.path, _fileName));
       await file.writeAsString(jsonString);
 
       if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
@@ -394,15 +466,35 @@ class _QuizTile extends StatelessWidget {
   }
 }
 
-/// Writes [data] to `assets/content_packs/[fileName]` and upserts the
-/// corresponding entry in `assets/content_packs/index.json`.
-/// Deduplicates by [syncId] first, then by [fileName].
-Future<void> _writePackToManifest(
+// ── Shared manifest helpers ────────────────────────────────────────────────────
+
+/// Returns true if [syncId] or [fileName] already appears in index.json.
+Future<bool> _isPackInManifest(String? syncId, String fileName) async {
+  try {
+    final manifestFile = File(
+        p.join(Directory.current.path, 'assets', 'content_packs', 'index.json'));
+    if (!await manifestFile.exists()) return false;
+    final manifest = jsonDecode(await manifestFile.readAsString()) as List;
+    return manifest.any((e) {
+      final entry = e as Map<String, dynamic>;
+      if (syncId != null && entry['syncId'] == syncId) return true;
+      return entry['file'] == fileName;
+    });
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Writes [data] to `assets/content_packs/[fileName]` and upserts the entry
+/// in `assets/content_packs/index.json`. Deduplicates by [syncId] then [fileName].
+/// Returns true on success, false on error (error is shown as a snackbar).
+Future<bool> _writePackToManifest(
   BuildContext context, {
   required Map<String, dynamic> data,
   required String fileName,
   required String title,
   required String? syncId,
+  required bool wasInManifest,
 }) async {
   try {
     final packDir = p.join(Directory.current.path, 'assets', 'content_packs');
@@ -437,15 +529,18 @@ Future<void> _writePackToManifest(
         .writeAsString(const JsonEncoder.withIndent('  ').convert(manifest));
 
     if (context.mounted) {
+      final verb = wasInManifest ? 'Updated' : 'Added';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Added "$title" to content packs manifest')),
+        SnackBar(content: Text('$verb "$title" in content packs')),
       );
     }
+    return true;
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add to manifest: $e')),
+        SnackBar(content: Text('Failed to write to content packs: $e')),
       );
     }
+    return false;
   }
 }
