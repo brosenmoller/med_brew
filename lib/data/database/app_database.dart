@@ -27,11 +27,16 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 9) {
+        await m.addColumn(questions, questions.occlusionConfig);
+      }
+    },
   );
 
   // ─── Export ───────────────────────────────────────────────────
@@ -139,6 +144,8 @@ class AppDatabase extends _$AppDatabase {
               ? jsonDecode(question.imagePathVariants!)
               : null,
           'explanation': question.explanation,
+          if (question.occlusionConfig != null)
+            'occlusionConfig': jsonDecode(question.occlusionConfig!),
         };
 
         switch (question.answerType) {
@@ -209,6 +216,9 @@ class AppDatabase extends _$AppDatabase {
           imagePath: Value(q['imagePath'] as String?),
           imagePathVariants: importedVariants != null
               ? Value(jsonEncode(importedVariants.cast<String>()))
+              : const Value.absent(),
+          occlusionConfig: q['occlusionConfig'] != null
+              ? Value(jsonEncode(q['occlusionConfig']))
               : const Value.absent(),
         ));
         questionIdMap[importedId] = newId;

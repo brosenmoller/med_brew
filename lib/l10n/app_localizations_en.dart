@@ -942,4 +942,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String syncDiscoverableAs(String name) {
     return 'Discoverable as: $name';
   }
+
+  @override
+  String get occlusionSectionTitle => 'Image Occlusion';
+
+  @override
+  String get defineOcclusionAreas => 'Define Occlusion Areas';
+
+  @override
+  String get editOcclusionAreas => 'Edit Occlusion Areas';
+
+  @override
+  String occlusionSummary(int hidden, int highlight) {
+    return '$hidden hidden, $highlight highlighted ✓';
+  }
+
+  @override
+  String get occlusionNoImage => 'Set an image first to add occlusion';
+
+  @override
+  String get occlusionHideMode => 'Hide';
+
+  @override
+  String get occlusionHighlightMode => 'Highlight';
+
+  @override
+  String get occlusionClear => 'Clear occlusion';
 }

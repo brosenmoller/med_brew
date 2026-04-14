@@ -14,6 +14,7 @@ import 'package:med_brew/widgets/image_picker_field.dart';
 import 'package:med_brew/widgets/unsaved_changes_guard.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:med_brew/models/occlusion_data.dart';
 import 'edit_question/answer_type_selector.dart';
 import 'edit_question/multiple_choice_section.dart';
 import 'edit_question/typed_answer_section.dart';
@@ -21,6 +22,7 @@ import 'edit_question/image_click_section.dart';
 import 'edit_question/flashcard_section.dart';
 import 'edit_question/sorting_section.dart';
 import 'edit_question/set_section.dart';
+import 'edit_question/occlusion_section.dart';
 
 class EditQuestionScreen extends StatefulWidget {
   final String quizId;
@@ -80,7 +82,19 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   // Set
   late final List<TextEditingController> _setControllers;
 
+  // Occlusion (optional, available for all types except imageClick)
+  OcclusionData? _occlusionData;
+
   bool get _hasChanges => _isDirty;
+
+  /// The image path to use as the background for occlusion editing.
+  /// For flashcard: front image. For imageClick: null (not supported).
+  /// For all others: first image variant, or fallback to imagePath.
+  String? get _occlusionImagePath {
+    if (_answerType == 'imageClick') return null;
+    if (_answerType == 'flashcard') return _flashcardFrontImagePath;
+    return _imagePathVariants.isNotEmpty ? _imagePathVariants.first : _imagePath;
+  }
 
   void _markDirty() {
     if (!_isDirty) setState(() => _isDirty = true);
@@ -186,6 +200,14 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
           List.generate(4, (_) => TextEditingController());
       _setControllers =
           List.generate(2, (_) => TextEditingController());
+    }
+
+    // Occlusion config
+    if (q?.occlusionConfig != null) {
+      try {
+        _occlusionData = OcclusionData.fromJson(
+            jsonDecode(q!.occlusionConfig!) as Map<String, dynamic>);
+      } catch (_) {}
     }
 
     // Image variants: load from new column if set, fall back to legacy imagePath.
@@ -395,6 +417,22 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                     const SizedBox(height: 8),
                     _buildImageVariantsEditor(),
                     const SizedBox(height: 16),
+                  ],
+
+                  // Occlusion section — available for all types except imageClick
+                  if (_answerType != 'imageClick') ...[
+                    const SizedBox(height: 8),
+                    const Divider(),
+                    const SizedBox(height: 4),
+                    OcclusionSection(
+                      imagePathForOcclusion: _occlusionImagePath,
+                      occlusionData: _occlusionData,
+                      onChanged: (data) => setState(() {
+                        _occlusionData = data;
+                        _isDirty = true;
+                      }),
+                    ),
+                    const SizedBox(height: 8),
                   ],
 
                   TextFormField(
@@ -662,6 +700,11 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         : null;
 
     final explanation = _explanationController.text.trim();
+    final String? occlusionConfigJson = (_occlusionData != null &&
+            !_occlusionData!.isEmpty)
+        ? jsonEncode(_occlusionData!.toJson())
+        : null;
+
     final companion = QuestionsCompanion(
       questionText: Value(questionText),
       answerType: Value(_answerType),
@@ -669,6 +712,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       explanation: Value(explanation.isEmpty ? null : explanation),
       imagePath: Value(finalImagePath),
       imagePathVariants: Value(finalVariantsJson),
+      occlusionConfig: Value(occlusionConfigJson),
     );
 
     if (widget.isEditing) {

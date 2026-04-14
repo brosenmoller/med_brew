@@ -361,5 +361,20 @@
     "placeholders": {
       "name": { "type": "String" }
     }
-  }
+  },
+
+  "occlusionSectionTitle": "Afbeelding Verbergen",
+  "defineOcclusionAreas": "Gebieden definiëren",
+  "editOcclusionAreas": "Gebieden bewerken",
+  "occlusionSummary": "{hidden} verborgen, {highlight} gemarkeerd ✓",
+  "@occlusionSummary": {
+    "placeholders": {
+      "hidden": { "type": "int" },
+      "highlight": { "type": "int" }
+    }
+  },
+  "occlusionNoImage": "Stel eerst een afbeelding in",
+  "occlusionHideMode": "Verbergen",
+  "occlusionHighlightMode": "Markeren",
+  "occlusionClear": "Verwijderen"
 }

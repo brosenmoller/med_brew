@@ -5,6 +5,7 @@ import 'package:med_brew/models/folder_data.dart';
 import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SetConfig, SortingConfig, TypedAnswerConfig;
 import 'package:med_brew/models/answer_type.dart';
+import 'package:med_brew/models/occlusion_data.dart';
 
 class QuestionService {
   QuestionService._internal();
@@ -108,6 +109,14 @@ class QuestionService {
           imagePathVariants = [];
         }
 
+        OcclusionData? occlusionData;
+        if (qRow.occlusionConfig != null) {
+          try {
+            occlusionData = OcclusionData.fromJson(
+                jsonDecode(qRow.occlusionConfig!) as Map<String, dynamic>);
+          } catch (_) {}
+        }
+
         questionIds.add(questionId);
         _questions[questionId] = QuestionData(
           id: questionId,
@@ -116,6 +125,7 @@ class QuestionService {
           imagePathVariants: imagePathVariants,
           answerType: answerType,
           explanation: qRow.explanation,
+          occlusionData: occlusionData,
           multipleChoiceConfig: answerType == AnswerType.multipleChoice
               ? MultipleChoiceConfig.fromJson(config) : null,
           typedAnswerConfig: answerType == AnswerType.typed

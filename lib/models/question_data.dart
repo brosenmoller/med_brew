@@ -1,5 +1,6 @@
 import 'package:med_brew/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SetConfig, SortingConfig, TypedAnswerConfig;
 import 'package:med_brew/models/answer_type.dart' show AnswerType;
+import 'package:med_brew/models/occlusion_data.dart' show OcclusionData;
 
 class QuestionData {
   final String id;
@@ -11,6 +12,9 @@ class QuestionData {
   final List<String> imagePathVariants;
   final AnswerType answerType;
   final String? explanation;
+
+  /// Optional occlusion overlay (hidden areas + highlight shapes) for this question's image.
+  final OcclusionData? occlusionData;
 
   // Type-specific data
   final MultipleChoiceConfig? multipleChoiceConfig;
@@ -27,6 +31,7 @@ class QuestionData {
     this.explanation,
     this.imagePath,
     this.imagePathVariants = const [],
+    this.occlusionData,
     this.multipleChoiceConfig,
     this.typedAnswerConfig,
     this.imageClickConfig,

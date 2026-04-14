@@ -947,4 +947,30 @@ class AppLocalizationsNl extends AppLocalizations {
   String syncDiscoverableAs(String name) {
     return 'Zichtbaar als: $name';
   }
+
+  @override
+  String get occlusionSectionTitle => 'Afbeelding Verbergen';
+
+  @override
+  String get defineOcclusionAreas => 'Gebieden definiëren';
+
+  @override
+  String get editOcclusionAreas => 'Gebieden bewerken';
+
+  @override
+  String occlusionSummary(int hidden, int highlight) {
+    return '$hidden verborgen, $highlight gemarkeerd ✓';
+  }
+
+  @override
+  String get occlusionNoImage => 'Stel eerst een afbeelding in';
+
+  @override
+  String get occlusionHideMode => 'Verbergen';
+
+  @override
+  String get occlusionHighlightMode => 'Markeren';
+
+  @override
+  String get occlusionClear => 'Verwijderen';
 }

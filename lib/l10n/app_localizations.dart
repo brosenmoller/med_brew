@@ -1609,6 +1609,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discoverable as: {name}'**
   String syncDiscoverableAs(String name);
+
+  /// No description provided for @occlusionSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Occlusion'**
+  String get occlusionSectionTitle;
+
+  /// No description provided for @defineOcclusionAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'Define Occlusion Areas'**
+  String get defineOcclusionAreas;
+
+  /// No description provided for @editOcclusionAreas.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Occlusion Areas'**
+  String get editOcclusionAreas;
+
+  /// No description provided for @occlusionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{hidden} hidden, {highlight} highlighted ✓'**
+  String occlusionSummary(int hidden, int highlight);
+
+  /// No description provided for @occlusionNoImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Set an image first to add occlusion'**
+  String get occlusionNoImage;
+
+  /// No description provided for @occlusionHideMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get occlusionHideMode;
+
+  /// No description provided for @occlusionHighlightMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight'**
+  String get occlusionHighlightMode;
+
+  /// No description provided for @occlusionClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear occlusion'**
+  String get occlusionClear;
 }
 
 class _AppLocalizationsDelegate

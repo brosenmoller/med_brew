@@ -461,5 +461,20 @@
     "placeholders": {
       "name": { "type": "String" }
     }
-  }
+  },
+
+  "occlusionSectionTitle": "Image Occlusion",
+  "defineOcclusionAreas": "Define Occlusion Areas",
+  "editOcclusionAreas": "Edit Occlusion Areas",
+  "occlusionSummary": "{hidden} hidden, {highlight} highlighted ✓",
+  "@occlusionSummary": {
+    "placeholders": {
+      "hidden": { "type": "int" },
+      "highlight": { "type": "int" }
+    }
+  },
+  "occlusionNoImage": "Set an image first to add occlusion",
+  "occlusionHideMode": "Hide",
+  "occlusionHighlightMode": "Highlight",
+  "occlusionClear": "Clear occlusion"
 }

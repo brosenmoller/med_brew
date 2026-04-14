@@ -39,6 +39,9 @@ class Questions extends Table {
   // JSON array of image paths — one is picked at random each time the question
   // is displayed. Null means fall back to the legacy single imagePath.
   TextColumn get imagePathVariants => text().nullable()();
+  // JSON blob storing OcclusionData (hidden areas + highlight shapes).
+  // Null means no occlusion configured for this question.
+  TextColumn get occlusionConfig => text().nullable()();
   @override
   Set<Column> get primaryKey => {id};
 }

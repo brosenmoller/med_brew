@@ -123,6 +123,8 @@ class _SetWidgetState extends State<SetWidget> {
             child: QuestionImage(
               path: widget.question.imagePath!,
               maxHeight: 180,
+              occlusionData: widget.question.occlusionData,
+              occlusionRevealed: widget.answerState != AnswerState.unanswered,
             ),
           ),
 

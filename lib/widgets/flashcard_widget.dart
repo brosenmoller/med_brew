@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:med_brew/models/occlusion_data.dart';
 import 'package:med_brew/models/question_data.dart';
 import 'package:med_brew/widgets/app_image.dart';
+import 'package:med_brew/widgets/occluded_image.dart';
 
 class FlashcardWidget extends StatefulWidget {
   final QuestionData question;
@@ -65,6 +67,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget> {
                       label: _sidesSwapped ? 'Back' : 'Front',
                       text: _sidesSwapped ? config.backText : config.frontText,
                       imagePath: _sidesSwapped ? config.backImagePath : config.frontImagePath,
+                      occlusionData: widget.question.occlusionData,
                       tapToFlip: !widget.locked,
                       onTap: _flip,
                     ),
@@ -121,6 +124,7 @@ class _CardFace extends StatelessWidget {
   final String label;
   final String? text;
   final String? imagePath;
+  final OcclusionData? occlusionData;
   final bool tapToFlip;
   final VoidCallback? onTap;
 
@@ -129,6 +133,7 @@ class _CardFace extends StatelessWidget {
     required this.label,
     this.text,
     this.imagePath,
+    this.occlusionData,
     this.tapToFlip = false,
     this.onTap,
   });
@@ -160,10 +165,16 @@ class _CardFace extends StatelessWidget {
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: AppImage(
-                      path: imagePath,
-                      fit: BoxFit.contain,
-                    ),
+                    child: occlusionData != null
+                        ? OccludedImage(
+                            imagePath: imagePath,
+                            occlusionData: occlusionData!,
+                            revealed: false,
+                          )
+                        : AppImage(
+                            path: imagePath,
+                            fit: BoxFit.contain,
+                          ),
                   ),
                 ),
               if (imagePath != null && text != null) const SizedBox(height: 16),

@@ -79,6 +79,8 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                   child: QuestionImage(
                     path: _resolvedImagePath!,
                     maxHeight: double.infinity,
+                    occlusionData: widget.question.occlusionData,
+                    occlusionRevealed: answered,
                   ),
                 ),
               )
