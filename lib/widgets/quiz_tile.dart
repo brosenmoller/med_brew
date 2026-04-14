@@ -157,10 +157,12 @@ class _QuizTileState extends State<QuizTile> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Top row: SRS + favorite icons
+                        // Top row: language chip (left) + SRS/favorite icons (right)
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
+                            if (lang != null)
+                              _Badge(label: lang.toUpperCase()),
+                            const Spacer(),
                             _IconToggle(
                               icon: Icons.repeat_rounded,
                               active: _isSrsEnabled,
@@ -178,17 +180,6 @@ class _QuizTileState extends State<QuizTile> {
                           ],
                         ),
                         const Spacer(),
-                        // Language chip
-                        if (lang != null) ...[
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: _Badge(
-                              icon: Icons.language,
-                              label: lang.toUpperCase(),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                        ],
                         Text(
                           widget.quiz.title,
                           style: const TextStyle(
@@ -257,10 +248,10 @@ class _IconToggle extends StatelessWidget {
 }
 
 class _Badge extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String label;
 
-  const _Badge({required this.icon, required this.label});
+  const _Badge({this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -273,8 +264,10 @@ class _Badge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white70, size: 11),
-          const SizedBox(width: 4),
+          if (icon != null) ...[
+            Icon(icon, color: Colors.white70, size: 11),
+            const SizedBox(width: 4),
+          ],
           Flexible(
             child: Text(
               label,

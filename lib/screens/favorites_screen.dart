@@ -48,14 +48,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth < 400
-        ? 2
-        : screenWidth < 600
-            ? 3
-            : screenWidth < 900
-                ? 4
-                : 6;
 
     return Scaffold(
       body: CustomScrollView(
@@ -129,8 +121,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   },
                   childCount: _favoriteQuizzes.length,
                 ),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 250,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
