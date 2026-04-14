@@ -6,7 +6,7 @@ import 'package:med_brew/screens/manage_content_screens/manage_content_screen.da
 import 'package:med_brew/screens/settings_screen.dart';
 import 'package:med_brew/screens/favorites_screen.dart';
 import 'package:med_brew/services/streak_service.dart';
-import 'srs_overview_screen.dart';
+import 'package:med_brew/screens/srs_overview/srs_overview_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final AppDatabase db;
