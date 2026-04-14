@@ -31,7 +31,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.local_fire_department, color: Colors.orange, size: 22),
+                Icon(Icons.local_fire_department, color: state.completedToday ? Colors.orange : Colors.grey, size: 22),
                 const SizedBox(width: 10),
                 Text(
                   l10n.streakCount(state.streakCount),
@@ -118,7 +118,11 @@ class HomeScreen extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
+                            Icon(
+                              Icons.local_fire_department,
+                              color: state.completedToday ? Colors.orange : Colors.white38,
+                              size: 20,
+                            ),
                             const SizedBox(width: 3),
                             Text(
                               '${state.streakCount}',

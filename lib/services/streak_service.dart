@@ -26,12 +26,14 @@ class StreakState {
   final int highestStreak;
   final int freezesRemaining;
   final bool streakEnabled;
+  final bool completedToday;
 
   const StreakState({
     required this.streakCount,
     required this.highestStreak,
     required this.freezesRemaining,
     required this.streakEnabled,
+    required this.completedToday,
   });
 }
 
@@ -63,7 +65,7 @@ class StreakService {
 
   /// Reactive state — safe to use in ValueListenableBuilder.
   final ValueNotifier<StreakState> streakNotifier = ValueNotifier(
-    const StreakState(streakCount: 0, highestStreak: 0, freezesRemaining: 2, streakEnabled: true),
+    const StreakState(streakCount: 0, highestStreak: 0, freezesRemaining: 2, streakEnabled: true, completedToday: false),
   );
 
   // ── Getters ────────────────────────────────────────────────────────────────
@@ -264,6 +266,7 @@ class StreakService {
       highestStreak: highestStreak,
       freezesRemaining: freezesRemainingThisWeek,
       streakEnabled: streakEnabled,
+      completedToday: lastActivityDate == _dateStr(DateTime.now()),
     );
   }
 }
