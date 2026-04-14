@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:med_brew/l10n/app_localizations.dart';
@@ -89,7 +90,11 @@ class _SetWidgetState extends State<SetWidget> {
     widget.onAnswered(_missed!.isEmpty && matches.every((m) => m != null));
   }
 
-  // Key handler for the TextField: Shift+Enter adds, Enter submits.
+  bool get _isMobile =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+
+  // Key handler for the TextField: Shift+Enter adds, Enter submits (desktop only).
   KeyEventResult _handleInputKey(FocusNode _, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (event.logicalKey != LogicalKeyboardKey.enter) return KeyEventResult.ignored;
@@ -97,7 +102,7 @@ class _SetWidgetState extends State<SetWidget> {
 
     if (HardwareKeyboard.instance.isShiftPressed) {
       _addItem();
-    } else {
+    } else if (!_isMobile) {
       if (_entered.isNotEmpty) _submit();
     }
     return KeyEventResult.handled;
@@ -139,9 +144,15 @@ class _SetWidgetState extends State<SetWidget> {
                               controller: _inputController,
                               focusNode: _inputFocus,
                               readOnly: widget.locked,
-                              // Suppress the default Enter-submits behaviour so
-                              // our onKeyEvent handler owns both Enter variants.
-                              textInputAction: TextInputAction.none,
+                              // Mobile: Enter key adds the item.
+                              // Desktop: suppress default Enter so our onKeyEvent
+                              // handler owns both Shift+Enter (add) and Enter (submit).
+                              textInputAction: _isMobile
+                                  ? TextInputAction.done
+                                  : TextInputAction.none,
+                              onSubmitted: _isMobile && !widget.locked
+                                  ? (_) => _addItem()
+                                  : null,
                               decoration: InputDecoration(
                                 hintText: l10n.setHint,
                                 border: const OutlineInputBorder(),
