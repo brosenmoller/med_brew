@@ -54,11 +54,13 @@ class NotificationService {
 
   /// Cancels any existing reminder and schedules a new daily one at [hour]:[minute]
   /// (local time). Repeats every 24 h at the same UTC-converted time.
+  /// Set [forceNextDay] to true to skip today entirely (e.g. after recording activity).
   Future<void> rescheduleReminder({
     required int hour,
     required int minute,
     required String title,
     required String body,
+    bool forceNextDay = false,
   }) async {
     if (!_supported) return;
     try {
@@ -67,7 +69,7 @@ class NotificationService {
       // Convert desired local time to UTC for scheduling.
       final now = DateTime.now();
       var nextLocal = DateTime(now.year, now.month, now.day, hour, minute);
-      if (!nextLocal.isAfter(now)) {
+      if (forceNextDay || !nextLocal.isAfter(now)) {
         nextLocal = nextLocal.add(const Duration(days: 1));
       }
       final nextUtc = nextLocal.toUtc();

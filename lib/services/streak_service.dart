@@ -160,6 +160,8 @@ class StreakService {
       await _box.put(_kHighestStreak, newStreak);
     }
     _refreshNotifier();
+    // Push the daily reminder to tomorrow so it doesn't fire on a day already studied.
+    if (notifsEnabled && streakEnabled) await _rescheduleForTomorrow();
     return event;
   }
 
@@ -262,6 +264,14 @@ class StreakService {
         minute: notifsMinute,
         title: _notifTitle,
         body: _notifBody,
+      );
+
+  Future<void> _rescheduleForTomorrow() => NotificationService().rescheduleReminder(
+        hour: notifsHour,
+        minute: notifsMinute,
+        title: _notifTitle,
+        body: _notifBody,
+        forceNextDay: true,
       );
 
   void _refreshNotifier() {

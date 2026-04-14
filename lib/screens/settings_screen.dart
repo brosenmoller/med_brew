@@ -196,37 +196,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                   if (_streakEnabled) ...[
-                    SwitchListTile(
-                      title: Text(l10n.streakNotifsToggle),
-                      subtitle: Text(l10n.streakNotifsSubtitle),
-                      value: _notifsEnabled,
-                      onChanged: (v) async {
-                        if (v) {
-                          final granted = await _notifs.requestPermission();
-                          if (!granted) return;
-                        }
-                        await _streak.setNotifsEnabled(v);
-                        if (mounted) setState(() => _notifsEnabled = v);
-                      },
-                    ),
-                    if (_notifsEnabled)
-                      ListTile(
-                        title: Text(l10n.streakNotifsTime),
-                        trailing: Text(
-                          _notifTime.format(context),
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        onTap: () async {
-                          final picked = await showTimePicker(
-                            context: context,
-                            initialTime: _notifTime,
-                          );
-                          if (picked == null || !mounted) return;
-                          await _streak.setNotifTime(picked.hour, picked.minute);
-                          setState(() => _notifTime = picked);
+                    if (_notifs.isSupported) ...[
+                      SwitchListTile(
+                        title: Text(l10n.streakNotifsToggle),
+                        subtitle: Text(l10n.streakNotifsSubtitle),
+                        value: _notifsEnabled,
+                        onChanged: (v) async {
+                          if (v) {
+                            final granted = await _notifs.requestPermission();
+                            if (!granted) return;
+                          }
+                          await _streak.setNotifsEnabled(v);
+                          if (mounted) setState(() => _notifsEnabled = v);
                         },
                       ),
-                    const Divider(indent: 16, endIndent: 16),
+                      if (_notifsEnabled)
+                        ListTile(
+                          title: Text(l10n.streakNotifsTime),
+                          trailing: Text(
+                            _notifTime.format(context),
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          onTap: () async {
+                            final picked = await showTimePicker(
+                              context: context,
+                              initialTime: _notifTime,
+                            );
+                            if (picked == null || !mounted) return;
+                            await _streak.setNotifTime(picked.hour, picked.minute);
+                            setState(() => _notifTime = picked);
+                          },
+                        ),
+                      const Divider(indent: 16, endIndent: 16),
+                    ],
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                       child: OutlinedButton.icon(
