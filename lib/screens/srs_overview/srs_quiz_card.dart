@@ -55,16 +55,22 @@ class SrsQuizCard extends StatelessWidget {
     final accentColor =
         hasDue ? colorScheme.error : colorScheme.outlineVariant;
 
+    final Color timeColor =
+        hasDue ? colorScheme.error : colorScheme.outline;
+
+    // Use screen width as the breakpoint — avoids LayoutBuilder inside
+    // IntrinsicHeight, which Flutter does not support.
+    final wide = MediaQuery.sizeOf(context).width > 450;
+
     final String timeLabel;
-    final Color timeColor;
     if (hasDue) {
       final overdue = DateTime.now().difference(entry.oldestDue!);
-      timeLabel = l10n.srsOldestOverdue(_fmt(overdue, l10n));
-      timeColor = colorScheme.error;
+      timeLabel = wide
+          ? l10n.srsOldestOverdue(_fmt(overdue, l10n))
+          : _fmt(overdue, l10n);
     } else {
       final until = entry.nextUpcoming.difference(DateTime.now());
       timeLabel = l10n.srsNextIn(_fmt(until, l10n));
-      timeColor = colorScheme.outline;
     }
 
     return Padding(
