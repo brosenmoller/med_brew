@@ -129,16 +129,22 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              sliver: SliverConstrainedCrossAxis(
-                maxExtent: 720,
-                sliver: SliverList.builder(
-                  itemCount: entries.length,
-                  itemBuilder: (context, index) => _QuizCard(
-                    entry: entries[index],
-                    onStart: _start,
-                    onStartNormal: _startNormal,
-                    onRemoveSrs: _removeSrs,
+              padding: const EdgeInsets.only(top: 12, bottom: 24),
+              sliver: SliverList.builder(
+                itemCount: entries.length,
+                itemBuilder: (context, index) => Align(
+                  alignment: Alignment.center,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 720),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      child: _QuizCard(
+                        entry: entries[index],
+                        onStart: _start,
+                        onStartNormal: _startNormal,
+                        onRemoveSrs: _removeSrs,
+                      ),
+                    ),
                   ),
                 ),
               ),
