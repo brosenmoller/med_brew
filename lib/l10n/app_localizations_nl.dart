@@ -67,6 +67,69 @@ class AppLocalizationsNl extends AppLocalizations {
   String get settingsLanguageDutch => 'Nederlands';
 
   @override
+  String get srsAlgoSectionTitle => 'SRS-algoritme';
+
+  @override
+  String get srsAlgoSectionSubtitle => 'Planningsgedrag aanpassen';
+
+  @override
+  String get srsAlgoLapseMultiplier => 'Verval factor';
+
+  @override
+  String get srsAlgoLapseDesc =>
+      'Bij \"Opnieuw\" wordt dit deel van het huidige interval bewaard.';
+
+  @override
+  String get srsAlgoAgainPenalty => 'Opnieuw - gemakspenalty';
+
+  @override
+  String get srsAlgoAgainDesc =>
+      'Hoeveel de gemaksfactor daalt bij elke herhaling.';
+
+  @override
+  String get srsAlgoHardPenalty => 'Moeilijk - gemakspenalty';
+
+  @override
+  String get srsAlgoHardDesc =>
+      'Hoeveel de gemaksfactor daalt bij \"Moeilijk\".';
+
+  @override
+  String get srsAlgoGoodAdjust => 'Goed - gemaksaanpassing';
+
+  @override
+  String get srsAlgoGoodDesc =>
+      'Hoeveel de gemaksfactor verschuift bij \"Goed\". Standaard 0 blijft neutraal.';
+
+  @override
+  String get srsAlgoEasyBonus => 'Makkelijk - gemaksbonus';
+
+  @override
+  String get srsAlgoEasyDesc =>
+      'Hoeveel de gemaksfactor stijgt bij \"Makkelijk\".';
+
+  @override
+  String get srsAlgoInitialEase => 'Beginfactor gemak';
+
+  @override
+  String get srsAlgoInitialEaseDesc =>
+      'Startfactor voor nieuw toegevoegde kaarten.';
+
+  @override
+  String get srsAlgoMaxInterval => 'Max. interval';
+
+  @override
+  String get srsAlgoMaxIntervalDesc =>
+      'Langste interval waarvoor een kaart ingepland kan worden.';
+
+  @override
+  String srsAlgoDays(int count) {
+    return '$count dagen';
+  }
+
+  @override
+  String get srsAlgoResetDefaults => 'Terugzetten naar standaard';
+
+  @override
   String get cancel => 'Annuleren';
 
   @override
@@ -737,7 +800,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get navSync => 'Synchroniseren';
 
   @override
-  String get navSyncSubtitle => 'Inhoud delen met apparaten in de buurt';
+  String get navSyncSubtitle =>
+      'Alle inhoud synchroniseren tussen twee apparaten';
 
   @override
   String get syncTitle => 'Synchroniseren';

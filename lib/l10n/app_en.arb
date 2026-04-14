@@ -23,6 +23,29 @@
   "settingsLanguageSystem": "System default",
   "settingsLanguageEnglish": "English",
   "settingsLanguageDutch": "Dutch",
+  "srsAlgoSectionTitle": "SRS Algorithm",
+  "srsAlgoSectionSubtitle": "Adjust scheduling behaviour",
+  "srsAlgoLapseMultiplier": "Lapse multiplier",
+  "srsAlgoLapseDesc": "On \"Again\", keep this fraction of the card's current interval.",
+  "srsAlgoAgainPenalty": "Again - ease penalty",
+  "srsAlgoAgainDesc": "How much the ease factor drops on each lapse.",
+  "srsAlgoHardPenalty": "Hard - ease penalty",
+  "srsAlgoHardDesc": "How much the ease factor drops on \"Hard\".",
+  "srsAlgoGoodAdjust": "Good - ease adjustment",
+  "srsAlgoGoodDesc": "How much the ease factor shifts on \"Good\". Default 0 keeps it neutral.",
+  "srsAlgoEasyBonus": "Easy - ease bonus",
+  "srsAlgoEasyDesc": "How much the ease factor rises on \"Easy\".",
+  "srsAlgoInitialEase": "Initial ease factor",
+  "srsAlgoInitialEaseDesc": "Starting ease factor for newly enrolled cards.",
+  "srsAlgoMaxInterval": "Max interval",
+  "srsAlgoMaxIntervalDesc": "Longest interval a card can be scheduled.",
+  "srsAlgoDays": "{count} days",
+  "@srsAlgoDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "srsAlgoResetDefaults": "Reset to defaults",
 
   "cancel": "Cancel",
   "confirm": "Confirm",
@@ -365,7 +388,7 @@
   "discard": "Discard",
 
   "navSync": "Sync",
-  "navSyncSubtitle": "Share content with nearby devices",
+  "navSyncSubtitle": "Sync all content between two devices",
 
   "syncTitle": "Sync",
   "syncInfo": "Open this screen on both devices and make sure they are on the same Wi-Fi network.",

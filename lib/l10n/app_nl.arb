@@ -23,6 +23,29 @@
   "settingsLanguageSystem": "Systeemstandaard",
   "settingsLanguageEnglish": "Engels",
   "settingsLanguageDutch": "Nederlands",
+  "srsAlgoSectionTitle": "SRS-algoritme",
+  "srsAlgoSectionSubtitle": "Planningsgedrag aanpassen",
+  "srsAlgoLapseMultiplier": "Verval factor",
+  "srsAlgoLapseDesc": "Bij \"Opnieuw\" wordt dit deel van het huidige interval bewaard.",
+  "srsAlgoAgainPenalty": "Opnieuw - gemakspenalty",
+  "srsAlgoAgainDesc": "Hoeveel de gemaksfactor daalt bij elke herhaling.",
+  "srsAlgoHardPenalty": "Moeilijk - gemakspenalty",
+  "srsAlgoHardDesc": "Hoeveel de gemaksfactor daalt bij \"Moeilijk\".",
+  "srsAlgoGoodAdjust": "Goed - gemaksaanpassing",
+  "srsAlgoGoodDesc": "Hoeveel de gemaksfactor verschuift bij \"Goed\". Standaard 0 blijft neutraal.",
+  "srsAlgoEasyBonus": "Makkelijk - gemaksbonus",
+  "srsAlgoEasyDesc": "Hoeveel de gemaksfactor stijgt bij \"Makkelijk\".",
+  "srsAlgoInitialEase": "Beginfactor gemak",
+  "srsAlgoInitialEaseDesc": "Startfactor voor nieuw toegevoegde kaarten.",
+  "srsAlgoMaxInterval": "Max. interval",
+  "srsAlgoMaxIntervalDesc": "Langste interval waarvoor een kaart ingepland kan worden.",
+  "srsAlgoDays": "{count} dagen",
+  "@srsAlgoDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "srsAlgoResetDefaults": "Terugzetten naar standaard",
 
   "cancel": "Annuleren",
   "confirm": "Bevestigen",
@@ -265,7 +288,7 @@
   "discard": "Verwerpen",
 
   "navSync": "Synchroniseren",
-  "navSyncSubtitle": "Inhoud delen met apparaten in de buurt",
+  "navSyncSubtitle": "Alle inhoud synchroniseren tussen twee apparaten",
 
   "syncTitle": "Synchroniseren",
   "syncInfo": "Open dit scherm op beide apparaten en zorg ervoor dat ze op hetzelfde Wi-Fi-netwerk zijn.",

@@ -67,6 +67,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageDutch => 'Dutch';
 
   @override
+  String get srsAlgoSectionTitle => 'SRS Algorithm';
+
+  @override
+  String get srsAlgoSectionSubtitle => 'Adjust scheduling behaviour';
+
+  @override
+  String get srsAlgoLapseMultiplier => 'Lapse multiplier';
+
+  @override
+  String get srsAlgoLapseDesc =>
+      'On \"Again\", keep this fraction of the card\'s current interval.';
+
+  @override
+  String get srsAlgoAgainPenalty => 'Again - ease penalty';
+
+  @override
+  String get srsAlgoAgainDesc =>
+      'How much the ease factor drops on each lapse.';
+
+  @override
+  String get srsAlgoHardPenalty => 'Hard - ease penalty';
+
+  @override
+  String get srsAlgoHardDesc => 'How much the ease factor drops on \"Hard\".';
+
+  @override
+  String get srsAlgoGoodAdjust => 'Good - ease adjustment';
+
+  @override
+  String get srsAlgoGoodDesc =>
+      'How much the ease factor shifts on \"Good\". Default 0 keeps it neutral.';
+
+  @override
+  String get srsAlgoEasyBonus => 'Easy - ease bonus';
+
+  @override
+  String get srsAlgoEasyDesc => 'How much the ease factor rises on \"Easy\".';
+
+  @override
+  String get srsAlgoInitialEase => 'Initial ease factor';
+
+  @override
+  String get srsAlgoInitialEaseDesc =>
+      'Starting ease factor for newly enrolled cards.';
+
+  @override
+  String get srsAlgoMaxInterval => 'Max interval';
+
+  @override
+  String get srsAlgoMaxIntervalDesc =>
+      'Longest interval a card can be scheduled.';
+
+  @override
+  String srsAlgoDays(int count) {
+    return '$count days';
+  }
+
+  @override
+  String get srsAlgoResetDefaults => 'Reset to defaults';
+
+  @override
   String get cancel => 'Cancel';
 
   @override
@@ -735,7 +796,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSync => 'Sync';
 
   @override
-  String get navSyncSubtitle => 'Share content with nearby devices';
+  String get navSyncSubtitle => 'Sync all content between two devices';
 
   @override
   String get syncTitle => 'Sync';

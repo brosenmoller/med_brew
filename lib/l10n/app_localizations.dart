@@ -212,6 +212,114 @@ abstract class AppLocalizations {
   /// **'Dutch'**
   String get settingsLanguageDutch;
 
+  /// No description provided for @srsAlgoSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SRS Algorithm'**
+  String get srsAlgoSectionTitle;
+
+  /// No description provided for @srsAlgoSectionSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust scheduling behaviour'**
+  String get srsAlgoSectionSubtitle;
+
+  /// No description provided for @srsAlgoLapseMultiplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Lapse multiplier'**
+  String get srsAlgoLapseMultiplier;
+
+  /// No description provided for @srsAlgoLapseDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'On \"Again\", keep this fraction of the card\'s current interval.'**
+  String get srsAlgoLapseDesc;
+
+  /// No description provided for @srsAlgoAgainPenalty.
+  ///
+  /// In en, this message translates to:
+  /// **'Again - ease penalty'**
+  String get srsAlgoAgainPenalty;
+
+  /// No description provided for @srsAlgoAgainDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How much the ease factor drops on each lapse.'**
+  String get srsAlgoAgainDesc;
+
+  /// No description provided for @srsAlgoHardPenalty.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard - ease penalty'**
+  String get srsAlgoHardPenalty;
+
+  /// No description provided for @srsAlgoHardDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How much the ease factor drops on \"Hard\".'**
+  String get srsAlgoHardDesc;
+
+  /// No description provided for @srsAlgoGoodAdjust.
+  ///
+  /// In en, this message translates to:
+  /// **'Good - ease adjustment'**
+  String get srsAlgoGoodAdjust;
+
+  /// No description provided for @srsAlgoGoodDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How much the ease factor shifts on \"Good\". Default 0 keeps it neutral.'**
+  String get srsAlgoGoodDesc;
+
+  /// No description provided for @srsAlgoEasyBonus.
+  ///
+  /// In en, this message translates to:
+  /// **'Easy - ease bonus'**
+  String get srsAlgoEasyBonus;
+
+  /// No description provided for @srsAlgoEasyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How much the ease factor rises on \"Easy\".'**
+  String get srsAlgoEasyDesc;
+
+  /// No description provided for @srsAlgoInitialEase.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial ease factor'**
+  String get srsAlgoInitialEase;
+
+  /// No description provided for @srsAlgoInitialEaseDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting ease factor for newly enrolled cards.'**
+  String get srsAlgoInitialEaseDesc;
+
+  /// No description provided for @srsAlgoMaxInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Max interval'**
+  String get srsAlgoMaxInterval;
+
+  /// No description provided for @srsAlgoMaxIntervalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest interval a card can be scheduled.'**
+  String get srsAlgoMaxIntervalDesc;
+
+  /// No description provided for @srsAlgoDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days'**
+  String srsAlgoDays(int count);
+
+  /// No description provided for @srsAlgoResetDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to defaults'**
+  String get srsAlgoResetDefaults;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:
@@ -1295,7 +1403,7 @@ abstract class AppLocalizations {
   /// No description provided for @navSyncSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Share content with nearby devices'**
+  /// **'Sync all content between two devices'**
   String get navSyncSubtitle;
 
   /// No description provided for @syncTitle.
