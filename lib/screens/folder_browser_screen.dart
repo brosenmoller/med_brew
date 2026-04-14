@@ -38,7 +38,7 @@ class FolderBrowserScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: folder == null ? 120 : 90,
+            expandedHeight: 120,
             pinned: true,
             backgroundColor: colorScheme.primary,
             iconTheme: IconThemeData(color: colorScheme.onPrimary),
@@ -141,23 +141,26 @@ class FolderBrowserScreen extends StatelessWidget {
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                sliver: SliverGrid(
+                sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final quiz = quizzes[index];
-                      return QuizTile(
-                        quiz: quiz,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => QuizSessionScreen(quizData: quiz),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: QuizTile(
+                          horizontal: true,
+                          quiz: quiz,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => QuizSessionScreen(quizData: quiz),
+                            ),
                           ),
                         ),
                       );
                     },
                     childCount: quizzes.length,
                   ),
-                  gridDelegate: gridDelegate,
                 ),
               ),
             ],

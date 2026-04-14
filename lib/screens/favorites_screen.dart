@@ -105,26 +105,25 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              sliver: SliverGrid(
+              sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final quiz = _favoriteQuizzes[index];
-                    return QuizTile(
-                      quiz: quiz,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => QuizSessionScreen(quizData: quiz),
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: QuizTile(
+                        horizontal: true,
+                        quiz: quiz,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => QuizSessionScreen(quizData: quiz),
+                          ),
                         ),
                       ),
                     );
                   },
                   childCount: _favoriteQuizzes.length,
-                ),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 250,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
                 ),
               ),
             ),

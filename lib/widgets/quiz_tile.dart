@@ -25,11 +25,13 @@ Color _colorForTitle(String title) {
 class QuizTile extends StatefulWidget {
   final QuizData quiz;
   final VoidCallback onTap;
+  final bool horizontal;
 
   const QuizTile({
     super.key,
     required this.quiz,
     required this.onTap,
+    this.horizontal = false,
   });
 
   @override
@@ -92,6 +94,10 @@ class _QuizTileState extends State<QuizTile> {
 
   @override
   Widget build(BuildContext context) {
+    return widget.horizontal ? _buildHorizontal() : _buildGrid();
+  }
+
+  Widget _buildGrid() {
     final hasImage = widget.quiz.imagePath != null;
     final baseColor = _colorForTitle(widget.quiz.title);
     final questionCount = widget.quiz.questionIds.length;
@@ -122,17 +128,12 @@ class _QuizTileState extends State<QuizTile> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Base color
                   ColoredBox(color: baseColor),
-
-                  // Cover image
                   if (hasImage)
                     AppImage(
                       path: widget.quiz.imagePath,
                       fit: BoxFit.cover,
                     ),
-
-                  // Gradient overlay — transparent top, dark bottom
                   AnimatedOpacity(
                     opacity: _hovering ? 0.85 : 1.0,
                     duration: const Duration(milliseconds: 150),
@@ -150,14 +151,11 @@ class _QuizTileState extends State<QuizTile> {
                       ),
                     ),
                   ),
-
-                  // Content
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Top row: language chip (left) + SRS/favorite icons (right)
                         Row(
                           children: [
                             if (lang != null)
@@ -209,6 +207,140 @@ class _QuizTileState extends State<QuizTile> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHorizontal() {
+    final hasImage = widget.quiz.imagePath != null;
+    final baseColor = _colorForTitle(widget.quiz.title);
+    final questionCount = widget.quiz.questionIds.length;
+    final lang = widget.quiz.languageCode;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: AnimatedScale(
+        scale: _hovering ? 1.02 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: baseColor.withValues(alpha: _hovering ? 0.45 : 0.28),
+                  blurRadius: _hovering ? 14 : 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                height: 80,
+                child: Row(
+                  children: [
+                    // Left image strip — only shown when there is a cover image
+                    if (hasImage)
+                      SizedBox(
+                        width: 76,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            AppImage(path: widget.quiz.imagePath, fit: BoxFit.cover),
+                            // Right-edge fade into the content area
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.3),
+                                  ],
+                                  stops: const [0.4, 1.0],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Content area
+                    Expanded(
+                      child: ColoredBox(
+                        color: baseColor.withValues(alpha: 0.82),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                widget.quiz.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  shadows: [
+                                    Shadow(blurRadius: 4, color: Colors.black38),
+                                  ],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  _Badge(
+                                    icon: Icons.quiz_outlined,
+                                    label: '$questionCount ${questionCount == 1 ? 'question' : 'questions'}',
+                                  ),
+                                  if (lang != null) ...[
+                                    const SizedBox(width: 6),
+                                    _Badge(label: lang.toUpperCase()),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Icon toggles
+                    ColoredBox(
+                      color: baseColor.withValues(alpha: 0.82),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _IconToggle(
+                              icon: Icons.repeat_rounded,
+                              active: _isSrsEnabled,
+                              activeColor: Colors.lightBlueAccent,
+                              onPressed: _toggleSrs,
+                            ),
+                            _IconToggle(
+                              icon: _isFavorite
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                              active: _isFavorite,
+                              activeColor: Colors.amberAccent,
+                              onPressed: _toggleFavorite,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
