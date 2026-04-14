@@ -7,7 +7,7 @@
 
   "navBrowse": "Bladeren",
   "navBrowseSubtitle": "Verken quizzen & categorieën",
-  "navSpacedRepetition": "Spaced Repetition",
+  "navSpacedRepetition": "Gespreide Herhaling",
   "navSpacedRepetitionSubtitle": "Bekijk je te herhalen kaarten",
   "navFavorites": "Favorieten",
   "navFavoritesSubtitle": "Je opgeslagen quizzen",
@@ -126,7 +126,7 @@
   "favoritesTitle": "Favorieten",
   "favoritesEmpty": "Nog geen favoriete quizzen.",
 
-  "srsTitle": "Spaced Repetition",
+  "srsTitle": "Gespreide Herhaling",
   "srsNoQuestions": "Geen spaced repetition-vragen beschikbaar",
   "srsDue": "{count} te herhalen",
   "srsCards": "{count} kaarten",

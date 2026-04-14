@@ -21,7 +21,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get navBrowseSubtitle => 'Verken quizzen & categorieën';
 
   @override
-  String get navSpacedRepetition => 'Spaced Repetition';
+  String get navSpacedRepetition => 'Gespreide Herhaling';
 
   @override
   String get navSpacedRepetitionSubtitle => 'Bekijk je te herhalen kaarten';
@@ -300,7 +300,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get favoritesEmpty => 'Nog geen favoriete quizzen.';
 
   @override
-  String get srsTitle => 'Spaced Repetition';
+  String get srsTitle => 'Gespreide Herhaling';
 
   @override
   String get srsNoQuestions => 'Geen spaced repetition-vragen beschikbaar';

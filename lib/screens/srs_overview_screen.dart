@@ -62,13 +62,6 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
       ));
     }
 
-    if (entries.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.srsTitle)),
-        body: Center(child: Text(l10n.srsNoQuestions)),
-      );
-    }
-
     // Due entries first (most overdue at top), then upcoming (soonest first).
     entries.sort((a, b) {
       final aDue = a.oldestDue != null;
@@ -79,23 +72,78 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
       return a.nextUpcoming.compareTo(b.nextUpcoming);
     });
 
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.srsTitle)),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            itemCount: entries.length,
-            itemBuilder: (context, index) => _QuizCard(
-              entry: entries[index],
-              onStart: _start,
-              onStartNormal: _startNormal,
-              onRemoveSrs: _removeSrs,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            pinned: true,
+            backgroundColor: colorScheme.error,
+            iconTheme: IconThemeData(color: colorScheme.onError),
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              title: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.srsTitle,
+                  style: TextStyle(
+                    color: colorScheme.onError,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.error,
+                      colorScheme.tertiary,
+                    ],
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 24, bottom: 24),
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 80,
+                      color: colorScheme.onError.withValues(alpha: 0.12),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+
+          if (entries.isEmpty)
+            SliverFillRemaining(
+              child: Center(child: Text(l10n.srsNoQuestions)),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              sliver: SliverConstrainedCrossAxis(
+                maxExtent: 720,
+                sliver: SliverList.builder(
+                  itemCount: entries.length,
+                  itemBuilder: (context, index) => _QuizCard(
+                    entry: entries[index],
+                    onStart: _start,
+                    onStartNormal: _startNormal,
+                    onRemoveSrs: _removeSrs,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

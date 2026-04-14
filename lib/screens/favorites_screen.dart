@@ -46,47 +46,97 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-
-    if (!_initialized) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_favoriteQuizzes.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.favoritesTitle)),
-        body: Center(child: Text(l10n.favoritesEmpty)),
-      );
-    }
+    final colorScheme = Theme.of(context).colorScheme;
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final crossAxisCount = screenWidth < 600 ? 2 : 6;
+    final crossAxisCount = screenWidth < 400
+        ? 2
+        : screenWidth < 600
+            ? 3
+            : screenWidth < 900
+                ? 4
+                : 6;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.favoritesTitle)),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _favoriteQuizzes.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemBuilder: (context, index) {
-          final quiz = _favoriteQuizzes[index];
-          return QuizTile(
-            quiz: quiz,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => QuizSessionScreen(quizData: quiz),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            pinned: true,
+            backgroundColor: colorScheme.secondary,
+            iconTheme: IconThemeData(color: colorScheme.onSecondary),
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              title: Text(
+                l10n.favoritesTitle,
+                style: TextStyle(
+                  color: colorScheme.onSecondary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  letterSpacing: -0.3,
                 ),
-              );
-            },
-          );
-        },
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.secondary,
+                      colorScheme.primary,
+                    ],
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 24, bottom: 24),
+                    child: Icon(
+                      Icons.star_rounded,
+                      size: 80,
+                      color: colorScheme.onSecondary.withValues(alpha: 0.12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          if (!_initialized)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_favoriteQuizzes.isEmpty)
+            SliverFillRemaining(
+              child: Center(child: Text(l10n.favoritesEmpty)),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              sliver: SliverGrid(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final quiz = _favoriteQuizzes[index];
+                    return QuizTile(
+                      quiz: quiz,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => QuizSessionScreen(quizData: quiz),
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: _favoriteQuizzes.length,
+                ),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

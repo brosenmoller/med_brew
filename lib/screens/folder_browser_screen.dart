@@ -18,6 +18,8 @@ class FolderBrowserScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
     final subfolders = folder == null
         ? _service.getRootFolders()
         : _service.getSubfolders(folder!.id);
@@ -42,89 +44,135 @@ class FolderBrowserScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(folder?.title ?? l10n.navBrowse),
-        actions: [
-          IconButton(
-            tooltip: l10n.searchTooltip,
-            icon: const Icon(Icons.search),
-            onPressed: () => showSearch(
-              context: context,
-              delegate: GlobalSearchDelegate(hint: l10n.searchHint),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: folder == null ? 120 : 90,
+            pinned: true,
+            backgroundColor: colorScheme.primary,
+            iconTheme: IconThemeData(color: colorScheme.onPrimary),
+            actions: [
+              IconButton(
+                tooltip: l10n.searchTooltip,
+                icon: Icon(Icons.search, color: colorScheme.onPrimary),
+                onPressed: () => showSearch(
+                  context: context,
+                  delegate: GlobalSearchDelegate(hint: l10n.searchHint),
+                ),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              title: Text(
+                folder?.title ?? l10n.navBrowse,
+                style: TextStyle(
+                  color: colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      colorScheme.primary,
+                      colorScheme.tertiary,
+                    ],
+                  ),
+                ),
+                child: Align(
+                  alignment: Alignment.bottomRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 24, bottom: 16),
+                    child: Icon(
+                      folder == null
+                          ? Icons.folder_open_rounded
+                          : Icons.folder_rounded,
+                      size: 80,
+                      color: colorScheme.onPrimary.withValues(alpha: 0.12),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
+
+          if (isEmpty)
+            SliverFillRemaining(
+              child: Center(child: Text(l10n.emptyFolder)),
+            )
+          else ...[
+            if (subfolders.isNotEmpty) ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                  child: Text(
+                    l10n.foldersSection,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverGrid(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final sub = subfolders[index];
+                      return FolderTile(
+                        folder: sub,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FolderBrowserScreen(folder: sub),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: subfolders.length,
+                  ),
+                  gridDelegate: gridDelegate,
+                ),
+              ),
+            ],
+
+            if (quizzes.isNotEmpty) ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                  child: Text(
+                    l10n.quizzesSection,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                sliver: SliverGrid(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final quiz = quizzes[index];
+                      return QuizTile(
+                        quiz: quiz,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => QuizSessionScreen(quizData: quiz),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: quizzes.length,
+                  ),
+                  gridDelegate: gridDelegate,
+                ),
+              ),
+            ],
+          ],
         ],
       ),
-      body: isEmpty
-          ? Center(child: Text(l10n.emptyFolder))
-          : CustomScrollView(
-              slivers: [
-                if (subfolders.isNotEmpty) ...[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        l10n.foldersSection,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final sub = subfolders[index];
-                          return FolderTile(
-                            folder: sub,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => FolderBrowserScreen(folder: sub),
-                              ),
-                            ),
-                          );
-                        },
-                        childCount: subfolders.length,
-                      ),
-                      gridDelegate: gridDelegate,
-                    ),
-                  ),
-                ],
-                if (quizzes.isNotEmpty) ...[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        l10n.quizzesSection,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final quiz = quizzes[index];
-                          return QuizTile(
-                            quiz: quiz,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => QuizSessionScreen(quizData: quiz),
-                              ),
-                            ),
-                          );
-                        },
-                        childCount: quizzes.length,
-                      ),
-                      gridDelegate: gridDelegate,
-                    ),
-                  ),
-                ],
-              ],
-            ),
     );
   }
 }

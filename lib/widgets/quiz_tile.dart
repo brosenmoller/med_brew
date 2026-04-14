@@ -4,6 +4,24 @@ import 'package:med_brew/services/favorites_service.dart';
 import 'package:med_brew/services/srs_service.dart';
 import 'package:med_brew/widgets/app_image.dart';
 
+// Same palette as FolderTile for visual consistency.
+const _kTileColors = [
+  Color(0xFF5C6BC0),
+  Color(0xFF26A69A),
+  Color(0xFFEF5350),
+  Color(0xFFAB47BC),
+  Color(0xFF42A5F5),
+  Color(0xFF66BB6A),
+  Color(0xFFFF7043),
+  Color(0xFF26C6DA),
+];
+
+Color _colorForTitle(String title) {
+  final hash = title.codeUnits.fold(0, (a, b) => a + b);
+  // Offset by 3 so quizzes and folders in the same folder land on different hues.
+  return _kTileColors[(hash + 3) % _kTileColors.length];
+}
+
 class QuizTile extends StatefulWidget {
   final QuizData quiz;
   final VoidCallback onTap;
@@ -75,13 +93,17 @@ class _QuizTileState extends State<QuizTile> {
   @override
   Widget build(BuildContext context) {
     final hasImage = widget.quiz.imagePath != null;
+    final baseColor = _colorForTitle(widget.quiz.title);
+    final questionCount = widget.quiz.questionIds.length;
+    final lang = widget.quiz.languageCode;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: AnimatedScale(
-        scale: _hovering ? 1.02 : 1.0,
+        scale: _hovering ? 1.03 : 1.0,
         duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
         child: GestureDetector(
           onTap: widget.onTap,
           child: DecoratedBox(
@@ -89,9 +111,8 @@ class _QuizTileState extends State<QuizTile> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black
-                      .withValues(alpha: _hovering ? 0.25 : 0.15),
-                  blurRadius: 10,
+                  color: baseColor.withValues(alpha: _hovering ? 0.45 : 0.3),
+                  blurRadius: _hovering ? 16 : 10,
                   offset: const Offset(0, 4),
                 ),
               ],
@@ -101,70 +122,97 @@ class _QuizTileState extends State<QuizTile> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Base colour (shows only when there is no image)
-                  const ColoredBox(color: Colors.green),
+                  // Base color
+                  ColoredBox(color: baseColor),
 
-                  // Image layer — always painted, no flash
+                  // Cover image
                   if (hasImage)
                     AppImage(
                       path: widget.quiz.imagePath,
                       fit: BoxFit.cover,
                     ),
 
-                  // Darkening overlay, animated so it never causes a flash
+                  // Gradient overlay — transparent top, dark bottom
                   AnimatedOpacity(
-                    opacity: _hovering ? 0.25 : 0.4,
+                    opacity: _hovering ? 0.85 : 1.0,
                     duration: const Duration(milliseconds: 150),
-                    child: const ColoredBox(color: Colors.black),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: hasImage ? 0.72 : 0.45),
+                          ],
+                          stops: const [0.25, 1.0],
+                        ),
+                      ),
+                    ),
                   ),
 
                   // Content
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Top-right toggles
+                        // Top row: SRS + favorite icons
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             _IconToggle(
-                              icon: Icons.repeat,
+                              icon: Icons.repeat_rounded,
                               active: _isSrsEnabled,
-                              activeColor: Colors.blue,
+                              activeColor: Colors.lightBlueAccent,
                               onPressed: _toggleSrs,
                             ),
                             _IconToggle(
                               icon: _isFavorite
-                                  ? Icons.star
-                                  : Icons.star_border,
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
                               active: _isFavorite,
-                              activeColor: Colors.yellowAccent,
+                              activeColor: Colors.amberAccent,
                               onPressed: _toggleFavorite,
                             ),
                           ],
                         ),
                         const Spacer(),
+                        // Language chip
+                        if (lang != null) ...[
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: _Badge(
+                              icon: Icons.language,
+                              label: lang.toUpperCase(),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
                         Text(
                           widget.quiz.title,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
                             shadows: [
                               Shadow(
-                                blurRadius: 4,
+                                blurRadius: 6,
                                 color: Colors.black54,
-                                offset: Offset(1, 1),
+                                offset: Offset(0, 1),
                               ),
                             ],
                           ),
                           textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const Spacer(),
-                        // Type badge
-                        _TypeBadge(
-                          icon: Icons.quiz_outlined,
-                          label: 'Quiz',
+                        const SizedBox(height: 6),
+                        Center(
+                          child: _Badge(
+                            icon: Icons.quiz_outlined,
+                            label: '$questionCount ${questionCount == 1 ? 'question' : 'questions'}',
+                          ),
                         ),
                       ],
                     ),
@@ -195,7 +243,12 @@ class _IconToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: Icon(icon, color: active ? activeColor : Colors.white, size: 20),
+      icon: Icon(
+        icon,
+        color: active ? activeColor : Colors.white60,
+        size: 20,
+        shadows: const [Shadow(blurRadius: 4, color: Colors.black45)],
+      ),
       onPressed: onPressed,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -203,11 +256,11 @@ class _IconToggle extends StatelessWidget {
   }
 }
 
-class _TypeBadge extends StatelessWidget {
+class _Badge extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _TypeBadge({required this.icon, required this.label});
+  const _Badge({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -220,14 +273,17 @@ class _TypeBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white70, size: 12),
+          Icon(icon, color: Colors.white70, size: 11),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
