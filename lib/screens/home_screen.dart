@@ -119,8 +119,14 @@ class HomeScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.local_fire_department,
-                              color: state.completedToday ? Colors.orange : Colors.white38,
+                              state.usedFreezeYesterday
+                                  ? Icons.ac_unit_rounded
+                                  : Icons.local_fire_department,
+                              color: state.usedFreezeYesterday
+                                  ? Colors.lightBlue.shade300
+                                  : state.completedToday
+                                      ? Colors.orange
+                                      : Colors.white38,
                               size: 20,
                             ),
                             const SizedBox(width: 3),

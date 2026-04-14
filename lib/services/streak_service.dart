@@ -27,6 +27,7 @@ class StreakState {
   final int freezesRemaining;
   final bool streakEnabled;
   final bool completedToday;
+  final bool usedFreezeYesterday;
 
   const StreakState({
     required this.streakCount,
@@ -34,6 +35,7 @@ class StreakState {
     required this.freezesRemaining,
     required this.streakEnabled,
     required this.completedToday,
+    this.usedFreezeYesterday = false,
   });
 }
 
@@ -54,6 +56,7 @@ class StreakService {
   static const _kFreezesUsed = 'streak_freezes_used';
   static const _kWeekAnchor = 'streak_week_anchor';
   static const _kStreakEnabled = 'streak_enabled';
+  static const _kLastFreezeDate = 'streak_last_freeze_date';
   static const _kNotifsEnabled = 'streak_notifs_enabled';
   static const _kNotifsHour = 'streak_notifs_hour';
   static const _kNotifsMinute = 'streak_notifs_minute';
@@ -140,6 +143,7 @@ class StreakService {
       } else if (available >= missedDays) {
         // Enough freezes to cover all missed days.
         await _box.put(_kFreezesUsed, freezesUsedThisWeek + missedDays);
+        await _box.put(_kLastFreezeDate, _dateStr(today.subtract(const Duration(days: 1))));
         newStreak = currentStreak + 1;
         event = StreakEvent.freezeUsed;
       } else {
@@ -261,12 +265,16 @@ class StreakService {
       );
 
   void _refreshNotifier() {
+    final today = DateTime.now();
+    final yesterdayStr = _dateStr(today.subtract(const Duration(days: 1)));
+    final lastFreezeDate = _box.get(_kLastFreezeDate) as String?;
     streakNotifier.value = StreakState(
       streakCount: currentStreak,
       highestStreak: highestStreak,
       freezesRemaining: freezesRemainingThisWeek,
       streakEnabled: streakEnabled,
-      completedToday: lastActivityDate == _dateStr(DateTime.now()),
+      completedToday: lastActivityDate == _dateStr(today),
+      usedFreezeYesterday: lastFreezeDate == yesterdayStr,
     );
   }
 }
