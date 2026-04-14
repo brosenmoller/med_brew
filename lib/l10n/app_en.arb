@@ -452,6 +452,9 @@
   "syncPermissionPermanentlyDenied": "Permission was permanently denied. Please enable it in app settings.",
   "syncOpenSettings": "Open settings",
 
+  "settingsAnimations": "Animations",
+  "settingsAnimationsSubtitle": "Show confetti and other visual effects",
+
   "syncThisDevice": "This device",
   "syncDiscoverableAs": "Discoverable as: {name}",
   "@syncDiscoverableAs": {

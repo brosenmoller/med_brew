@@ -929,6 +929,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncOpenSettings => 'Open settings';
 
   @override
+  String get settingsAnimations => 'Animations';
+
+  @override
+  String get settingsAnimationsSubtitle =>
+      'Show confetti and other visual effects';
+
+  @override
   String get syncThisDevice => 'This device';
 
   @override

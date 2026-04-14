@@ -1586,6 +1586,18 @@ abstract class AppLocalizations {
   /// **'Open settings'**
   String get syncOpenSettings;
 
+  /// No description provided for @settingsAnimations.
+  ///
+  /// In en, this message translates to:
+  /// **'Animations'**
+  String get settingsAnimations;
+
+  /// No description provided for @settingsAnimationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show confetti and other visual effects'**
+  String get settingsAnimationsSubtitle;
+
   /// No description provided for @syncThisDevice.
   ///
   /// In en, this message translates to:

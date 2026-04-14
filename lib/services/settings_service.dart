@@ -72,6 +72,16 @@ class SettingsService {
     await _box.put(_kMaxDays, s.maxIntervalDays);
   }
 
+  // ── Animations ───────────────────────────────────────────────────────────
+
+  static const _kAnimationsEnabled = 'animations_enabled';
+
+  bool get animationsEnabled =>
+      (_box.get(_kAnimationsEnabled) as bool?) ?? true;
+
+  Future<void> setAnimationsEnabled(bool value) =>
+      _box.put(_kAnimationsEnabled, value);
+
   Future<void> resetSrsSettings() async {
     for (final key in [
       _kLapseMult,

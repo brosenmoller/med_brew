@@ -934,6 +934,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get syncOpenSettings => 'Instellingen openen';
 
   @override
+  String get settingsAnimations => 'Animaties';
+
+  @override
+  String get settingsAnimationsSubtitle =>
+      'Toon confetti en andere visuele effecten';
+
+  @override
   String get syncThisDevice => 'Dit apparaat';
 
   @override

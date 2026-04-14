@@ -6,6 +6,7 @@ import 'package:med_brew/models/user_question_data.dart';
 import 'package:med_brew/screens/question_display/answer_area.dart';
 import 'package:med_brew/screens/question_display/continue_button.dart';
 import 'package:med_brew/screens/question_display/srs_buttons.dart';
+import 'package:med_brew/services/settings_service.dart';
 
 class QuestionDisplayScreen extends StatefulWidget {
   final QuestionData question;
@@ -70,7 +71,7 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
 
     if (!isCorrect) {
       _shakeController.forward(from: 0);
-    } else {
+    } else if (SettingsService().animationsEnabled) {
       _confettiController.play();
     }
 

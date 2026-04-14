@@ -352,6 +352,9 @@
   "syncPermissionPermanentlyDenied": "Toestemming is permanent geweigerd. Schakel deze in via de app-instellingen.",
   "syncOpenSettings": "Instellingen openen",
 
+  "settingsAnimations": "Animaties",
+  "settingsAnimationsSubtitle": "Toon confetti en andere visuele effecten",
+
   "syncThisDevice": "Dit apparaat",
   "syncDiscoverableAs": "Zichtbaar als: {name}",
   "@syncDiscoverableAs": {

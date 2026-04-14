@@ -30,6 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late bool _streakEnabled;
   late bool _notifsEnabled;
   late TimeOfDay _notifTime;
+  late bool _animationsEnabled;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _streakEnabled = _streak.streakEnabled;
     _notifsEnabled = _streak.notifsEnabled;
     _notifTime = TimeOfDay(hour: _streak.notifsHour, minute: _streak.notifsMinute);
+    _animationsEnabled = _settings.animationsEnabled;
   }
 
   Future<void> _saveSrs(SrsSettings updated) async {
@@ -121,7 +123,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (mounted) setState(() {});
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
+
+            // ── Animations ───────────────────────────────────────
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.settingsAnimations),
+              subtitle: Text(l10n.settingsAnimationsSubtitle),
+              value: _animationsEnabled,
+              onChanged: (v) async {
+                await _settings.setAnimationsEnabled(v);
+                setState(() => _animationsEnabled = v);
+              },
+            ),
+            const SizedBox(height: 12),
 
             // ── Sync ─────────────────────────────────────────────
             ListTile(
