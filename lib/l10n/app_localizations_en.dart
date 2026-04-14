@@ -445,6 +445,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportQuizTooltip => 'Export quiz';
 
   @override
+  String get moveTooltip => 'Move';
+
+  @override
+  String get moveToFolderTitle => 'Move to folder';
+
+  @override
+  String get moveToRootOption => 'Root (no folder)';
+
+  @override
   String get contentPacksTitle => 'Content Packs';
 
   @override

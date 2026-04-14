@@ -102,19 +102,25 @@ class FolderContentsBody extends StatelessWidget {
               return Center(child: Text(l10n.emptyFolderManage));
             }
 
-            return ListView(
-              padding: const EdgeInsets.only(bottom: 100),
-              children: [
-                if (subfolders.isNotEmpty) ...[
-                  _SectionHeader(label: l10n.foldersSection),
-                  ...subfolders.map((f) => _FolderTile(db: db, f: f)),
-                  const Divider(height: 1),
-                ],
-                if (quizzes.isNotEmpty) ...[
-                  _SectionHeader(label: l10n.quizzesSection),
-                  ...quizzes.map((q) => _QuizTile(db: db, q: q)),
-                ],
-              ],
+            return Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: ListView(
+                  padding: const EdgeInsets.only(bottom: 100),
+                  children: [
+                    if (subfolders.isNotEmpty) ...[
+                      _SectionHeader(label: l10n.foldersSection),
+                      ...subfolders.map((f) => _FolderTile(db: db, f: f)),
+                      const Divider(height: 17),
+                    ],
+                    if (quizzes.isNotEmpty) ...[
+                      _SectionHeader(label: l10n.quizzesSection),
+                      ...quizzes.map((q) => _QuizTile(db: db, q: q)),
+                    ],
+                  ],
+                ),
+              ),
             );
           },
         );
@@ -190,24 +196,10 @@ class _FolderTileState extends State<_FolderTile> {
           : const CircleAvatar(child: Icon(Icons.folder_outlined)),
       title: Text(f.title,
           style: const TextStyle(fontWeight: FontWeight.w600)),
+      contentPadding: const EdgeInsets.only(left: 16),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (kDebugMode)
-            IconButton(
-              icon: _inManifest
-                  ? const Icon(Icons.library_add, color: Colors.orange)
-                  : const Icon(Icons.library_add_outlined),
-              tooltip: _inManifest
-                  ? 'Update in content packs'
-                  : 'Add to content packs',
-              onPressed: () => _addToManifest(context),
-            ),
-          IconButton(
-            icon: const Icon(Icons.upload_outlined),
-            tooltip: l10n.exportFolderTooltip,
-            onPressed: () => _exportFolder(context),
-          ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             tooltip: l10n.edit,
@@ -218,10 +210,67 @@ class _FolderTileState extends State<_FolderTile> {
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            tooltip: l10n.delete,
-            onPressed: () => _confirmDeleteFolder(context),
+          PopupMenuButton<Object?>(
+            icon: const Icon(Icons.more_vert),
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                onTap: () async {
+                  final excludeIds = await db.getFolderSubtreeIds(f.id);
+                  if (context.mounted) {
+                    await _showMoveToFolderDialog(
+                      context: context,
+                      db: db,
+                      excludeIds: excludeIds,
+                      onMove: (targetId) =>
+                          db.moveFolderToParent(f.id, targetId),
+                    );
+                  }
+                },
+                child: Row(
+                  children: [
+                    const Icon(Icons.drive_file_move_outlined),
+                    const SizedBox(width: 12),
+                    Text(l10n.moveTooltip),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                onTap: () => _exportFolder(context),
+                child: Row(
+                  children: [
+                    const Icon(Icons.upload_outlined),
+                    const SizedBox(width: 12),
+                    Text(l10n.exportFolderTooltip),
+                  ],
+                ),
+              ),
+              if (kDebugMode)
+                PopupMenuItem(
+                  onTap: () => _addToManifest(context),
+                  child: Row(
+                    children: [
+                      _inManifest
+                          ? const Icon(Icons.library_add, color: Colors.orange)
+                          : const Icon(Icons.library_add_outlined),
+                      const SizedBox(width: 12),
+                      Text(_inManifest
+                          ? 'Update in content packs'
+                          : 'Add to content packs'),
+                    ],
+                  ),
+                ),
+              PopupMenuItem(
+                onTap: () => _confirmDeleteFolder(context),
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete_outline, color: Colors.red),
+                    const SizedBox(width: 12),
+                    Text(l10n.delete,
+                        style: const TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
           const Icon(Icons.chevron_right),
         ],
@@ -350,24 +399,10 @@ class _QuizTileState extends State<_QuizTile> {
           : const CircleAvatar(child: Icon(Icons.quiz_outlined)),
       title: Text(q.title,
           style: const TextStyle(fontWeight: FontWeight.w600)),
+      contentPadding: const EdgeInsets.only(left: 16),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (kDebugMode)
-            IconButton(
-              icon: _inManifest
-                  ? const Icon(Icons.library_add, color: Colors.orange)
-                  : const Icon(Icons.library_add_outlined),
-              tooltip: _inManifest
-                  ? 'Update in content packs'
-                  : 'Add to content packs',
-              onPressed: () => _addToManifest(context),
-            ),
-          IconButton(
-            icon: const Icon(Icons.upload_outlined),
-            tooltip: l10n.exportQuizTooltip,
-            onPressed: () => _exportQuiz(context),
-          ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             tooltip: l10n.edit,
@@ -382,10 +417,60 @@ class _QuizTileState extends State<_QuizTile> {
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            tooltip: l10n.delete,
-            onPressed: () => _confirmDeleteQuiz(context),
+          PopupMenuButton<Object?>(
+            icon: const Icon(Icons.more_vert),
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                onTap: () => _showMoveToFolderDialog(
+                  context: context,
+                  db: db,
+                  onMove: (targetId) => db.moveQuizToFolder(q.id, targetId),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.drive_file_move_outlined),
+                    const SizedBox(width: 12),
+                    Text(l10n.moveTooltip),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                onTap: () => _exportQuiz(context),
+                child: Row(
+                  children: [
+                    const Icon(Icons.upload_outlined),
+                    const SizedBox(width: 12),
+                    Text(l10n.exportQuizTooltip),
+                  ],
+                ),
+              ),
+              if (kDebugMode)
+                PopupMenuItem(
+                  onTap: () => _addToManifest(context),
+                  child: Row(
+                    children: [
+                      _inManifest
+                          ? const Icon(Icons.library_add, color: Colors.orange)
+                          : const Icon(Icons.library_add_outlined),
+                      const SizedBox(width: 12),
+                      Text(_inManifest
+                          ? 'Update in content packs'
+                          : 'Add to content packs'),
+                    ],
+                  ),
+                ),
+              PopupMenuItem(
+                onTap: () => _confirmDeleteQuiz(context),
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete_outline, color: Colors.red),
+                    const SizedBox(width: 12),
+                    Text(l10n.delete,
+                        style: const TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
           const Icon(Icons.chevron_right),
         ],
@@ -464,6 +549,65 @@ class _QuizTileState extends State<_QuizTile> {
       ),
     );
   }
+}
+
+// ── Move-to-folder dialog ──────────────────────────────────────────────────────
+
+Future<void> _showMoveToFolderDialog({
+  required BuildContext context,
+  required AppDatabase db,
+  Set<String>? excludeIds,
+  required Future<void> Function(String? targetFolderId) onMove,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final allFolders = await db.getAllFolders();
+  final available = excludeIds == null
+      ? allFolders
+      : allFolders.where((f) => !excludeIds.contains(f.id)).toList();
+
+  if (!context.mounted) return;
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.moveToFolderTitle),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder_off_outlined),
+              title: Text(l10n.moveToRootOption),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await onMove(null);
+                await QuestionService().refresh();
+              },
+            ),
+            const Divider(height: 1),
+            ...available.map(
+              (f) => ListTile(
+                leading: const Icon(Icons.folder_outlined),
+                title: Text(f.title),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await onMove(f.id);
+                  await QuestionService().refresh();
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l10n.cancel),
+        ),
+      ],
+    ),
+  );
 }
 
 // ── Shared manifest helpers ────────────────────────────────────────────────────

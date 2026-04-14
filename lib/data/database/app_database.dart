@@ -699,6 +699,17 @@ class AppDatabase extends _$AppDatabase {
       (update(folders)..where((t) => t.id.equals(folderId)))
           .write(FoldersCompanion(parentFolderId: Value(parentFolderId)));
 
+  Future<void> moveFolderToParent(String folderId, String? newParentId) =>
+      (update(folders)..where((t) => t.id.equals(folderId)))
+          .write(FoldersCompanion(parentFolderId: Value(newParentId)));
+
+  Future<void> moveQuizToFolder(String quizId, String? newFolderId) =>
+      (update(quizzes)..where((t) => t.id.equals(quizId)))
+          .write(QuizzesCompanion(folderId: Value(newFolderId)));
+
+  Future<Set<String>> getFolderSubtreeIds(String folderId) =>
+      _collectFolderSubtree(folderId);
+
   /// Deletes every row from every content table. Used by the dev wipe tool.
   Future<void> wipeAllContent() => transaction(() async {
         await delete(quizQuestions).go();

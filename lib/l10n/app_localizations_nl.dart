@@ -449,6 +449,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get exportQuizTooltip => 'Quiz exporteren';
 
   @override
+  String get moveTooltip => 'Verplaatsen';
+
+  @override
+  String get moveToFolderTitle => 'Verplaats naar map';
+
+  @override
+  String get moveToRootOption => 'Root (geen map)';
+
+  @override
   String get contentPacksTitle => 'Inhoudspakketten';
 
   @override

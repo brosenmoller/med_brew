@@ -800,6 +800,24 @@ abstract class AppLocalizations {
   /// **'Export quiz'**
   String get exportQuizTooltip;
 
+  /// No description provided for @moveTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get moveTooltip;
+
+  /// No description provided for @moveToFolderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to folder'**
+  String get moveToFolderTitle;
+
+  /// No description provided for @moveToRootOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Root (no folder)'**
+  String get moveToRootOption;
+
   /// No description provided for @contentPacksTitle.
   ///
   /// In en, this message translates to:
