@@ -4,6 +4,7 @@ import 'package:med_brew/models/folder_data.dart';
 import 'package:med_brew/screens/global_search_screen.dart';
 import 'package:med_brew/screens/quiz_session_screen.dart';
 import 'package:med_brew/services/question_service.dart';
+import 'package:med_brew/widgets/collapsible_app_bar_title.dart';
 import 'package:med_brew/widgets/folder_tile.dart';
 import 'package:med_brew/widgets/quiz_tile.dart';
 
@@ -59,14 +60,16 @@ class FolderBrowserScreen extends StatelessWidget {
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                  title: Text(
-                    folder?.title ?? l10n.navBrowse,
-                    style: TextStyle(
-                      color: colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      letterSpacing: -0.3,
+                  titlePadding: const EdgeInsets.fromLTRB(0, 0, 20, 16),
+                  title: CollapsibleAppBarTitle(
+                    child: Text(
+                      folder?.title ?? l10n.navBrowse,
+                      style: TextStyle(
+                        color: colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                   background: Container(

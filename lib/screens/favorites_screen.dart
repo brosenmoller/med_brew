@@ -4,6 +4,7 @@ import 'package:med_brew/models/quiz_data.dart';
 import 'package:med_brew/services/favorites_service.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/screens/quiz_session_screen.dart';
+import 'package:med_brew/widgets/collapsible_app_bar_title.dart';
 import 'package:med_brew/widgets/quiz_tile.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -63,14 +64,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 backgroundColor: colorScheme.secondary,
                 iconTheme: IconThemeData(color: colorScheme.onSecondary),
                 flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                  title: Text(
-                    l10n.favoritesTitle,
-                    style: TextStyle(
-                      color: colorScheme.onSecondary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
-                      letterSpacing: -0.3,
+                  titlePadding: const EdgeInsets.fromLTRB(0, 0, 20, 16),
+                  title: CollapsibleAppBarTitle(
+                    child: Text(
+                      l10n.favoritesTitle,
+                      style: TextStyle(
+                        color: colorScheme.onSecondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                   background: Container(

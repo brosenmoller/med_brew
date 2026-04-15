@@ -7,6 +7,7 @@ import 'package:med_brew/screens/srs_session_screen.dart';
 import 'package:med_brew/screens/srs_overview/srs_quiz_card.dart';
 import 'package:med_brew/services/question_service.dart';
 import 'package:med_brew/services/srs_service.dart';
+import 'package:med_brew/widgets/collapsible_app_bar_title.dart';
 
 class SrsOverviewScreen extends StatefulWidget {
   const SrsOverviewScreen({super.key});
@@ -84,17 +85,19 @@ class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
             backgroundColor: colorScheme.error,
             iconTheme: IconThemeData(color: colorScheme.onError),
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              title: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  l10n.srsTitle,
-                  style: TextStyle(
-                    color: colorScheme.onError,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22,
-                    letterSpacing: -0.3,
+              titlePadding: const EdgeInsets.fromLTRB(0, 0, 20, 16),
+              title: CollapsibleAppBarTitle(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.srsTitle,
+                    style: TextStyle(
+                      color: colorScheme.onError,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ),
               ),

@@ -33,7 +33,17 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
-      if (from < 9) {
+      if (from < 8) {
+        // Schema pre-dates UUID primary keys and the current table layout.
+        // The old migration chain was deleted, so the only safe path is to
+        // drop everything and recreate from scratch (same as a fresh install).
+        await customStatement('DROP TABLE IF EXISTS quiz_questions');
+        await customStatement('DROP TABLE IF EXISTS questions');
+        await customStatement('DROP TABLE IF EXISTS quizzes');
+        await customStatement('DROP TABLE IF EXISTS folders');
+        await customStatement('DROP TABLE IF EXISTS categories');
+        await m.createAll();
+      } else if (from < 9) {
         await m.addColumn(questions, questions.occlusionConfig);
       }
     },

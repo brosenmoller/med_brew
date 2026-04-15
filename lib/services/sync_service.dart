@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -199,9 +200,21 @@ class SyncService {
 
     final imgDir = await _getImagesDir();
     final file = File(p.join(imgDir, safeName));
-    if (!await file.exists()) return Response.notFound('Image not found');
 
-    final bytes = await file.readAsBytes();
+    late final Uint8List bytes;
+    if (await file.exists()) {
+      bytes = await file.readAsBytes();
+    } else {
+      // Content pack images are Flutter bundled assets — try the asset bundle
+      // when the file doesn't exist on disk (e.g. release builds on Windows).
+      try {
+        final data = await rootBundle.load('assets/images/$safeName');
+        bytes = data.buffer.asUint8List();
+      } catch (_) {
+        return Response.notFound('Image not found');
+      }
+    }
+
     final ext = p.extension(safeName).toLowerCase();
     final contentType = switch (ext) {
       '.jpg' || '.jpeg' => 'image/jpeg',
