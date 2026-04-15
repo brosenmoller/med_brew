@@ -16,7 +16,7 @@ MedBrew supports six different question formats which are all editable:
 - **Sorting** — Drag items into the correct order
 - **Set** — Enter all correct answers from a group (order doesn't matter)
 
-# Extra question features
+#### Extra question features
 - All questions support and image with occludable and highlightable areas
 - All questions support inbuilt randomization to avoid remembering question quirks instead of the actual answer.
 
