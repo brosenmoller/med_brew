@@ -48,7 +48,7 @@ MedBrew uses a **spaced repetition system** to surface the right cards at the ri
 1. Download and install MedBrew for your platform
 2. Create a folder and add your first quiz
 3. Add questions using any of the supported answer types
-4. Start a study session — or import a content pack to hit the ground running
+4. Start a study session or import a content pack to hit the ground running
 
 ---
 
