@@ -9,12 +9,12 @@
 ### Different Quiz Types
 MedBrew supports six different question formats which are all editable:
 
-- **Multiple Choice** — Pick the correct answer from a set of options
-- **Typed Answer** — Type out the answer yourself for active recall
-- **Flashcard** — Flip-style cards
-- **Image Click** — Tap the correct area on an image to answer
-- **Sorting** — Drag items into the correct order
-- **Set** — Enter all correct answers from a group (order doesn't matter)
+- **Multiple Choice** - Pick the correct answer from a set of options
+- **Typed Answer** - Type out the answer yourself for active recall
+- **Flashcard** - Flip-style cards
+- **Image Click** - Tap the correct area on an image to answer
+- **Sorting** - Drag items into the correct order
+- **Set** - Enter all correct answers from a group (order doesn't matter)
 
 #### Extra question features
 - All questions support and image with occludable and highlightable areas
