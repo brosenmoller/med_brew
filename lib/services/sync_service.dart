@@ -259,8 +259,12 @@ class SyncService {
     }
 
     _progress('Reading remote inventory…');
-    final manifestResp =
-        await http.get(Uri.parse('$base/sync/manifest'));
+    final manifestResp = await http
+        .get(Uri.parse('$base/sync/manifest'))
+        .timeout(const Duration(seconds: 30));
+    if (manifestResp.statusCode != 200) {
+      throw SyncException('Failed to read remote inventory (${manifestResp.statusCode})');
+    }
     final remoteManifest = SyncManifest.fromJson(
         Map<String, dynamic>.from(jsonDecode(manifestResp.body) as Map));
 
@@ -312,11 +316,14 @@ class SyncService {
       );
       final pushBody = pushPayload.toJson();
       pushBody['senderPort'] = _httpPort; // Tell remote where to fetch images
-      await http.post(
+      final pushResp = await http.post(
         Uri.parse('$base/sync/push'),
         headers: {'content-type': 'application/json'},
         body: jsonEncode(pushBody),
-      );
+      ).timeout(const Duration(seconds: 120));
+      if (pushResp.statusCode != 200) {
+        throw SyncException('Remote failed to import content (${pushResp.statusCode})');
+      }
     } else {
       // Still push SRS + favorites even if no new content
       final srsAndFavPayload = await _buildPayload(
@@ -330,11 +337,14 @@ class SyncService {
           srsAndFavPayload.favoriteSyncIds.isNotEmpty) {
         final pushBody = srsAndFavPayload.toJson();
         pushBody['senderPort'] = _httpPort;
-        await http.post(
+        final srsResp = await http.post(
           Uri.parse('$base/sync/push'),
           headers: {'content-type': 'application/json'},
           body: jsonEncode(pushBody),
-        );
+        ).timeout(const Duration(seconds: 60));
+        if (srsResp.statusCode != 200) {
+          throw SyncException('Remote failed to import SRS data (${srsResp.statusCode})');
+        }
       }
     }
 
@@ -353,7 +363,10 @@ class SyncService {
           'quizIds': toFetchQuizIds,
           'questionIds': toFetchQuestionIds,
         }),
-      );
+      ).timeout(const Duration(seconds: 120));
+      if (pullResp.statusCode != 200) {
+        throw SyncException('Failed to fetch remote content (${pullResp.statusCode})');
+      }
       final fetchedPayload = SyncPayload.fromJson(
           Map<String, dynamic>.from(jsonDecode(pullResp.body) as Map));
 

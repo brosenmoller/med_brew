@@ -19,7 +19,12 @@ class SrsService {
   /// Initialize Hive box
   Future<void> init() async {
     if (_initialized) { return; }
-    _userQuestionBox = await Hive.openBox<UserQuestionData>(boxName);
+    try {
+      _userQuestionBox = await Hive.openBox<UserQuestionData>(boxName);
+    } catch (_) {
+      await Hive.deleteBoxFromDisk(boxName);
+      _userQuestionBox = await Hive.openBox<UserQuestionData>(boxName);
+    }
     _initialized = true;
   }
 

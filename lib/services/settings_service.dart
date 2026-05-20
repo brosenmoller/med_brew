@@ -13,7 +13,12 @@ class SettingsService {
   final ValueNotifier<Locale?> localeNotifier = ValueNotifier(null);
 
   Future<void> init() async {
-    _box = await Hive.openBox('settings');
+    try {
+      _box = await Hive.openBox('settings');
+    } catch (_) {
+      await Hive.deleteBoxFromDisk('settings');
+      _box = await Hive.openBox('settings');
+    }
     final code = _box.get('languageCode') as String?;
     if (code != null) {
       localeNotifier.value = Locale(code);

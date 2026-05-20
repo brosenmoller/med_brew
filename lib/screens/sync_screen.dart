@@ -234,6 +234,13 @@ class _SyncScreenState extends State<SyncScreen> {
           _error = e.message;
         });
       }
+    } on TimeoutException {
+      if (mounted) {
+        setState(() {
+          _state = _SyncState.error;
+          _error = 'Connection timed out. Make sure both devices are on the same network and try again.';
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -250,6 +257,7 @@ class _SyncScreenState extends State<SyncScreen> {
         _error = null;
         _statusMessage = '';
         _lastSyncedPeer = null;
+        _peers = _syncService.discovery.currentPeers;
       });
 
   // ── Build ─────────────────────────────────────────────────────

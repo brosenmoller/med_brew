@@ -122,7 +122,9 @@ class SyncDiscoveryService {
     final port = int.tryParse(parts[2]);
     if (port == null) return;
 
-    final key = '$senderIp:$port';
+    // Key by IP only so that if the remote server restarts on a new port the
+    // entry is updated in-place rather than creating a duplicate stale entry.
+    final key = senderIp;
     final peer = SyncPeer(deviceName: deviceName, host: senderIp, port: port);
     _peers[key] = _PeerEntry(peer: peer, lastSeen: DateTime.now());
     if (!_peersController.isClosed) _peersController.add(currentPeers);

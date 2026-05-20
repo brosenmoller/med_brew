@@ -22,7 +22,12 @@ class AppDatabase extends _$AppDatabase {
     return LazyDatabase(() async {
       final dir = await getAppStorageDir();
       final file = File(path_dart.join(dir.path, 'med_brew.db'));
-      return NativeDatabase.createInBackground(file);
+      return NativeDatabase.createInBackground(
+        file,
+        setup: (db) {
+          db.execute('PRAGMA foreign_keys = ON');
+        },
+      );
     });
   }
 
@@ -449,17 +454,21 @@ class AppDatabase extends _$AppDatabase {
     required QuestionsCompanion question,
     required String quizId,
   }) async {
-    final questionId = await insertQuestion(question);
-    await into(quizQuestions).insert(
-      QuizQuestionsCompanion.insert(
-        quizId: quizId,
-        questionId: questionId,
-      ),
-    );
+    await transaction(() async {
+      final questionId = await insertQuestion(question);
+      await into(quizQuestions).insert(
+        QuizQuestionsCompanion.insert(
+          quizId: quizId,
+          questionId: questionId,
+        ),
+      );
+    });
   }
 
-  Future<int> deleteQuestion(String id) =>
-      (delete(questions)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteQuestion(String id) async {
+    await (delete(quizQuestions)..where((t) => t.questionId.equals(id))).go();
+    await (delete(questions)..where((t) => t.id.equals(id))).go();
+  }
 
   // ─── Lookup helpers ───────────────────────────────────────────
 

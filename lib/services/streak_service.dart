@@ -89,7 +89,12 @@ class StreakService {
 
   Future<void> init() async {
     if (_initialized) return;
-    _box = await Hive.openBox('streak');
+    try {
+      _box = await Hive.openBox('streak');
+    } catch (_) {
+      await Hive.deleteBoxFromDisk('streak');
+      _box = await Hive.openBox('streak');
+    }
     _initialized = true;
     _refreshNotifier();
   }

@@ -12,7 +12,12 @@ class FavoritesService {
 
   Future<void> init() async {
     if (_initialized) return;
-    _box = await Hive.openBox<String>(_boxName);
+    try {
+      _box = await Hive.openBox<String>(_boxName);
+    } catch (_) {
+      await Hive.deleteBoxFromDisk(_boxName);
+      _box = await Hive.openBox<String>(_boxName);
+    }
     _initialized = true;
   }
 
