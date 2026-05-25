@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as path_dart;
 import 'package:uuid/uuid.dart';
 import 'package:leerlus/utils/app_storage.dart';
+import 'package:leerlus/services/lus_archive_service.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
@@ -113,6 +114,22 @@ class AppDatabase extends _$AppDatabase {
       'questions': quizzesAndQuestions['questions'],
     };
   }
+
+  // ─── .lus (ZIP) export ────────────────────────────────────────
+
+  Future<Uint8List> exportToLus() async =>
+      LusArchiveService.packToLus(await exportToJsonMap());
+
+  Future<Uint8List> exportFolderToLus(String folderId) async =>
+      LusArchiveService.packToLus(await exportFolderToJsonMap(folderId));
+
+  Future<Uint8List> exportQuizToLus(String quizId) async =>
+      LusArchiveService.packToLus(await exportQuizToJsonMap(quizId));
+
+  Future<int> importFromLus(Uint8List lusBytes) async =>
+      importFromJson(await LusArchiveService.unpackFromLus(lusBytes));
+
+  // ─── Internal helpers ─────────────────────────────────────────
 
   /// Collects the given folder and all its descendants, returning their IDs.
   Future<Set<String>> _collectFolderSubtree(String folderId) async {

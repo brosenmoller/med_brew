@@ -57,6 +57,7 @@ dependencies:
   permission_handler: ^11.3.0
   flutter_local_notifications: ^18.0.0
   timezone: ^0.9.4
+  archive: ^3.6.1
 
 
 dev_dependencies:

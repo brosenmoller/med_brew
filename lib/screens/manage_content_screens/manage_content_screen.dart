@@ -1,5 +1,4 @@
-﻿import 'dart:convert';
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -78,15 +77,14 @@ class ManageContentScreen extends StatelessWidget {
     );
   }
 
-  // ── JSON export ─────────────────────────────────────────────────
+  // ── .lus export ─────────────────────────────────────────────────
 
   Future<void> _exportJson(BuildContext context) async {
     try {
-      final data = await db.exportToJsonMap();
-      final jsonString = const JsonEncoder.withIndent('  ').convert(data);
+      final bytes = await db.exportToLus();
       final dir = await getApplicationDocumentsDirectory();
-      final file = File(p.join(dir.path, 'med_brew_export.json'));
-      await file.writeAsString(jsonString);
+      final file = File(p.join(dir.path, 'leerlus_export.lus'));
+      await file.writeAsBytes(bytes);
 
       if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
         if (context.mounted) {
@@ -96,7 +94,7 @@ class ManageContentScreen extends StatelessWidget {
         }
       } else {
         await Share.shareXFiles(
-          [XFile(file.path)],
+          [XFile(file.path, mimeType: 'application/zip')],
           subject: 'Leerlus export',
         );
       }
@@ -110,21 +108,17 @@ class ManageContentScreen extends StatelessWidget {
     }
   }
 
-  // ── JSON import ─────────────────────────────────────────────────
+  // ── Import (.lus) ────────────────────────────────────────────────
 
   Future<void> _importJson(BuildContext context) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['json'],
+        allowedExtensions: ['lus'],
       );
       if (result == null || result.files.single.path == null) return;
 
-      final file = File(result.files.single.path!);
-      final jsonString = await file.readAsString();
-      final data = jsonDecode(jsonString) as Map<String, dynamic>;
-
-      await db.importFromJson(data);
+      await db.importFromLus(await File(result.files.single.path!).readAsBytes());
       await QuestionService().refresh();
 
       if (context.mounted) {

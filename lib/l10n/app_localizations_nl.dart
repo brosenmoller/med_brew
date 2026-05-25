@@ -434,10 +434,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get addQuestion => 'Vraag toevoegen';
 
   @override
-  String get importJsonTooltip => 'JSON importeren';
+  String get importJsonTooltip => 'Importeer (.lus / .json)';
 
   @override
-  String get exportJsonTooltip => 'JSON exporteren';
+  String get exportJsonTooltip => 'Exporteer (.lus)';
 
   @override
   String get exportSeedDbTooltip => 'seed.db exporteren';

@@ -430,10 +430,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addQuestion => 'Add Question';
 
   @override
-  String get importJsonTooltip => 'Import JSON';
+  String get importJsonTooltip => 'Import (.lus / .json)';
 
   @override
-  String get exportJsonTooltip => 'Export JSON';
+  String get exportJsonTooltip => 'Export (.lus)';
 
   @override
   String get exportSeedDbTooltip => 'Export seed.db';

@@ -773,13 +773,13 @@ abstract class AppLocalizations {
   /// No description provided for @importJsonTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Import JSON'**
+  /// **'Import (.lus / .json)'**
   String get importJsonTooltip;
 
   /// No description provided for @exportJsonTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Export JSON'**
+  /// **'Export (.lus)'**
   String get exportJsonTooltip;
 
   /// No description provided for @exportSeedDbTooltip.

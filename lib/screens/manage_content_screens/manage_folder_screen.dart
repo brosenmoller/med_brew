@@ -166,7 +166,7 @@ class _FolderTileState extends State<_FolderTile> {
   Folder get f => widget.f;
 
   String get _fileName =>
-      'folder_${f.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.json';
+      'folder_${f.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.lus';
 
   @override
   void initState() {
@@ -299,11 +299,10 @@ class _FolderTileState extends State<_FolderTile> {
 
   Future<void> _exportFolder(BuildContext context) async {
     try {
-      final data = await db.exportFolderToJsonMap(f.id);
-      final jsonString = const JsonEncoder.withIndent('  ').convert(data);
+      final bytes = await db.exportFolderToLus(f.id);
       final dir = await getApplicationDocumentsDirectory();
       final file = File(p.join(dir.path, _fileName));
-      await file.writeAsString(jsonString);
+      await file.writeAsBytes(bytes);
 
       if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
         if (context.mounted) {
@@ -312,7 +311,10 @@ class _FolderTileState extends State<_FolderTile> {
           );
         }
       } else {
-        await Share.shareXFiles([XFile(file.path)], subject: 'Leerlus folder export');
+        await Share.shareXFiles(
+          [XFile(file.path, mimeType: 'application/zip')],
+          subject: 'Leerlus folder export',
+        );
       }
     } catch (e) {
       if (context.mounted) {
@@ -369,7 +371,7 @@ class _QuizTileState extends State<_QuizTile> {
   Quiz get q => widget.q;
 
   String get _fileName =>
-      'quiz_${q.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.json';
+      'quiz_${q.title.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_').toLowerCase()}.lus';
 
   @override
   void initState() {
@@ -499,11 +501,10 @@ class _QuizTileState extends State<_QuizTile> {
 
   Future<void> _exportQuiz(BuildContext context) async {
     try {
-      final data = await db.exportQuizToJsonMap(q.id);
-      final jsonString = const JsonEncoder.withIndent('  ').convert(data);
+      final bytes = await db.exportQuizToLus(q.id);
       final dir = await getApplicationDocumentsDirectory();
       final file = File(p.join(dir.path, _fileName));
-      await file.writeAsString(jsonString);
+      await file.writeAsBytes(bytes);
 
       if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
         if (context.mounted) {
@@ -512,7 +513,10 @@ class _QuizTileState extends State<_QuizTile> {
           );
         }
       } else {
-        await Share.shareXFiles([XFile(file.path)], subject: 'Leerlus quiz export');
+        await Share.shareXFiles(
+          [XFile(file.path, mimeType: 'application/zip')],
+          subject: 'Leerlus quiz export',
+        );
       }
     } catch (e) {
       if (context.mounted) {

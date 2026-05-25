@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:leerlus/data/database/app_database.dart';
 import 'package:leerlus/l10n/app_localizations.dart';
 import 'package:leerlus/services/question_service.dart';
+import 'package:path/path.dart' as p;
 
 class ContentPacksScreen extends StatefulWidget {
   final AppDatabase db;
@@ -39,9 +40,20 @@ class _ContentPacksScreenState extends State<ContentPacksScreen> {
 
   Future<void> _importPack(_PackMeta pack) async {
     try {
-      final raw = await rootBundle.loadString('assets/content_packs/${pack.file}');
-      final data = jsonDecode(raw) as Map<String, dynamic>;
-      final count = await widget.db.importFromJson(data);
+      final assetPath = 'assets/content_packs/${pack.file}';
+      final int count;
+
+      if (p.extension(pack.file).toLowerCase() == '.lus') {
+        final byteData = await rootBundle.load(assetPath);
+        count = await widget.db.importFromLus(
+          byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
+        );
+      } else {
+        final raw = await rootBundle.loadString(assetPath);
+        final data = jsonDecode(raw) as Map<String, dynamic>;
+        count = await widget.db.importFromJson(data);
+      }
+
       await QuestionService().refresh();
       if (mounted) {
         final l10n = AppLocalizations.of(context);
