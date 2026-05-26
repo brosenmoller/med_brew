@@ -388,6 +388,11 @@ class AppDatabase extends _$AppDatabase {
   Future<void> deleteFolder(String id) =>
       transaction(() => _deleteFolderRecursive(id));
 
+  /// Deletes only the folder row — no recursion. Used by the hard-sync handler
+  /// which already deletes quizzes and questions as separate steps.
+  Future<void> deleteFolderRow(String id) =>
+      (delete(folders)..where((t) => t.id.equals(id))).go();
+
   Future<void> _deleteFolderRecursive(String id) async {
     final subs = await (select(folders)
       ..where((t) => t.parentFolderId.equals(id))).get();

@@ -454,6 +454,39 @@
   "syncTroubleshootingTitle": "Experiencing problems?",
   "syncFirewallHint": "Windows Firewall may be blocking network traffic. When prompted, allow Leerlus through the firewall, or go to Windows Security → Firewall & network protection → Allow an app through Firewall.",
   "syncSetupFailed": "Could not start sync",
+  "syncHardSyncLabel": "Override other device",
+  "syncHardSyncWarning": "Content on the other device that doesn't exist on this device will be permanently deleted.",
+  "syncOverrideTitle": "Override {deviceName}?",
+  "@syncOverrideTitle": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "syncOverrideConfirm": "All content on {deviceName} that doesn't exist on this device will be permanently deleted. This cannot be undone.",
+  "@syncOverrideConfirm": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "syncOverride": "Override",
+  "syncResultFoldersDeleted": "{count, plural, =1{1 folder removed} other{{count} folders removed}}",
+  "@syncResultFoldersDeleted": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultQuizzesDeleted": "{count, plural, =1{1 quiz removed} other{{count} quizzes removed}}",
+  "@syncResultQuizzesDeleted": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultQuestionsDeleted": "{count, plural, =1{1 question removed} other{{count} questions removed}}",
+  "@syncResultQuestionsDeleted": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
 
   "settingsAnimations": "Animations",
   "settingsAnimationsSubtitle": "Show confetti and other visual effects",

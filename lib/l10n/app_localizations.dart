@@ -1604,6 +1604,54 @@ abstract class AppLocalizations {
   /// **'Could not start sync'**
   String get syncSetupFailed;
 
+  /// No description provided for @syncHardSyncLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Override other device'**
+  String get syncHardSyncLabel;
+
+  /// No description provided for @syncHardSyncWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Content on the other device that doesn\'t exist on this device will be permanently deleted.'**
+  String get syncHardSyncWarning;
+
+  /// No description provided for @syncOverrideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Override {deviceName}?'**
+  String syncOverrideTitle(String deviceName);
+
+  /// No description provided for @syncOverrideConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'All content on {deviceName} that doesn\'t exist on this device will be permanently deleted. This cannot be undone.'**
+  String syncOverrideConfirm(String deviceName);
+
+  /// No description provided for @syncOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Override'**
+  String get syncOverride;
+
+  /// No description provided for @syncResultFoldersDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 folder removed} other{{count} folders removed}}'**
+  String syncResultFoldersDeleted(int count);
+
+  /// No description provided for @syncResultQuizzesDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 quiz removed} other{{count} quizzes removed}}'**
+  String syncResultQuizzesDeleted(int count);
+
+  /// No description provided for @syncResultQuestionsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 question removed} other{{count} questions removed}}'**
+  String syncResultQuestionsDeleted(int count);
+
   /// No description provided for @settingsAnimations.
   ///
   /// In en, this message translates to:

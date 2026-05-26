@@ -944,6 +944,59 @@ class AppLocalizationsNl extends AppLocalizations {
   String get syncSetupFailed => 'Kon synchronisatie niet starten';
 
   @override
+  String get syncHardSyncLabel => 'Ander apparaat overschrijven';
+
+  @override
+  String get syncHardSyncWarning =>
+      'Inhoud op het andere apparaat die niet op dit apparaat staat, wordt permanent verwijderd.';
+
+  @override
+  String syncOverrideTitle(String deviceName) {
+    return '$deviceName overschrijven?';
+  }
+
+  @override
+  String syncOverrideConfirm(String deviceName) {
+    return 'Alle inhoud op $deviceName die niet op dit apparaat staat, wordt permanent verwijderd. Dit kan niet ongedaan worden gemaakt.';
+  }
+
+  @override
+  String get syncOverride => 'Overschrijven';
+
+  @override
+  String syncResultFoldersDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mappen verwijderd',
+      one: '1 map verwijderd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultQuizzesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count quizzen verwijderd',
+      one: '1 quiz verwijderd',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultQuestionsDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count vragen verwijderd',
+      one: '1 vraag verwijderd',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsAnimations => 'Animaties';
 
   @override

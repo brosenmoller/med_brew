@@ -75,6 +75,7 @@ class SyncService {
     router.post('/sync/push', _handlePush);
     router.post('/sync/pull', _handlePull);
     router.get('/sync/image', _handleImage);
+    router.post('/sync/hard-delete', _handleHardDelete);
     router.post('/sync/done', _handleSyncDone);
 
     _server = await shelf_io.serve(router.call, InternetAddress.anyIPv4, 0);
@@ -252,6 +253,77 @@ class SyncService {
     return Response.ok(bytes, headers: {'content-type': contentType});
   }
 
+  Future<Response> _handleHardDelete(Request req) async {
+    try {
+      final bodyStr = await _readBodyWithLimit(req);
+      if (bodyStr == null) {
+        return Response(413,
+            body: jsonEncode({'ok': false, 'error': 'Payload too large'}),
+            headers: {'content-type': 'application/json'});
+      }
+      final data = Map<String, dynamic>.from(jsonDecode(bodyStr) as Map);
+      final folderIds =
+          (data['folderIds'] as List).map((e) => e as String).toList();
+      final quizIds =
+          (data['quizIds'] as List).map((e) => e as String).toList();
+      final questionIds =
+          (data['questionIds'] as List).map((e) => e as String).toList();
+
+      int qsDel = 0, qzDel = 0, fDel = 0;
+
+      // 1. Questions first — avoids re-deletion by deleteQuiz's orphan cleanup
+      for (final id in questionIds) {
+        if (await _db!.getQuestionById(id) != null) {
+          await _db!.deleteQuestion(id);
+          await SrsService().deleteUserData(id);
+          qsDel++;
+        }
+      }
+      // 2. Quizzes — questions already gone, orphan-cleanup is a no-op
+      for (final id in quizIds) {
+        if (await _db!.getQuizById(id) != null) {
+          await _db!.deleteQuiz(id);
+          qzDel++;
+        }
+      }
+      // 3. Folder rows only — quiz contents already handled above
+      for (final id in folderIds) {
+        await _db!.deleteFolderRow(id);
+        fDel++;
+      }
+
+      await QuestionService().refresh();
+
+      // Merge delete counts into the push result so the acceptor's done-screen
+      // reflects both what was added and what was removed.
+      _acceptorResult = SyncResult(
+        foldersAdded:   _acceptorResult?.foldersAdded   ?? 0,
+        quizzesAdded:   _acceptorResult?.quizzesAdded   ?? 0,
+        questionsAdded: _acceptorResult?.questionsAdded ?? 0,
+        srsUpdated:     _acceptorResult?.srsUpdated     ?? 0,
+        favoritesAdded: _acceptorResult?.favoritesAdded ?? 0,
+        foldersDeleted:   fDel,
+        quizzesDeleted:   qzDel,
+        questionsDeleted: qsDel,
+      );
+
+      return Response.ok(
+        jsonEncode({
+          'ok': true,
+          'foldersDeleted':   fDel,
+          'quizzesDeleted':   qzDel,
+          'questionsDeleted': qsDel,
+        }),
+        headers: {'content-type': 'application/json'},
+      );
+    } catch (e) {
+      return Response.internalServerError(
+        body: jsonEncode({'ok': false, 'error': e.toString()}),
+        headers: {'content-type': 'application/json'},
+      );
+    }
+  }
+
   Future<Response> _handleSyncDone(Request req) async {
     final result = _acceptorResult ?? const SyncResult();
     _acceptorResult = null;
@@ -266,7 +338,7 @@ class SyncService {
 
   // ── Initiator: full bidirectional sync ───────────────────────
 
-  Future<SyncResult> syncWith(SyncPeer peer) async {
+  Future<SyncResult> syncWith(SyncPeer peer, {bool hardSync = false}) async {
     final base = 'http://${peer.host}:${peer.port}';
 
     _progress('Connecting to ${peer.deviceName}…');
@@ -374,39 +446,72 @@ class SyncService {
       }
     }
 
-    // Pull remote content
+    // Pull remote content (or hard-delete it in override mode)
     SyncResult result = const SyncResult();
-    if (toFetchFolderIds.isNotEmpty ||
-        toFetchQuizIds.isNotEmpty ||
-        toFetchQuestionIds.isNotEmpty ||
-        toFetchFavIds.isNotEmpty) {
-      _progress('Fetching remote content…');
-      final pullResp = await http.post(
-        Uri.parse('$base/sync/pull'),
-        headers: {'content-type': 'application/json'},
-        body: jsonEncode({
-          'folderIds': toFetchFolderIds,
-          'quizIds': toFetchQuizIds,
-          'questionIds': toFetchQuestionIds,
-        }),
-      ).timeout(const Duration(seconds: 120));
-      if (pullResp.statusCode != 200) {
-        throw SyncException('Failed to fetch remote content (${pullResp.statusCode})');
+    if (hardSync) {
+      if (toFetchFolderIds.isNotEmpty ||
+          toFetchQuizIds.isNotEmpty ||
+          toFetchQuestionIds.isNotEmpty) {
+        _progress('Removing content from ${peer.deviceName}…');
+        final hdResp = await http.post(
+          Uri.parse('$base/sync/hard-delete'),
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode({
+            'folderIds': toFetchFolderIds,
+            'quizIds': toFetchQuizIds,
+            'questionIds': toFetchQuestionIds,
+          }),
+        ).timeout(const Duration(seconds: 120));
+        if (hdResp.statusCode != 200) {
+          throw SyncException(
+              'Hard delete failed (${hdResp.statusCode})');
+        }
+        final hdData =
+            Map<String, dynamic>.from(jsonDecode(hdResp.body) as Map);
+        result = SyncResult(
+          foldersDeleted:
+              (hdData['foldersDeleted'] as num?)?.toInt() ?? 0,
+          quizzesDeleted:
+              (hdData['quizzesDeleted'] as num?)?.toInt() ?? 0,
+          questionsDeleted:
+              (hdData['questionsDeleted'] as num?)?.toInt() ?? 0,
+        );
       }
-      final fetchedPayload = SyncPayload.fromJson(
-          Map<String, dynamic>.from(jsonDecode(pullResp.body) as Map));
+      // Favorites: skip pull in hard-sync mode (our favorites were already pushed)
+    } else {
+      if (toFetchFolderIds.isNotEmpty ||
+          toFetchQuizIds.isNotEmpty ||
+          toFetchQuestionIds.isNotEmpty ||
+          toFetchFavIds.isNotEmpty) {
+        _progress('Fetching remote content…');
+        final pullResp = await http.post(
+          Uri.parse('$base/sync/pull'),
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode({
+            'folderIds': toFetchFolderIds,
+            'quizIds': toFetchQuizIds,
+            'questionIds': toFetchQuestionIds,
+          }),
+        ).timeout(const Duration(seconds: 120));
+        if (pullResp.statusCode != 200) {
+          throw SyncException(
+              'Failed to fetch remote content (${pullResp.statusCode})');
+        }
+        final fetchedPayload = SyncPayload.fromJson(
+            Map<String, dynamic>.from(jsonDecode(pullResp.body) as Map));
 
-      _progress('Downloading images…');
-      for (final imgName in fetchedPayload.imageFilenames) {
-        await _fetchImage(base, imgName);
-      }
+        _progress('Downloading images…');
+        for (final imgName in fetchedPayload.imageFilenames) {
+          await _fetchImage(base, imgName);
+        }
 
-      _progress('Importing content…');
-      result = await _importPayload(fetchedPayload);
+        _progress('Importing content…');
+        result = await _importPayload(fetchedPayload);
 
-      // Also apply remote favorites we don't have yet
-      for (final favId in toFetchFavIds) {
-        await FavoritesService().addFavorite(favId);
+        // Also apply remote favorites we don't have yet
+        for (final favId in toFetchFavIds) {
+          await FavoritesService().addFavorite(favId);
+        }
       }
     }
 
@@ -746,7 +851,7 @@ class SyncService {
         nextReview: DateTime.parse(srsJson['nextReview'] as String),
       );
       await SrsService().upsertUserData(incoming);
-      srsUpdated++;
+      if (incoming.spacedRepetitionEnabled) srsUpdated++;
     }
 
     // Favorites (outside transaction — Hive)

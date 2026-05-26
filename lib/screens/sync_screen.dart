@@ -193,36 +193,93 @@ class _SyncScreenState extends State<SyncScreen> {
 
   Future<void> _syncWithPeer(SyncPeer peer) async {
     final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+
+    // First dialog: choose sync mode
+    bool hardSync = false;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.syncTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _DevicePairRow(
-              thisDevice: _thisDeviceName.isNotEmpty
-                  ? _thisDeviceName
-                  : l10n.syncThisDevice,
-              otherDevice: peer.deviceName,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateDlg) => AlertDialog(
+          title: Text(l10n.syncTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DevicePairRow(
+                thisDevice: _thisDeviceName.isNotEmpty
+                    ? _thisDeviceName
+                    : l10n.syncThisDevice,
+                otherDevice: peer.deviceName,
+              ),
+              const SizedBox(height: 12),
+              Text(l10n.syncConfirmMessage(peer.deviceName)),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  l10n.syncHardSyncLabel,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: hardSync ? cs.error : null,
+                    fontWeight:
+                        hardSync ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+                value: hardSync,
+                activeColor: cs.error,
+                onChanged: (v) => setStateDlg(() => hardSync = v ?? false),
+              ),
+              if (hardSync) ...[
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    l10n.syncHardSyncWarning,
+                    style: TextStyle(fontSize: 12, color: cs.error),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel),
             ),
-            const SizedBox(height: 12),
-            Text(l10n.syncConfirmMessage(peer.deviceName)),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.syncAccept),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.syncAccept),
-          ),
-        ],
       ),
     );
     if (confirmed != true || !mounted) return;
+
+    // Second dialog when hard sync is enabled
+    if (hardSync) {
+      final overrideConfirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.syncOverrideTitle(peer.deviceName)),
+          content: Text(l10n.syncOverrideConfirm(peer.deviceName)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: cs.error),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.syncOverride),
+            ),
+          ],
+        ),
+      );
+      if (overrideConfirmed != true || !mounted) return;
+    }
 
     setState(() {
       _state = _SyncState.requesting;
@@ -231,7 +288,7 @@ class _SyncScreenState extends State<SyncScreen> {
     });
 
     try {
-      final result = await _syncService.syncWith(peer);
+      final result = await _syncService.syncWith(peer, hardSync: hardSync);
       if (mounted) {
         setState(() {
           _state = _SyncState.done;
@@ -593,6 +650,15 @@ class _SyncScreenState extends State<SyncScreen> {
                       if (r.srsUpdated > 0)
                         _ResultRow(Icons.auto_awesome_outlined,
                             l10n.syncResultSrs(r.srsUpdated)),
+                      if (r.foldersDeleted > 0)
+                        _ResultRow(Icons.folder_delete_outlined,
+                            l10n.syncResultFoldersDeleted(r.foldersDeleted)),
+                      if (r.quizzesDeleted > 0)
+                        _ResultRow(Icons.delete_outline,
+                            l10n.syncResultQuizzesDeleted(r.quizzesDeleted)),
+                      if (r.questionsDeleted > 0)
+                        _ResultRow(Icons.help_outline,
+                            l10n.syncResultQuestionsDeleted(r.questionsDeleted)),
                     ],
                   ),
                 ),

@@ -939,6 +939,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncSetupFailed => 'Could not start sync';
 
   @override
+  String get syncHardSyncLabel => 'Override other device';
+
+  @override
+  String get syncHardSyncWarning =>
+      'Content on the other device that doesn\'t exist on this device will be permanently deleted.';
+
+  @override
+  String syncOverrideTitle(String deviceName) {
+    return 'Override $deviceName?';
+  }
+
+  @override
+  String syncOverrideConfirm(String deviceName) {
+    return 'All content on $deviceName that doesn\'t exist on this device will be permanently deleted. This cannot be undone.';
+  }
+
+  @override
+  String get syncOverride => 'Override';
+
+  @override
+  String syncResultFoldersDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders removed',
+      one: '1 folder removed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultQuizzesDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count quizzes removed',
+      one: '1 quiz removed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncResultQuestionsDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count questions removed',
+      one: '1 question removed',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsAnimations => 'Animations';
 
   @override

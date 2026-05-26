@@ -354,6 +354,39 @@
   "syncTroubleshootingTitle": "Problemen?",
   "syncFirewallHint": "De Windows-firewall blokkeert mogelijk het netwerkverkeer. Sta Leerlus toe via de firewall wanneer hierom gevraagd wordt, of ga naar Windows Beveiliging → Firewall- en netwerkbeveiliging → Een app toestaan via de firewall.",
   "syncSetupFailed": "Kon synchronisatie niet starten",
+  "syncHardSyncLabel": "Ander apparaat overschrijven",
+  "syncHardSyncWarning": "Inhoud op het andere apparaat die niet op dit apparaat staat, wordt permanent verwijderd.",
+  "syncOverrideTitle": "{deviceName} overschrijven?",
+  "@syncOverrideTitle": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "syncOverrideConfirm": "Alle inhoud op {deviceName} die niet op dit apparaat staat, wordt permanent verwijderd. Dit kan niet ongedaan worden gemaakt.",
+  "@syncOverrideConfirm": {
+    "placeholders": {
+      "deviceName": { "type": "String" }
+    }
+  },
+  "syncOverride": "Overschrijven",
+  "syncResultFoldersDeleted": "{count, plural, =1{1 map verwijderd} other{{count} mappen verwijderd}}",
+  "@syncResultFoldersDeleted": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultQuizzesDeleted": "{count, plural, =1{1 quiz verwijderd} other{{count} quizzen verwijderd}}",
+  "@syncResultQuizzesDeleted": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultQuestionsDeleted": "{count, plural, =1{1 vraag verwijderd} other{{count} vragen verwijderd}}",
+  "@syncResultQuestionsDeleted": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
 
   "settingsAnimations": "Animaties",
   "settingsAnimationsSubtitle": "Toon confetti en andere visuele effecten",

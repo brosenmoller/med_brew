@@ -135,6 +135,9 @@ class SyncResult {
   final int questionsAdded;
   final int srsUpdated;
   final int favoritesAdded;
+  final int foldersDeleted;
+  final int quizzesDeleted;
+  final int questionsDeleted;
 
   const SyncResult({
     this.foldersAdded = 0,
@@ -142,6 +145,9 @@ class SyncResult {
     this.questionsAdded = 0,
     this.srsUpdated = 0,
     this.favoritesAdded = 0,
+    this.foldersDeleted = 0,
+    this.quizzesDeleted = 0,
+    this.questionsDeleted = 0,
   });
 
   bool get isEmpty =>
@@ -149,5 +155,8 @@ class SyncResult {
       quizzesAdded == 0 &&
       questionsAdded == 0 &&
       srsUpdated == 0 &&
-      favoritesAdded == 0;
+      favoritesAdded == 0 &&
+      foldersDeleted == 0 &&
+      quizzesDeleted == 0 &&
+      questionsDeleted == 0;
 }
