@@ -452,28 +452,43 @@ class _SyncScreenState extends State<SyncScreen> {
                 Text(l10n.syncDiscovering,
                     style: const TextStyle(color: Colors.grey)),
                 if (Platform.isWindows) ...[
-                  const SizedBox(height: 24),
-                  Card(
-                    color: cs.errorContainer,
-                    elevation: 0,
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.security_rounded,
-                              size: 18, color: cs.onErrorContainer),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              l10n.syncFirewallHint,
-                              style: TextStyle(
-                                  fontSize: 12, color: cs.onErrorContainer),
-                            ),
-                          ),
-                        ],
-                      ),
+                  const SizedBox(height: 16),
+                  ExpansionTile(
+                    dense: true,
+                    tilePadding: EdgeInsets.zero,
+                    iconColor: cs.onSurfaceVariant,
+                    collapsedIconColor: cs.onSurfaceVariant,
+                    title: Text(
+                      l10n.syncTroubleshootingTitle,
+                      style: TextStyle(
+                          fontSize: 13, color: cs.onSurfaceVariant),
                     ),
+                    children: [
+                      const SizedBox(height: 8),
+                      Card(
+                        color: cs.errorContainer,
+                        elevation: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.security_rounded,
+                                  size: 18, color: cs.onErrorContainer),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  l10n.syncFirewallHint,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: cs.onErrorContainer),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ],

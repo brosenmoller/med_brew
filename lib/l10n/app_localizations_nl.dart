@@ -934,8 +934,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get syncOpenSettings => 'Instellingen openen';
 
   @override
+  String get syncTroubleshootingTitle => 'Problemen?';
+
+  @override
   String get syncFirewallHint =>
-      'Geen apparaten gevonden? De Windows-firewall blokkeert mogelijk het netwerkverkeer. Sta Leerlus toe via de firewall wanneer hierom gevraagd wordt, of ga naar Windows Beveiliging → Firewall- en netwerkbeveiliging → Een app toestaan via de firewall.';
+      'De Windows-firewall blokkeert mogelijk het netwerkverkeer. Sta Leerlus toe via de firewall wanneer hierom gevraagd wordt, of ga naar Windows Beveiliging → Firewall- en netwerkbeveiliging → Een app toestaan via de firewall.';
 
   @override
   String get syncSetupFailed => 'Kon synchronisatie niet starten';

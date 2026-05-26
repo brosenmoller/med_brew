@@ -6,6 +6,7 @@ import 'package:path/path.dart' as path_dart;
 import 'package:uuid/uuid.dart';
 import 'package:leerlus/utils/app_storage.dart';
 import 'package:leerlus/services/lus_archive_service.dart';
+import 'package:leerlus/services/srs_service.dart';
 import 'tables.dart';
 
 part 'app_database.g.dart';
@@ -422,8 +423,23 @@ class AppDatabase extends _$AppDatabase {
       update(quizzes).replace(entry);
 
   Future<void> deleteQuiz(String id) async {
+    // Capture question IDs before junction rows are removed.
+    final rows = await (select(quizQuestions)
+      ..where((t) => t.quizId.equals(id))).get();
+    final questionIds = rows.map((r) => r.questionId).toList();
+
     await (delete(quizQuestions)..where((t) => t.quizId.equals(id))).go();
     await (delete(quizzes)..where((t) => t.id.equals(id))).go();
+
+    // Delete questions that are now orphaned (no remaining quiz references).
+    for (final qId in questionIds) {
+      final remaining = await (select(quizQuestions)
+        ..where((t) => t.questionId.equals(qId))).get();
+      if (remaining.isEmpty) {
+        await (delete(questions)..where((t) => t.id.equals(qId))).go();
+        await SrsService().deleteUserData(qId);
+      }
+    }
   }
 
   // ─── Questions ────────────────────────────────────────────────

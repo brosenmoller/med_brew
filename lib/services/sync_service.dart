@@ -714,7 +714,13 @@ class SyncService {
         int order = 0;
         for (final qId
             in (qzJson['questionIds'] as List).map((e) => e as String)) {
-          final qLocalId = questionIdMap[qId];
+          var qLocalId = questionIdMap[qId];
+          if (qLocalId == null) {
+            // Question already exists locally but wasn't included in this payload
+            // (e.g. peer has it, so it was excluded from the delta).
+            final localQ = await _db!.getQuestionById(qId);
+            if (localQ != null) qLocalId = localQ.id;
+          }
           if (qLocalId == null) continue;
           await _db!.insertJunctionRowSafe(quizLocalId, qLocalId, order++);
         }
