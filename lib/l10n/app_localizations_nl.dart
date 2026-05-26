@@ -231,9 +231,9 @@ class AppLocalizationsNl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count bevriezingen over deze week',
-      one: '1 bevriezing over deze week',
-      zero: 'Geen bevriezingen meer deze week',
+      other: '$count streak freezes over deze week',
+      one: '1 streak freezes over deze week',
+      zero: 'Geen streak freezes meer deze week',
     );
     return '$_temp0';
   }
@@ -253,16 +253,16 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get streakFreezeUsed => 'Bevriezing gebruikt!';
+  String get streakFreezeUsed => 'Streak freeze gebruikt!';
 
   @override
   String streakFreezeUsedBody(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count bevriezingen over deze week',
-      one: '1 bevriezing over deze week',
-      zero: 'Geen bevriezingen meer deze week',
+      other: '$count streak freezes over deze week',
+      one: '1 streak freeze over deze week',
+      zero: 'Geen streak freezes meer deze week',
     );
     return '$_temp0';
   }
@@ -272,7 +272,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get streakResetBody =>
-      'Geen bevriezingen meer — opnieuw beginnen bij 1 dag.';
+      'Geen streak freezes meer, opnieuw beginnen bij 1 dag.';
 
   @override
   String get streakInfoTitle => 'Streak';
@@ -965,7 +965,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String syncHardSyncComplete(String deviceName) {
-    return 'Harde sync voltooid — $deviceName is overschreven.';
+    return 'Harde sync voltooid, $deviceName is overschreven.';
   }
 
   @override

@@ -533,7 +533,7 @@ abstract class AppLocalizations {
   /// No description provided for @streakResetBody.
   ///
   /// In en, this message translates to:
-  /// **'Out of freezes — starting fresh at 1 day.'**
+  /// **'Out of freezes, starting fresh at 1 day.'**
   String get streakResetBody;
 
   /// No description provided for @streakInfoTitle.
@@ -1637,7 +1637,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncHardSyncComplete.
   ///
   /// In en, this message translates to:
-  /// **'Hard sync complete — {deviceName} has been overridden.'**
+  /// **'Hard sync complete, {deviceName} has been overridden.'**
   String syncHardSyncComplete(String deviceName);
 
   /// No description provided for @syncResultFoldersDeleted.

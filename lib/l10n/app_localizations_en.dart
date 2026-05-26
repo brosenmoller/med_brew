@@ -268,7 +268,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get streakReset => 'Streak reset';
 
   @override
-  String get streakResetBody => 'Out of freezes — starting fresh at 1 day.';
+  String get streakResetBody => 'Out of freezes, starting fresh at 1 day.';
 
   @override
   String get streakInfoTitle => 'Streak';
@@ -960,7 +960,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String syncHardSyncComplete(String deviceName) {
-    return 'Hard sync complete — $deviceName has been overridden.';
+    return 'Hard sync complete, $deviceName has been overridden.';
   }
 
   @override
