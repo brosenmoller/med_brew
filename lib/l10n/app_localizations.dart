@@ -773,7 +773,7 @@ abstract class AppLocalizations {
   /// No description provided for @importJsonTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Import (.lus / .json)'**
+  /// **'Import (.lus)'**
   String get importJsonTooltip;
 
   /// No description provided for @exportJsonTooltip.
@@ -781,12 +781,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Export (.lus)'**
   String get exportJsonTooltip;
-
-  /// No description provided for @exportSeedDbTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Export seed.db'**
-  String get exportSeedDbTooltip;
 
   /// No description provided for @exportFolderTooltip.
   ///
@@ -847,6 +841,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already up to date'**
   String get contentPacksAlreadyUpToDate;
+
+  /// No description provided for @contentPacksNoneAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No content packs available'**
+  String get contentPacksNoneAvailable;
 
   /// No description provided for @importSuccess.
   ///

@@ -46,6 +46,8 @@ class _ImageManagementScreenState extends State<ImageManagementScreen> {
         if (entry.key.startsWith('assets/')) {
           final parts = entry.key.split('/');
           usageMap[p.joinAll([base, ...parts])] = entry.value;
+          // Remove the relative key so the seenPaths loop below doesn't add a duplicate.
+          usageMap.remove(entry.key);
         }
       }
     } else {
@@ -63,7 +65,8 @@ class _ImageManagementScreenState extends State<ImageManagementScreen> {
 
     final files = <File>[];
     if (imgDir != null) {
-      final dir = Directory(imgDir);
+      // p.normalize ensures consistent separators so paths match usageMap keys.
+      final dir = Directory(p.normalize(imgDir));
       if (dir.existsSync()) {
         files.addAll(
           dir.listSync().whereType<File>().where((f) => _isImageFile(f.path)),
@@ -72,12 +75,15 @@ class _ImageManagementScreenState extends State<ImageManagementScreen> {
     }
 
     final images = files
-        .map((f) => _ImageInfo(
-              path: f.path,
-              filename: p.basename(f.path),
-              usedBy: usageMap[f.path] ?? [],
-              isBuiltIn: isBuiltIn(f.path),
-            ))
+        .map((f) {
+          final path = p.normalize(f.path); // normalize separators
+          return _ImageInfo(
+            path: path,
+            filename: p.basename(path),
+            usedBy: usageMap[path] ?? [],
+            isBuiltIn: isBuiltIn(path),
+          );
+        })
         .toList()
       ..sort((a, b) => a.filename.compareTo(b.filename));
 
@@ -85,12 +91,13 @@ class _ImageManagementScreenState extends State<ImageManagementScreen> {
     // the directory listing (edge case: path stored differently).
     final seenPaths = images.map((i) => i.path).toSet();
     for (final entry in usageMap.entries) {
-      if (!seenPaths.contains(entry.key) && File(entry.key).existsSync()) {
+      final normKey = p.normalize(entry.key);
+      if (!seenPaths.contains(normKey) && File(normKey).existsSync()) {
         images.add(_ImageInfo(
-          path: entry.key,
-          filename: p.basename(entry.key),
+          path: normKey,
+          filename: p.basename(normKey),
           usedBy: entry.value,
-          isBuiltIn: isBuiltIn(entry.key),
+          isBuiltIn: isBuiltIn(normKey),
         ));
       }
     }
@@ -232,24 +239,37 @@ class _ImageManagementScreenState extends State<ImageManagementScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : displayed.isEmpty
-              ? Center(child: Text(l10n.imageLibraryEmpty))
-              : GridView.builder(
-                  padding: const EdgeInsets.all(8),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
-                  ),
-                  itemCount: displayed.length,
-                  itemBuilder: (context, index) {
-                    final img = displayed[index];
-                    return _ImageTile(
-                      info: img,
-                      onTap: () => _showImageDetail(img),
-                    );
-                  },
-                ),
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: displayed.isEmpty
+                    ? Center(child: Text(l10n.imageLibraryEmpty))
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          // 2 columns on narrow (mobile), scaling up for wider windows.
+                          final crossAxisCount =
+                              (constraints.maxWidth / 160).floor().clamp(2, 8);
+                          return GridView.builder(
+                            padding: const EdgeInsets.all(8),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 6,
+                              mainAxisSpacing: 6,
+                            ),
+                            itemCount: displayed.length,
+                            itemBuilder: (context, index) {
+                              final img = displayed[index];
+                              return _ImageTile(
+                                info: img,
+                                onTap: () => _showImageDetail(img),
+                              );
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: _uploadImage,
         tooltip: l10n.imageUpload,

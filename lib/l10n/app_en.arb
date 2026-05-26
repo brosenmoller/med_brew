@@ -213,9 +213,8 @@
   "addFolder": "Add Folder",
   "addQuiz": "Add Quiz",
   "addQuestion": "Add Question",
-  "importJsonTooltip": "Import (.lus / .json)",
+  "importJsonTooltip": "Import (.lus)",
   "exportJsonTooltip": "Export (.lus)",
-  "exportSeedDbTooltip": "Export seed.db",
   "exportFolderTooltip": "Export folder",
   "exportQuizTooltip": "Export quiz",
   "moveTooltip": "Move",
@@ -231,6 +230,7 @@
     }
   },
   "contentPacksAlreadyUpToDate": "Already up to date",
+  "contentPacksNoneAvailable": "No content packs available",
   "importSuccess": "Import successful",
   "importFailed": "Import failed: {error}",
   "@importFailed": {

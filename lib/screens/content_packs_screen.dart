@@ -85,19 +85,16 @@ class _ContentPacksScreenState extends State<ContentPacksScreen> {
   }
 
   Widget _buildBody(AppLocalizations l10n) {
-    if (_error != null) {
-      return Center(child: Text('Error: $_error'));
+    if (_error != null || (_packs != null && _packs!.isEmpty)) {
+      return Center(child: Text(l10n.contentPacksNoneAvailable));
     }
     if (_packs == null) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (_packs!.isEmpty) {
-      return const Center(child: Text('No content packs available.'));
-    }
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _packs!.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, i) {
         final pack = _packs![i];
         return ListTile(

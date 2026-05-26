@@ -430,13 +430,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addQuestion => 'Add Question';
 
   @override
-  String get importJsonTooltip => 'Import (.lus / .json)';
+  String get importJsonTooltip => 'Import (.lus)';
 
   @override
   String get exportJsonTooltip => 'Export (.lus)';
-
-  @override
-  String get exportSeedDbTooltip => 'Export seed.db';
 
   @override
   String get exportFolderTooltip => 'Export folder';
@@ -469,6 +466,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contentPacksAlreadyUpToDate => 'Already up to date';
+
+  @override
+  String get contentPacksNoneAvailable => 'No content packs available';
 
   @override
   String get importSuccess => 'Import successful';

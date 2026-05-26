@@ -434,13 +434,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get addQuestion => 'Vraag toevoegen';
 
   @override
-  String get importJsonTooltip => 'Importeer (.lus / .json)';
+  String get importJsonTooltip => 'Importeer (.lus)';
 
   @override
   String get exportJsonTooltip => 'Exporteer (.lus)';
-
-  @override
-  String get exportSeedDbTooltip => 'seed.db exporteren';
 
   @override
   String get exportFolderTooltip => 'Map exporteren';
@@ -473,6 +470,9 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get contentPacksAlreadyUpToDate => 'Al up-to-date';
+
+  @override
+  String get contentPacksNoneAvailable => 'Geen inhoudspakketten beschikbaar';
 
   @override
   String get importSuccess => 'Importeren geslaagd';

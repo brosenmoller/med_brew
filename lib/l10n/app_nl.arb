@@ -163,9 +163,8 @@
   "addFolder": "Map toevoegen",
   "addQuiz": "Quiz toevoegen",
   "addQuestion": "Vraag toevoegen",
-  "importJsonTooltip": "Importeer (.lus / .json)",
+  "importJsonTooltip": "Importeer (.lus)",
   "exportJsonTooltip": "Exporteer (.lus)",
-  "exportSeedDbTooltip": "seed.db exporteren",
   "exportFolderTooltip": "Map exporteren",
   "exportQuizTooltip": "Quiz exporteren",
   "moveTooltip": "Verplaatsen",
@@ -181,6 +180,7 @@
     }
   },
   "contentPacksAlreadyUpToDate": "Al up-to-date",
+  "contentPacksNoneAvailable": "Geen inhoudspakketten beschikbaar",
   "importSuccess": "Importeren geslaagd",
   "importFailed": "Importeren mislukt: {error}",
   "exportFailed": "Exporteren mislukt: {error}",
