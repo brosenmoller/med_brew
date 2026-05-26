@@ -673,6 +673,14 @@ class _SyncScreenState extends State<SyncScreen> {
             else
               Text(l10n.syncAlreadyUpToDate,
                   style: const TextStyle(color: Colors.grey)),
+            if (r.imagesFailedCount > 0) ...[
+              const SizedBox(height: 12),
+              _ResultRow(
+                Icons.image_not_supported_outlined,
+                l10n.syncResultImagesFailed(r.imagesFailedCount),
+                color: cs.error,
+              ),
+            ],
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _reset,
@@ -798,8 +806,9 @@ class _DeviceChip extends StatelessWidget {
 class _ResultRow extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color? color;
 
-  const _ResultRow(this.icon, this.label);
+  const _ResultRow(this.icon, this.label, {this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -807,9 +816,9 @@ class _ResultRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 18),
+          Icon(icon, size: 18, color: color),
           const SizedBox(width: 8),
-          Text(label),
+          Text(label, style: color != null ? TextStyle(color: color) : null),
         ],
       ),
     );

@@ -107,7 +107,7 @@
     }
   },
   "streakReset": "Streak reset",
-  "streakResetBody": "Out of freezes — starting fresh at 1 day.",
+  "streakResetBody": "Out of freezes, starting fresh at 1 day.",
 
   "streakInfoTitle": "Streak",
   "streakBest": "Best: {count, plural, =1{1 day} other{{count} days}}",
@@ -469,7 +469,7 @@
     }
   },
   "syncOverride": "Override",
-  "syncHardSyncComplete": "Hard sync complete — {deviceName} has been overridden.",
+  "syncHardSyncComplete": "Hard sync complete, {deviceName} has been overridden.",
   "@syncHardSyncComplete": {
     "placeholders": {
       "deviceName": { "type": "String" }
@@ -490,6 +490,12 @@
   },
   "syncResultQuestionsDeleted": "{count, plural, =1{1 question removed} other{{count} questions removed}}",
   "@syncResultQuestionsDeleted": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncResultImagesFailed": "{count, plural, =1{1 image failed to sync} other{{count} images failed to sync}}",
+  "@syncResultImagesFailed": {
     "placeholders": {
       "count": { "type": "int" }
     }

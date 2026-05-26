@@ -1002,6 +1002,17 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String syncResultImagesFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count afbeeldingen konden niet worden gesynchroniseerd',
+      one: '1 afbeelding kon niet worden gesynchroniseerd',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get settingsAnimations => 'Animaties';
 
   @override

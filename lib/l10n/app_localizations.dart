@@ -1658,6 +1658,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 question removed} other{{count} questions removed}}'**
   String syncResultQuestionsDeleted(int count);
 
+  /// No description provided for @syncResultImagesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 image failed to sync} other{{count} images failed to sync}}'**
+  String syncResultImagesFailed(int count);
+
   /// No description provided for @settingsAnimations.
   ///
   /// In en, this message translates to:

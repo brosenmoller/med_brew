@@ -138,6 +138,7 @@ class SyncResult {
   final int foldersDeleted;
   final int quizzesDeleted;
   final int questionsDeleted;
+  final int imagesFailedCount;
   /// True when this result is for the hard-sync initiator. Deletions in that
   /// case happened on the remote device, not locally, so the UI suppresses them.
   final bool isHardSync;
@@ -151,8 +152,22 @@ class SyncResult {
     this.foldersDeleted = 0,
     this.quizzesDeleted = 0,
     this.questionsDeleted = 0,
+    this.imagesFailedCount = 0,
     this.isHardSync = false,
   });
+
+  SyncResult withImagesFailed(int count) => SyncResult(
+    foldersAdded: foldersAdded,
+    quizzesAdded: quizzesAdded,
+    questionsAdded: questionsAdded,
+    srsUpdated: srsUpdated,
+    favoritesAdded: favoritesAdded,
+    foldersDeleted: foldersDeleted,
+    quizzesDeleted: quizzesDeleted,
+    questionsDeleted: questionsDeleted,
+    imagesFailedCount: count,
+    isHardSync: isHardSync,
+  );
 
   bool get isEmpty =>
       foldersAdded == 0 &&

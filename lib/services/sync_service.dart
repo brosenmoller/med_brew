@@ -32,6 +32,7 @@ class SyncService {
 
   Completer<bool>? _pendingAccept;
   SyncResult? _acceptorResult; // set by _handlePush, consumed by _handleSyncDone
+  Timer? _acceptorFallbackTimer;
 
   // Tracks peers we've already sent a reverse-advertisement to this session so
   // we don't spam the request on every peers-stream tick.
@@ -74,6 +75,8 @@ class SyncService {
     _myDeviceName = '';
     _pendingAccept?.complete(false);
     _pendingAccept = null;
+    _acceptorFallbackTimer?.cancel();
+    _acceptorFallbackTimer = null;
     _acceptorResult = null;
   }
 
@@ -188,7 +191,9 @@ class SyncService {
     );
   }
 
-  static const _maxPayloadBytes = 50 * 1024 * 1024; // 50 MB
+  // Limit applies to JSON metadata only — images are fetched separately via
+  // /sync/image and are not subject to this cap.
+  static const _maxPayloadBytes = 500 * 1024 * 1024; // 500 MB
 
   Future<String?> _readBodyWithLimit(Request req, [int maxBytes = _maxPayloadBytes]) async {
     final lengthHeader = req.headers['content-length'];
@@ -221,14 +226,16 @@ class SyncService {
       final payload = SyncPayload.fromJson(data);
 
       // Fetch images from sender before importing
+      int imagesFailed = 0;
       if (senderIp != null && senderPort != null) {
         final senderBase = 'http://$senderIp:$senderPort';
         for (final imgName in payload.imageFilenames) {
-          await _fetchImage(senderBase, imgName);
+          if (!await _fetchImage(senderBase, imgName)) imagesFailed++;
         }
       }
 
-      _acceptorResult = await _importPayload(payload);
+      _acceptorResult = (await _importPayload(payload)).withImagesFailed(imagesFailed);
+      _scheduleAcceptorFallback();
       await QuestionService().refresh();
       return Response.ok(
         jsonEncode({'ok': true}),
@@ -327,26 +334,36 @@ class SyncService {
           (data['questionIds'] as List).map((e) => e as String).toList();
 
       int qsDel = 0, qzDel = 0, fDel = 0;
+      final deletedQuestionIds = <String>[];
 
-      // 1. Questions first — avoids re-deletion by deleteQuiz's orphan cleanup
-      for (final id in questionIds) {
-        if (await _db!.getQuestionById(id) != null) {
-          await _db!.deleteQuestion(id);
-          await SrsService().deleteUserData(id);
-          qsDel++;
+      // All DB deletions in a single transaction so a crash mid-way doesn't
+      // leave the database in a partially-deleted state.
+      await _db!.transaction(() async {
+        // 1. Questions first — avoids re-deletion by deleteQuiz's orphan cleanup
+        for (final id in questionIds) {
+          if (await _db!.getQuestionById(id) != null) {
+            await _db!.deleteQuestion(id);
+            deletedQuestionIds.add(id);
+            qsDel++;
+          }
         }
-      }
-      // 2. Quizzes — questions already gone, orphan-cleanup is a no-op
-      for (final id in quizIds) {
-        if (await _db!.getQuizById(id) != null) {
-          await _db!.deleteQuiz(id);
-          qzDel++;
+        // 2. Quizzes — questions already gone, orphan-cleanup is a no-op
+        for (final id in quizIds) {
+          if (await _db!.getQuizById(id) != null) {
+            await _db!.deleteQuiz(id);
+            qzDel++;
+          }
         }
-      }
-      // 3. Folder rows only — quiz contents already handled above
-      for (final id in folderIds) {
-        await _db!.deleteFolderRow(id);
-        fDel++;
+        // 3. Folder rows only — quiz contents already handled above
+        for (final id in folderIds) {
+          await _db!.deleteFolderRow(id);
+          fDel++;
+        }
+      });
+
+      // SRS cleanup is Hive — runs outside the Drift transaction
+      for (final id in deletedQuestionIds) {
+        await SrsService().deleteUserData(id);
       }
 
       await QuestionService().refresh();
@@ -354,15 +371,17 @@ class SyncService {
       // Merge delete counts into the push result so the acceptor's done-screen
       // reflects both what was added and what was removed.
       _acceptorResult = SyncResult(
-        foldersAdded:   _acceptorResult?.foldersAdded   ?? 0,
-        quizzesAdded:   _acceptorResult?.quizzesAdded   ?? 0,
-        questionsAdded: _acceptorResult?.questionsAdded ?? 0,
-        srsUpdated:     _acceptorResult?.srsUpdated     ?? 0,
-        favoritesAdded: _acceptorResult?.favoritesAdded ?? 0,
-        foldersDeleted:   fDel,
-        quizzesDeleted:   qzDel,
-        questionsDeleted: qsDel,
+        foldersAdded:      _acceptorResult?.foldersAdded      ?? 0,
+        quizzesAdded:      _acceptorResult?.quizzesAdded      ?? 0,
+        questionsAdded:    _acceptorResult?.questionsAdded    ?? 0,
+        srsUpdated:        _acceptorResult?.srsUpdated        ?? 0,
+        favoritesAdded:    _acceptorResult?.favoritesAdded    ?? 0,
+        imagesFailedCount: _acceptorResult?.imagesFailedCount ?? 0,
+        foldersDeleted:    fDel,
+        quizzesDeleted:    qzDel,
+        questionsDeleted:  qsDel,
       );
+      _scheduleAcceptorFallback();
 
       return Response.ok(
         jsonEncode({
@@ -410,6 +429,8 @@ class SyncService {
   }
 
   Future<Response> _handleSyncDone(Request req) async {
+    _acceptorFallbackTimer?.cancel();
+    _acceptorFallbackTimer = null;
     final result = _acceptorResult ?? const SyncResult();
     _acceptorResult = null;
     if (!_acceptorDoneController.isClosed) {
@@ -419,6 +440,20 @@ class SyncService {
       jsonEncode({'ok': true}),
       headers: {'content-type': 'application/json'},
     );
+  }
+
+  // Starts (or restarts) a fallback timer so the acceptor UI is never left
+  // waiting if the initiator's /sync/done signal fails to arrive.
+  void _scheduleAcceptorFallback() {
+    _acceptorFallbackTimer?.cancel();
+    _acceptorFallbackTimer = Timer(const Duration(seconds: 30), () {
+      final result = _acceptorResult ?? const SyncResult();
+      _acceptorResult = null;
+      _acceptorFallbackTimer = null;
+      if (!_acceptorDoneController.isClosed) {
+        _acceptorDoneController.add(result);
+      }
+    });
   }
 
   // ── Initiator: full bidirectional sync ───────────────────────
@@ -587,12 +622,13 @@ class SyncService {
             Map<String, dynamic>.from(jsonDecode(pullResp.body) as Map));
 
         _progress('Downloading images…');
+        int imagesFailed = 0;
         for (final imgName in fetchedPayload.imageFilenames) {
-          await _fetchImage(base, imgName);
+          if (!await _fetchImage(base, imgName)) imagesFailed++;
         }
 
         _progress('Importing content…');
-        result = await _importPayload(fetchedPayload);
+        result = (await _importPayload(fetchedPayload)).withImagesFailed(imagesFailed);
 
         // Also apply remote favorites we don't have yet
         for (final favId in toFetchFavIds) {
@@ -996,18 +1032,26 @@ class SyncService {
 
   // ── Image transfer ───────────────────────────────────────────
 
-  Future<void> _fetchImage(String base, String imageName) async {
+  // Returns true if the image is available locally after the call (either it
+  // already existed or was successfully downloaded), false on failure.
+  Future<bool> _fetchImage(String base, String imageName) async {
     final safeName = p.basename(imageName);
-    if (safeName.isEmpty) return;
+    if (safeName.isEmpty) return true;
     final imgDir = await _getImagesDir();
     final localFile = File(p.join(imgDir, safeName));
-    if (await localFile.exists()) return;
+    if (await localFile.exists()) return true;
     try {
       final resp = await http
           .get(Uri.parse('$base/sync/image?name=${Uri.encodeComponent(safeName)}'))
           .timeout(const Duration(seconds: 30));
-      if (resp.statusCode == 200) await localFile.writeAsBytes(resp.bodyBytes);
-    } catch (_) {}
+      if (resp.statusCode == 200) {
+        await localFile.writeAsBytes(resp.bodyBytes);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   // ── Utilities ────────────────────────────────────────────────
@@ -1037,6 +1081,7 @@ class SyncService {
 
   void dispose() {
     _server?.close();
+    _acceptorFallbackTimer?.cancel();
     discovery.dispose();
     _syncProgressController.close();
     _incomingRequestController.close();
