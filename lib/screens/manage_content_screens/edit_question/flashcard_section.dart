@@ -35,14 +35,6 @@ class FlashcardSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.flashcardRandomize),
-          subtitle: Text(l10n.flashcardRandomizeSubtitle),
-          value: randomizeSides,
-          onChanged: onRandomizeChanged,
-        ),
-        const SizedBox(height: 8),
         FlashcardSideEditor(
           headerLabel: l10n.flashcardFrontSide,
           textOptionalLabel: l10n.flashcardFrontTextOptional,
@@ -62,7 +54,15 @@ class FlashcardSection extends StatelessWidget {
           pickerKey: backPickerKey,
           onImageChanged: onBackImageChanged,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.flashcardRandomize),
+          subtitle: Text(l10n.flashcardRandomizeSubtitle),
+          value: randomizeSides,
+          onChanged: onRandomizeChanged,
+        ),
+        const SizedBox(height: 8),
       ],
     );
   }

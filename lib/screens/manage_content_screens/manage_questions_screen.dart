@@ -53,58 +53,55 @@ class ManageQuestionsScreen extends StatelessWidget {
           if (questions.isEmpty) {
             return Center(child: Text(l10n.noQuestionsYet));
           }
-          return ReorderableListView.builder(
-            padding: const EdgeInsets.only(bottom: 100),
-            itemCount: questions.length,
-            onReorder: (oldIndex, newIndex) async {
-              if (newIndex > oldIndex) newIndex--;
-              await db.reorderQuestion(
-                  quizId: quiz.id,
-                  questionId: questions[oldIndex].id,
-                  newIndex: newIndex);
-            },
-            itemBuilder: (context, i) {
-              final question = questions[i];
-              return ListTile(
-                key: ValueKey(question.id),
-                leading: _answerTypeIcon(question.answerType),
-                title: Text(
-                  question.questionText,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Row(
-                  children: [
-                    _answerTypeChip(question.answerType, l10n),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined),
-                      tooltip: l10n.edit,
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditQuestionScreen(
-                            quizId: quiz.id,
-                            db: db,
-                            question: question,
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 100),
+                itemCount: questions.length,
+                itemBuilder: (context, i) {
+                  final question = questions[i];
+                  return ListTile(
+                    leading: _answerTypeIcon(question.answerType),
+                    title: Text(
+                      question.questionText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Row(
+                      children: [
+                        _answerTypeChip(question.answerType, l10n),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined),
+                          tooltip: l10n.edit,
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EditQuestionScreen(
+                                quizId: quiz.id,
+                                db: db,
+                                question: question,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          tooltip: l10n.delete,
+                          onPressed: () => _confirmDelete(context, question),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      tooltip: l10n.delete,
-                      onPressed: () => _confirmDelete(context, question),
-                    ),
-                    const Icon(Icons.drag_handle),
-                  ],
-                ),
-              );
-            },
+                  );
+                },
+              ),
+            ),
           );
         },
       ),

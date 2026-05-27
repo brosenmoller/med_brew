@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:leerlus/models/answer_state.dart';
+import 'package:leerlus/models/answer_type.dart';
 import 'package:leerlus/models/question_data.dart';
 import 'package:leerlus/models/user_question_data.dart';
 import 'package:leerlus/screens/question_display/answer_area.dart';
@@ -62,7 +63,9 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
     // Only focus the continue button when it will actually be shown.
     // In SRS mode after a correct answer the sheet appears instead — focusing
     // the continue button here would let Enter skip the quality selection.
-    final srsSheetWillAppear = widget.spacedRepetitionMode && isCorrect;
+    final srsSheetWillAppear = widget.spacedRepetitionMode &&
+        isCorrect &&
+        widget.question.answerType != AnswerType.flashcard;
     if (!srsSheetWillAppear) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _continueFocusNode.requestFocus();
@@ -146,14 +149,16 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
                       child: child,
                     );
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: Text(
-                      widget.question.questionVariants.first,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
+                  child: widget.question.answerType == AnswerType.flashcard
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                          child: Text(
+                            widget.question.questionVariants.first,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
                 ),
                 Expanded(
                   child: AnswerArea(
@@ -162,6 +167,9 @@ class _QuestionDisplayScreenState extends State<QuestionDisplayScreen>
                     answerState: answerState,
                     onAnswered: _handleAnswer,
                     spacedRepetitionMode: widget.spacedRepetitionMode,
+                    onFlashcardSrsAnswered: widget.spacedRepetitionMode
+                        ? (quality) => widget.onContinue(true, quality)
+                        : null,
                   ),
                 ),
               ],

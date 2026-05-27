@@ -14,7 +14,7 @@ import 'package:leerlus/widgets/image_picker_field.dart';
 import 'package:leerlus/widgets/unsaved_changes_guard.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:leerlus/models/occlusion_data.dart';
+import 'package:leerlus/models/occlusion_data.dart' show OcclusionData, OcclusionImageEntry;
 import 'edit_question/answer_type_selector.dart';
 import 'edit_question/multiple_choice_section.dart';
 import 'edit_question/typed_answer_section.dart';
@@ -64,6 +64,8 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
   // Image variants (for multipleChoice, typed, sorting, set)
   late List<String> _imagePathVariants;
+  final Set<String> _pendingVariantSources = {};
+  final Set<String> _removedSavedVariants = {};
 
   // Image click — list of polygons in normalized (0–1) coordinates
   List<List<Offset>> _selectedImageAreas = [];
@@ -82,18 +84,40 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
   // Set
   late final List<TextEditingController> _setControllers;
 
-  // Occlusion (optional, available for all types except imageClick)
-  OcclusionData? _occlusionData;
+  // Pending image flags — tracks whether the current image path for each slot
+  // is a temp source file that hasn't been copied to app storage yet.
+  // Needed to carry pending images across answer-type switches.
+  bool _flashcardFrontImagePending = false;
+  bool _flashcardBackImagePending = false;
+  bool _imageClickImagePending = false;
+
+  // Per-image occlusion: key = image path for variants, 'front'/'back' for flashcard.
+  // Stored as v2 JSON {"v":2,"perImage":{...}} in the DB occlusionConfig column.
+  Map<String, OcclusionData> _occlusionDataByImage = {};
+
+  // Original image paths captured at init (edit mode only) for orphan detection on save.
+  late final Set<String> _originalImagePaths;
 
   bool get _hasChanges => _isDirty;
 
-  /// The image path to use as the background for occlusion editing.
-  /// For flashcard: front image. For imageClick: null (not supported).
-  /// For all others: first image variant, or fallback to imagePath.
-  String? get _occlusionImagePath {
-    if (_answerType == 'imageClick') return null;
-    if (_answerType == 'flashcard') return _flashcardFrontImagePath;
-    return _imagePathVariants.isNotEmpty ? _imagePathVariants.first : _imagePath;
+  /// Images that support per-image occlusion for the current answer type.
+  /// imageClick returns empty (not supported). Each entry carries a stable
+  /// key ('front'/'back' or image path) and a display label.
+  List<OcclusionImageEntry> get _occlusionImages {
+    if (_answerType == 'imageClick') return [];
+    if (_answerType == 'flashcard') {
+      return [
+        if (_flashcardFrontImagePath?.isNotEmpty == true)
+          OcclusionImageEntry(key: 'front', label: 'Front', imagePath: _flashcardFrontImagePath!),
+        if (_flashcardBackImagePath?.isNotEmpty == true)
+          OcclusionImageEntry(key: 'back', label: 'Back', imagePath: _flashcardBackImagePath!),
+      ];
+    }
+    return _imagePathVariants.asMap().entries.map((e) => OcclusionImageEntry(
+      key: e.value,
+      label: _imagePathVariants.length == 1 ? 'Image' : 'Image ${e.key + 1}',
+      imagePath: e.value,
+    )).toList();
   }
 
   void _markDirty() {
@@ -105,7 +129,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     super.initState();
     final q = widget.question;
 
-    _answerType = q?.answerType ?? 'multipleChoice';
+    _answerType = q?.answerType ?? 'typed';
     _imagePath = q?.imagePath;
     _questionController = TextEditingController(text: q?.questionText ?? '');
     _explanationController =
@@ -202,11 +226,27 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
           List.generate(2, (_) => TextEditingController());
     }
 
-    // Occlusion config
+    // Occlusion config — v2: {"v":2,"perImage":{...}}; legacy v1: raw OcclusionData JSON
     if (q?.occlusionConfig != null) {
       try {
-        _occlusionData = OcclusionData.fromJson(
-            jsonDecode(q!.occlusionConfig!) as Map<String, dynamic>);
+        final occJson = jsonDecode(q!.occlusionConfig!) as Map<String, dynamic>;
+        if (occJson.containsKey('perImage')) {
+          final perImage = occJson['perImage'] as Map<String, dynamic>;
+          _occlusionDataByImage = {
+            for (final e in perImage.entries)
+              e.key: OcclusionData.fromJson(e.value as Map<String, dynamic>)
+          };
+        } else {
+          // Legacy v1 — assign to first applicable image
+          final legacy = OcclusionData.fromJson(occJson);
+          if (!legacy.isEmpty) {
+            if (_answerType == 'flashcard') {
+              _occlusionDataByImage = {'front': legacy};
+            } else if (_imagePathVariants.isNotEmpty) {
+              _occlusionDataByImage = {_imagePathVariants.first: legacy};
+            }
+          }
+        }
       } catch (_) {}
     }
 
@@ -226,6 +266,23 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       _imagePathVariants = [q!.imagePath!];
     } else {
       _imagePathVariants = [];
+    }
+
+    // Capture original image paths for orphan detection on save (edit mode only).
+    if (widget.isEditing) {
+      _originalImagePaths = <String>{};
+      for (final p in _imagePathVariants) {
+        if (AppDatabase.isUserImagePath(p)) _originalImagePaths.add(p);
+      }
+      if (AppDatabase.isUserImagePath(_imagePath)) _originalImagePaths.add(_imagePath!);
+      if (AppDatabase.isUserImagePath(_flashcardFrontImagePath)) {
+        _originalImagePaths.add(_flashcardFrontImagePath!);
+      }
+      if (AppDatabase.isUserImagePath(_flashcardBackImagePath)) {
+        _originalImagePaths.add(_flashcardBackImagePath!);
+      }
+    } else {
+      _originalImagePaths = {};
     }
 
     _questionController.addListener(_markDirty);
@@ -268,25 +325,24 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
             child: Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
                 children: [
-                  TextFormField(
-                    controller: _questionController,
-                    decoration: InputDecoration(
-                      labelText: l10n.questionLabel,
-                      border: const OutlineInputBorder(),
+                  if (_answerType != 'flashcard') ...[
+                    TextFormField(
+                      controller: _questionController,
+                      decoration: InputDecoration(
+                        labelText: l10n.questionLabel,
+                        border: const OutlineInputBorder(),
+                      ),
+                      maxLines: null,
+                      validator: (v) => v!.trim().isEmpty ? l10n.required : null,
                     ),
-                    maxLines: null,
-                    validator: (v) => v!.trim().isEmpty ? l10n.required : null,
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                  ],
 
                   AnswerTypeSelector(
                     selected: _answerType,
-                    onChanged: (v) => setState(() {
-                      _answerType = v;
-                      _isDirty = true;
-                    }),
+                    onChanged: _onAnswerTypeChanged,
                   ),
                   const SizedBox(height: 16),
 
@@ -332,11 +388,15 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                       pickerKey: _pickerKey,
                       imagePath: _imagePath,
                       selectedImageAreas: _selectedImageAreas,
-                      onImageChanged: (path) => setState(() {
-                        _imagePath = path;
-                        _selectedImageAreas = [];
-                        _isDirty = true;
-                      }),
+                      onImageChanged: (path) {
+                        final isPending = _pickerKey.currentState?.hasPendingSource ?? false;
+                        setState(() {
+                          _imagePath = path;
+                          _imageClickImagePending = path != null && isPending;
+                          _selectedImageAreas = [];
+                          _isDirty = true;
+                        });
+                      },
                       onAreasChanged: (areas) => setState(() {
                         _selectedImageAreas = areas;
                         _isDirty = true;
@@ -370,14 +430,24 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                       backImagePath: _flashcardBackImagePath,
                       frontPickerKey: _flashcardFrontPickerKey,
                       backPickerKey: _flashcardBackPickerKey,
-                      onFrontImageChanged: (path) => setState(() {
-                        _flashcardFrontImagePath = path;
-                        _isDirty = true;
-                      }),
-                      onBackImageChanged: (path) => setState(() {
-                        _flashcardBackImagePath = path;
-                        _isDirty = true;
-                      }),
+                      onFrontImageChanged: (path) {
+                        final isPending = _flashcardFrontPickerKey.currentState?.hasPendingSource ?? false;
+                        setState(() {
+                          if (path == null) _occlusionDataByImage.remove('front');
+                          _flashcardFrontImagePath = path;
+                          _flashcardFrontImagePending = path != null && isPending;
+                          _isDirty = true;
+                        });
+                      },
+                      onBackImageChanged: (path) {
+                        final isPending = _flashcardBackPickerKey.currentState?.hasPendingSource ?? false;
+                        setState(() {
+                          if (path == null) _occlusionDataByImage.remove('back');
+                          _flashcardBackImagePath = path;
+                          _flashcardBackImagePending = path != null && isPending;
+                          _isDirty = true;
+                        });
+                      },
                     ),
 
                   if (_answerType == 'set')
@@ -419,22 +489,21 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Occlusion section — available for all types except imageClick
-                  if (_answerType != 'imageClick') ...[
+                  if (_occlusionImages.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    const Divider(),
-                    const SizedBox(height: 4),
                     OcclusionSection(
-                      imagePathForOcclusion: _occlusionImagePath,
-                      occlusionData: _occlusionData,
-                      onChanged: (data) => setState(() {
-                        _occlusionData = data;
+                      images: _occlusionImages,
+                      occlusionDataByImage: _occlusionDataByImage,
+                      onChanged: (map) => setState(() {
+                        _occlusionDataByImage = map;
                         _isDirty = true;
                       }),
                     ),
                     const SizedBox(height: 8),
                   ],
 
+                  const Divider(),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _explanationController,
                     decoration: InputDecoration(
@@ -449,6 +518,14 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                     icon: const Icon(Icons.save),
                     label: Text(widget.isEditing ? l10n.saveChanges : l10n.saveQuestion),
                   ),
+                  if (_answerType == 'flashcard') ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _saveAndAddReversed,
+                      icon: const Icon(Icons.swap_horiz),
+                      label: Text(l10n.flashcardSaveAndAddReversed),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -487,7 +564,6 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
               final index = entry.key;
               final path = entry.value;
               return Stack(
-                clipBehavior: Clip.none,
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
@@ -502,20 +578,28 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                     ),
                   ),
                   Positioned(
-                    top: -8,
-                    right: -8,
+                    top: 4,
+                    right: 4,
                     child: GestureDetector(
                       onTap: () => setState(() {
-                        _imagePathVariants.removeAt(index);
+                        final removedPath = _imagePathVariants.removeAt(index);
+                        _occlusionDataByImage.remove(removedPath);
+                        if (_pendingVariantSources.remove(removedPath)) {
+                          // Was a pending source — never copied, nothing to track.
+                        } else if (widget.isEditing) {
+                          _removedSavedVariants.add(removedPath);
+                        }
                         _isDirty = true;
                       }),
                       child: Container(
+                        width: 22,
+                        height: 22,
                         decoration: const BoxDecoration(
                           color: Colors.red,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.close,
-                            size: 18, color: Colors.white),
+                            size: 14, color: Colors.white),
                       ),
                     ),
                   ),
@@ -555,10 +639,11 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     final result =
         await FilePicker.platform.pickFiles(type: FileType.image);
     if (result?.files.single.path == null) return;
-    final saved = await _saveImageToStorage(result!.files.single.path!);
-    if (saved != null && mounted) {
+    final sourcePath = result!.files.single.path!;
+    if (mounted) {
       setState(() {
-        _imagePathVariants.add(saved);
+        _imagePathVariants.add(sourcePath);
+        _pendingVariantSources.add(sourcePath);
         _isDirty = true;
       });
     }
@@ -598,16 +683,228 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     }
   }
 
+  Future<void> _showOrphanPromptAndDelete(Set<String> removedPaths) async {
+    if (!widget.isEditing || removedPaths.isEmpty) return;
+    final userPaths = removedPaths.where(AppDatabase.isUserImagePath).toSet();
+    if (userPaths.isEmpty) return;
+    final allReferenced = await widget.db.getAllReferencedUserImagePaths();
+    final orphaned = userPaths.difference(allReferenced).toList();
+    if (orphaned.isEmpty || !mounted) return;
+    final l10n = AppLocalizations.of(context);
+    bool deleteOrphans = true;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateDlg) => AlertDialog(
+          title: Text(l10n.saveOrphanImagesTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.saveOrphanImagesContent),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: Text(
+                  l10n.deleteOrphanImages(orphaned.length),
+                  style: const TextStyle(fontSize: 13),
+                ),
+                value: deleteOrphans,
+                onChanged: (v) => setStateDlg(() => deleteOrphans = v ?? false),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.delete),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed == true && deleteOrphans) {
+      for (final path in orphaned) {
+        try { await File(path).delete(); } catch (_) {}
+      }
+    }
+  }
+
+  // ── Answer type switching ──────────────────────────────────────────────────
+
+  /// Returns the set of occlusion keys (with non-empty data) that cannot be
+  /// remapped to [newType] and will therefore be lost.
+  Set<String> _computeLostOcclusionKeys(String newType) {
+    if (_occlusionDataByImage.isEmpty) return {};
+    final nonEmptyKeys = _occlusionDataByImage.entries
+        .where((e) => !e.value.isEmpty)
+        .map((e) => e.key)
+        .toSet();
+    if (nonEmptyKeys.isEmpty) return {};
+
+    // imageClick: no occlusion at all
+    if (newType == 'imageClick') return nonEmptyKeys;
+
+    final oldIsVariant = _answerType != 'flashcard' && _answerType != 'imageClick';
+    final newIsVariant = newType != 'flashcard' && newType != 'imageClick';
+
+    // Between variant-based types: image paths carry over unchanged
+    if (oldIsVariant && newIsVariant) return {};
+
+    // imageClick → anything: nothing to lose (imageClick had no occlusion)
+    if (_answerType == 'imageClick') return {};
+
+    // flashcard → variant: 'front' remaps to carryImage; 'back' is lost
+    if (_answerType == 'flashcard' && newIsVariant) {
+      final canRemap = _flashcardFrontImagePath != null && nonEmptyKeys.contains('front');
+      final lost = <String>{};
+      if (nonEmptyKeys.contains('back')) lost.add('back');
+      if (!canRemap && nonEmptyKeys.contains('front')) lost.add('front');
+      return lost;
+    }
+
+    // variant → flashcard: first variant remaps to 'front'; others are lost
+    if (oldIsVariant && newType == 'flashcard') {
+      final carryImage = _imagePathVariants.isNotEmpty ? _imagePathVariants.first : null;
+      return nonEmptyKeys.where((k) => k != carryImage).toSet();
+    }
+
+    return {};
+  }
+
+  /// Builds the new occlusion map after a type switch, remapping carried keys.
+  Map<String, OcclusionData> _remapOcclusionForTypeSwitch(
+      String newType, String? carryImage) {
+    if (_occlusionDataByImage.isEmpty) return {};
+    if (newType == 'imageClick') return {};
+
+    final oldIsVariant = _answerType != 'flashcard' && _answerType != 'imageClick';
+    final newIsVariant = newType != 'flashcard' && newType != 'imageClick';
+
+    if (oldIsVariant && newIsVariant) return Map.from(_occlusionDataByImage);
+    if (_answerType == 'imageClick') return {};
+
+    if (_answerType == 'flashcard' && newIsVariant && carryImage != null) {
+      final frontData = _occlusionDataByImage['front'];
+      if (frontData != null && !frontData.isEmpty) return {carryImage: frontData};
+      return {};
+    }
+
+    if (oldIsVariant && newType == 'flashcard' && carryImage != null) {
+      final carryData = _occlusionDataByImage[carryImage];
+      if (carryData != null && !carryData.isEmpty) return {'front': carryData};
+      return {};
+    }
+
+    return {};
+  }
+
+  Future<void> _onAnswerTypeChanged(String newType) async {
+    if (newType == _answerType) return;
+
+    // Warn if occlusion data would be irreversibly lost
+    final lostKeys = _computeLostOcclusionKeys(newType);
+    if (lostKeys.isNotEmpty && mounted) {
+      final l10n = AppLocalizations.of(context);
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.occlusionTypeChangeTitle),
+          content: Text(l10n.occlusionTypeChangeContent(lostKeys.length)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.occlusionTypeChangeContinue),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
+    // Determine carry-over image (carry even if pending — pending state preserved)
+    String? carryImage;
+    bool carryIsPending = false;
+    if (_answerType == 'flashcard') {
+      carryImage = _flashcardFrontImagePath;
+      carryIsPending = _flashcardFrontImagePending;
+    } else if (_answerType == 'imageClick') {
+      carryImage = _imagePath;
+      carryIsPending = _imageClickImagePending;
+    } else if (_imagePathVariants.isNotEmpty) {
+      carryImage = _imagePathVariants.first;
+      carryIsPending = _pendingVariantSources.contains(carryImage);
+    }
+
+    final newOcclusion = _remapOcclusionForTypeSwitch(newType, carryImage);
+
+    setState(() {
+      // Clear old type's image state
+      if (_answerType == 'flashcard') {
+        _flashcardFrontImagePath = null;
+        _flashcardBackImagePath = null;
+        _flashcardFrontImagePending = false;
+        _flashcardBackImagePending = false;
+      } else if (_answerType == 'imageClick') {
+        _imagePath = null;
+        _imageClickImagePending = false;
+        _selectedImageAreas = [];
+      } else {
+        // variant-based: track non-pending removed variants for orphan detection
+        if (widget.isEditing) {
+          for (final path in _imagePathVariants) {
+            if (!_pendingVariantSources.contains(path)) {
+              _removedSavedVariants.add(path);
+            }
+          }
+        }
+        _imagePathVariants.clear();
+        _pendingVariantSources.clear();
+      }
+
+      // Apply carry-over to new type (preserve pending state)
+      if (carryImage != null) {
+        if (newType == 'flashcard') {
+          _flashcardFrontImagePath = carryImage;
+          _flashcardFrontImagePending = carryIsPending;
+        } else if (newType == 'imageClick') {
+          _imagePath = carryImage;
+          _imageClickImagePending = carryIsPending;
+        } else {
+          _imagePathVariants.add(carryImage);
+          if (carryIsPending) _pendingVariantSources.add(carryImage);
+        }
+      }
+
+      _occlusionDataByImage = newOcclusion;
+      _answerType = newType;
+      _isDirty = true;
+    });
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     final l10n = AppLocalizations.of(context);
-    final questionText = _questionController.text.trim();
+    var questionText = _questionController.text.trim();
 
     final String answerConfig;
     // imageClick/flashcard use a single imagePath; all other types use the
     // imagePathVariants list and derive imagePath from its first element.
     String? singleImagePath; // only set for imageClick / flashcard
+    // Wider-scoped so the orphan check below can read them after the if/else chain.
+    String? resolvedFrontImagePath;
+    String? resolvedBackImagePath;
 
     if (_answerType == 'multipleChoice') {
       if (_correctIndices.isEmpty) {
@@ -623,8 +920,13 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         if (_showCorrectCount) 'showCorrectCount': true,
       });
     } else if (_answerType == 'imageClick') {
-      singleImagePath = await _pickerKey.currentState
-          ?.applyAutoName('question_$questionText') ?? _imagePath;
+      if (_imageClickImagePending && _imagePath != null) {
+        singleImagePath = await _saveImageToStorage(_imagePath!);
+        if (mounted) setState(() { _imagePath = singleImagePath; _imageClickImagePending = false; });
+      } else {
+        singleImagePath = await _pickerKey.currentState
+            ?.applyAutoName('question_$questionText') ?? _imagePath;
+      }
       if (_selectedImageAreas.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.pleaseDefineClickArea)));
@@ -635,19 +937,31 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     } else if (_answerType == 'flashcard') {
       final frontText = _flashcardFrontTextController.text.trim();
       final backText = _flashcardBackTextController.text.trim();
-      final frontImagePath = await _flashcardFrontPickerKey.currentState
-          ?.applyAutoName('question_${questionText}_front')
-          ?? _flashcardFrontImagePath;
-      final backImagePath = await _flashcardBackPickerKey.currentState
-          ?.applyAutoName('question_${questionText}_back')
-          ?? _flashcardBackImagePath;
+      // Auto-populate questionText from front side (used in list views)
+      questionText = frontText.isNotEmpty ? frontText : backText.isNotEmpty ? backText : 'Flashcard';
+      if (_flashcardFrontImagePending && _flashcardFrontImagePath != null) {
+        resolvedFrontImagePath = await _saveImageToStorage(_flashcardFrontImagePath!);
+        if (mounted) setState(() { _flashcardFrontImagePath = resolvedFrontImagePath; _flashcardFrontImagePending = false; });
+      } else {
+        resolvedFrontImagePath = await _flashcardFrontPickerKey.currentState
+            ?.applyAutoName('question_${questionText}_front')
+            ?? _flashcardFrontImagePath;
+      }
+      if (_flashcardBackImagePending && _flashcardBackImagePath != null) {
+        resolvedBackImagePath = await _saveImageToStorage(_flashcardBackImagePath!);
+        if (mounted) setState(() { _flashcardBackImagePath = resolvedBackImagePath; _flashcardBackImagePending = false; });
+      } else {
+        resolvedBackImagePath = await _flashcardBackPickerKey.currentState
+            ?.applyAutoName('question_${questionText}_back')
+            ?? _flashcardBackImagePath;
+      }
 
-      if (frontText.isEmpty && (frontImagePath == null || frontImagePath.isEmpty)) {
+      if (frontText.isEmpty && (resolvedFrontImagePath == null || resolvedFrontImagePath.isEmpty)) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.flashcardFrontRequired)));
         return;
       }
-      if (backText.isEmpty && (backImagePath == null || backImagePath.isEmpty)) {
+      if (backText.isEmpty && (resolvedBackImagePath == null || resolvedBackImagePath.isEmpty)) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.flashcardBackRequired)));
         return;
@@ -655,9 +969,9 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
 
       answerConfig = jsonEncode(FlashcardConfig(
         frontText: frontText.isEmpty ? null : frontText,
-        frontImagePath: frontImagePath,
+        frontImagePath: resolvedFrontImagePath,
         backText: backText.isEmpty ? null : backText,
-        backImagePath: backImagePath,
+        backImagePath: resolvedBackImagePath,
         randomizeSides: _flashcardRandomizeSides,
       ).toJson());
     } else if (_answerType == 'sorting') {
@@ -687,6 +1001,33 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
       });
     }
 
+    // Flush pending image variants — copy source files to app storage now.
+    if (_pendingVariantSources.isNotEmpty) {
+      final oldPaths = List<String>.from(_imagePathVariants);
+      final resolved = <String>[];
+      for (final path in _imagePathVariants) {
+        if (_pendingVariantSources.contains(path)) {
+          resolved.add(await _saveImageToStorage(path) ?? path);
+        } else {
+          resolved.add(path);
+        }
+      }
+      _imagePathVariants
+        ..clear()
+        ..addAll(resolved);
+      _pendingVariantSources.clear();
+      // Remap occlusion keys from old pending paths to new saved paths
+      final remapped = <String, OcclusionData>{};
+      for (int i = 0; i < oldPaths.length; i++) {
+        final entry = _occlusionDataByImage[oldPaths[i]];
+        if (entry != null) remapped[_imagePathVariants[i]] = entry;
+      }
+      for (final e in _occlusionDataByImage.entries) {
+        if (!oldPaths.contains(e.key)) remapped[e.key] = e.value;
+      }
+      _occlusionDataByImage = remapped;
+    }
+
     // Build image fields for the companion.
     // imageClick / flashcard: singleImagePath, no variants.
     // All other types: variants list drives both columns.
@@ -700,9 +1041,16 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
         : null;
 
     final explanation = _explanationController.text.trim();
-    final String? occlusionConfigJson = (_occlusionData != null &&
-            !_occlusionData!.isEmpty)
-        ? jsonEncode(_occlusionData!.toJson())
+    final nonEmptyOcclusion = Map.fromEntries(
+      _occlusionDataByImage.entries.where((e) => !e.value.isEmpty),
+    );
+    final String? occlusionConfigJson = nonEmptyOcclusion.isNotEmpty
+        ? jsonEncode({
+            'v': 2,
+            'perImage': {
+              for (final e in nonEmptyOcclusion.entries) e.key: e.value.toJson(),
+            },
+          })
         : null;
 
     final companion = QuestionsCompanion(
@@ -727,6 +1075,131 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
     }
 
     await QuestionService().refresh();
+
+    if (widget.isEditing && mounted) {
+      final finalUserPaths = <String>{
+        if (AppDatabase.isUserImagePath(finalImagePath)) finalImagePath!,
+        for (final p in _imagePathVariants)
+          if (AppDatabase.isUserImagePath(p)) p,
+        if (AppDatabase.isUserImagePath(resolvedFrontImagePath)) resolvedFrontImagePath!,
+        if (AppDatabase.isUserImagePath(resolvedBackImagePath)) resolvedBackImagePath!,
+        if (AppDatabase.isUserImagePath(singleImagePath)) singleImagePath!,
+      };
+      await _showOrphanPromptAndDelete(_originalImagePaths.difference(finalUserPaths));
+    }
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _saveAndAddReversed() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final l10n = AppLocalizations.of(context);
+
+    final frontText = _flashcardFrontTextController.text.trim();
+    final backText = _flashcardBackTextController.text.trim();
+    final questionText = frontText.isNotEmpty ? frontText : backText.isNotEmpty ? backText : 'Flashcard';
+
+    String? frontImagePath;
+    if (_flashcardFrontImagePending && _flashcardFrontImagePath != null) {
+      frontImagePath = await _saveImageToStorage(_flashcardFrontImagePath!);
+      if (mounted) setState(() { _flashcardFrontImagePath = frontImagePath; _flashcardFrontImagePending = false; });
+    } else {
+      frontImagePath = await _flashcardFrontPickerKey.currentState
+          ?.applyAutoName('question_${questionText}_front')
+          ?? _flashcardFrontImagePath;
+    }
+    String? backImagePath;
+    if (_flashcardBackImagePending && _flashcardBackImagePath != null) {
+      backImagePath = await _saveImageToStorage(_flashcardBackImagePath!);
+      if (mounted) setState(() { _flashcardBackImagePath = backImagePath; _flashcardBackImagePending = false; });
+    } else {
+      backImagePath = await _flashcardBackPickerKey.currentState
+          ?.applyAutoName('question_${questionText}_back')
+          ?? _flashcardBackImagePath;
+    }
+
+    if (frontText.isEmpty && (frontImagePath == null || frontImagePath.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.flashcardFrontRequired)));
+      return;
+    }
+    if (backText.isEmpty && (backImagePath == null || backImagePath.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.flashcardBackRequired)));
+      return;
+    }
+
+    final explanation = _explanationController.text.trim();
+    final nonEmptyOcclusionR = Map.fromEntries(
+      _occlusionDataByImage.entries.where((e) => !e.value.isEmpty),
+    );
+    final occlusionConfigJson = nonEmptyOcclusionR.isNotEmpty
+        ? jsonEncode({
+            'v': 2,
+            'perImage': {
+              for (final e in nonEmptyOcclusionR.entries) e.key: e.value.toJson(),
+            },
+          })
+        : null;
+
+    final mainConfig = jsonEncode(FlashcardConfig(
+      frontText: frontText.isEmpty ? null : frontText,
+      frontImagePath: frontImagePath,
+      backText: backText.isEmpty ? null : backText,
+      backImagePath: backImagePath,
+      randomizeSides: _flashcardRandomizeSides,
+    ).toJson());
+
+    final mainCompanion = QuestionsCompanion(
+      questionText: Value(questionText),
+      answerType: const Value('flashcard'),
+      answerConfig: Value(mainConfig),
+      explanation: Value(explanation.isEmpty ? null : explanation),
+      occlusionConfig: Value(occlusionConfigJson),
+    );
+
+    if (widget.isEditing) {
+      await (widget.db.update(widget.db.questions)
+        ..where((t) => t.id.equals(widget.question!.id)))
+          .write(mainCompanion);
+    } else {
+      await widget.db.insertQuestionIntoQuiz(
+        quizId: widget.quizId,
+        question: mainCompanion,
+      );
+    }
+
+    // Insert reversed sibling
+    final reversedQuestionText = backText.isNotEmpty ? backText : frontText.isNotEmpty ? frontText : 'Flashcard';
+    final reversedConfig = jsonEncode(FlashcardConfig(
+      frontText: backText.isEmpty ? null : backText,
+      frontImagePath: backImagePath,
+      backText: frontText.isEmpty ? null : frontText,
+      backImagePath: frontImagePath,
+      randomizeSides: _flashcardRandomizeSides,
+    ).toJson());
+
+    await widget.db.insertQuestionIntoQuiz(
+      quizId: widget.quizId,
+      question: QuestionsCompanion(
+        questionText: Value(reversedQuestionText),
+        answerType: const Value('flashcard'),
+        answerConfig: Value(reversedConfig),
+        explanation: Value(explanation.isEmpty ? null : explanation),
+      ),
+    );
+
+    await QuestionService().refresh();
+
+    if (widget.isEditing && mounted) {
+      final finalUserPaths = <String>{
+        if (AppDatabase.isUserImagePath(frontImagePath)) frontImagePath!,
+        if (AppDatabase.isUserImagePath(backImagePath)) backImagePath!,
+      };
+      await _showOrphanPromptAndDelete(_originalImagePaths.difference(finalUserPaths));
+    }
+
     if (mounted) Navigator.pop(context);
   }
 }

@@ -109,11 +109,26 @@ class QuestionService {
           imagePathVariants = [];
         }
 
-        OcclusionData? occlusionData;
+        Map<String, OcclusionData> occlusionDataByImage = {};
         if (qRow.occlusionConfig != null) {
           try {
-            occlusionData = OcclusionData.fromJson(
-                jsonDecode(qRow.occlusionConfig!) as Map<String, dynamic>);
+            final occJson = jsonDecode(qRow.occlusionConfig!) as Map<String, dynamic>;
+            if (occJson.containsKey('perImage')) {
+              final perImage = occJson['perImage'] as Map<String, dynamic>;
+              occlusionDataByImage = {
+                for (final e in perImage.entries)
+                  e.key: OcclusionData.fromJson(e.value as Map<String, dynamic>)
+              };
+            } else {
+              final legacy = OcclusionData.fromJson(occJson);
+              if (!legacy.isEmpty) {
+                if (answerType == AnswerType.flashcard) {
+                  occlusionDataByImage = {'front': legacy};
+                } else if (imagePathVariants.isNotEmpty) {
+                  occlusionDataByImage = {imagePathVariants.first: legacy};
+                }
+              }
+            }
           } catch (_) {}
         }
 
@@ -125,7 +140,7 @@ class QuestionService {
           imagePathVariants: imagePathVariants,
           answerType: answerType,
           explanation: qRow.explanation,
-          occlusionData: occlusionData,
+          occlusionDataByImage: occlusionDataByImage,
           multipleChoiceConfig: answerType == AnswerType.multipleChoice
               ? MultipleChoiceConfig.fromJson(config) : null,
           typedAnswerConfig: answerType == AnswerType.typed

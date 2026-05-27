@@ -1,5 +1,24 @@
 import 'package:flutter/material.dart';
 
+/// Carries per-image info into the occlusion section / selector.
+class OcclusionImageEntry {
+  /// Stable key used in the occlusion data map.
+  /// 'front' or 'back' for flashcard sides; image path for variants.
+  final String key;
+
+  /// Human-readable label shown in the UI (e.g. 'Front', 'Back', 'Image 1').
+  final String label;
+
+  /// Resolved image path passed to AppImage / the selector.
+  final String imagePath;
+
+  const OcclusionImageEntry({
+    required this.key,
+    required this.label,
+    required this.imagePath,
+  });
+}
+
 enum HighlightShapeType { rect, circle }
 
 class HighlightShape {

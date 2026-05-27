@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:leerlus/models/occlusion_data.dart';
 import 'package:leerlus/widgets/app_image.dart';
 import 'package:leerlus/widgets/unsaved_changes_guard.dart';
@@ -17,13 +17,31 @@ const _kHighlightColors = [
   Colors.cyan,
 ];
 
+/// Per-image mutable state for the occlusion selector.
+class _PerImageState {
+  List<List<Offset>> hiddenPolygons;
+  List<HighlightShape> highlights;
+  List<Offset> drawingPoints = [];
+  Offset? firstRectCorner;
+  Offset? firstHighlightCorner;
+  int? selectedHideIndex;
+  int? selectedHighlightIndex;
+  bool isDirty;
+
+  _PerImageState({
+    required this.hiddenPolygons,
+    required this.highlights,
+    this.isDirty = false,
+  });
+}
+
 class ImageOcclusionSelectorScreen extends StatefulWidget {
-  final String imagePath;
-  final OcclusionData initialData;
+  final List<OcclusionImageEntry> images;
+  final Map<String, OcclusionData> initialData;
 
   const ImageOcclusionSelectorScreen({
     super.key,
-    required this.imagePath,
+    required this.images,
     required this.initialData,
   });
 
@@ -34,41 +52,46 @@ class ImageOcclusionSelectorScreen extends StatefulWidget {
 
 class _ImageOcclusionSelectorScreenState
     extends State<ImageOcclusionSelectorScreen> {
-  // ── Mode ─────────────────────────────────────────────────────────────────
+  // ── Mode / tool state (shared across images) ──────────────────────────────
   _Mode _mode = _Mode.hide;
-
-  // ── Hide mode state ───────────────────────────────────────────────────────
   _HideTool _hideTool = _HideTool.polygon;
-  late List<List<Offset>> _hiddenPolygons;
-  List<Offset> _drawingPoints = [];
-  Offset? _firstRectCorner;
-  int? _selectedHideIndex;
-
-  // ── Highlight mode state ──────────────────────────────────────────────────
   _HighlightTool _highlightTool = _HighlightTool.rect;
-  late List<HighlightShape> _highlights;
   MaterialColor _highlightColor = _kHighlightColors[0];
-  Offset? _firstHighlightCorner;
-  int? _selectedHighlightIndex;
 
-  // ── Shared ────────────────────────────────────────────────────────────────
-  double? _aspectRatio;
-  bool _isDirty = false;
+  // ── Per-image state ───────────────────────────────────────────────────────
+  late final List<_PerImageState> _perImageStates;
+  int _currentIndex = 0;
+
+  // ── Aspect ratios per image ───────────────────────────────────────────────
+  late final List<double?> _aspectRatios;
+
+  // ── Zoom ──────────────────────────────────────────────────────────────────
   double _currentScale = 1.0;
   final TransformationController _transformController =
       TransformationController();
 
+  _PerImageState get _current => _perImageStates[_currentIndex];
+
   @override
   void initState() {
     super.initState();
-    _hiddenPolygons = widget.initialData.hiddenAreas
-        .map((p) => List<Offset>.from(p))
-        .toList();
-    _highlights = List<HighlightShape>.from(widget.initialData.highlights);
+    _perImageStates = widget.images.map((img) {
+      final data = widget.initialData[img.key];
+      return _PerImageState(
+        hiddenPolygons: data?.hiddenAreas.map((p) => List<Offset>.from(p)).toList() ?? [],
+        highlights: List<HighlightShape>.from(data?.highlights ?? []),
+      );
+    }).toList();
+
+    _aspectRatios = List<double?>.filled(widget.images.length, null);
+    for (int i = 0; i < widget.images.length; i++) {
+      final idx = i;
+      resolveImageAspectRatio(widget.images[idx].imagePath).then((ratio) {
+        if (mounted) setState(() => _aspectRatios[idx] = ratio);
+      });
+    }
+
     _transformController.addListener(_onTransformChanged);
-    resolveImageAspectRatio(widget.imagePath).then((ratio) {
-      if (mounted) setState(() => _aspectRatio = ratio);
-    });
   }
 
   @override
@@ -84,11 +107,29 @@ class _ImageOcclusionSelectorScreenState
   }
 
   bool get _isDrawing =>
-      _drawingPoints.isNotEmpty ||
-      _firstRectCorner != null ||
-      _firstHighlightCorner != null;
+      _current.drawingPoints.isNotEmpty ||
+      _current.firstRectCorner != null ||
+      _current.firstHighlightCorner != null;
 
-  bool get _hasChanges => _isDirty || _isDrawing;
+  bool get _hasChanges =>
+      _perImageStates.any((s) => s.isDirty) || _isDrawing;
+
+  // ── Image tab switching ───────────────────────────────────────────────────
+  void _switchImage(int index) {
+    if (index == _currentIndex) return;
+    setState(() {
+      // Discard any in-progress drawing for the current image
+      _current.drawingPoints = [];
+      _current.firstRectCorner = null;
+      _current.firstHighlightCorner = null;
+      _current.selectedHideIndex = null;
+      _current.selectedHighlightIndex = null;
+
+      _currentIndex = index;
+      _currentScale = 1.0;
+      _transformController.value = Matrix4.identity();
+    });
+  }
 
   // ── Point-in-polygon ──────────────────────────────────────────────────────
   static bool _isInsidePolygon(List<Offset> polygon, Offset point) {
@@ -145,87 +186,88 @@ class _ImageOcclusionSelectorScreenState
 
   void _handleHideTap(Offset normPos, Offset viewportPos, Size size) {
     if (_hideTool == _HideTool.rectangle) {
-      if (_firstRectCorner == null) {
-        _firstRectCorner = normPos;
+      if (_current.firstRectCorner == null) {
+        _current.firstRectCorner = normPos;
       } else {
-        final a = _firstRectCorner!;
+        final a = _current.firstRectCorner!;
         final b = normPos;
-        _hiddenPolygons.add([
+        _current.hiddenPolygons.add([
           Offset(a.dx, a.dy),
           Offset(b.dx, a.dy),
           Offset(b.dx, b.dy),
           Offset(a.dx, b.dy),
         ]);
-        _firstRectCorner = null;
-        _isDirty = true;
+        _current.firstRectCorner = null;
+        _current.isDirty = true;
       }
       return;
     }
 
     // Polygon tool
-    if (_drawingPoints.isEmpty) {
+    if (_current.drawingPoints.isEmpty) {
       bool tapped = false;
-      for (int i = _hiddenPolygons.length - 1; i >= 0; i--) {
-        if (_hiddenPolygons[i].length >= 3 &&
-            _isInsidePolygon(_hiddenPolygons[i], normPos)) {
-          _selectedHideIndex = (_selectedHideIndex == i) ? null : i;
+      for (int i = _current.hiddenPolygons.length - 1; i >= 0; i--) {
+        if (_current.hiddenPolygons[i].length >= 3 &&
+            _isInsidePolygon(_current.hiddenPolygons[i], normPos)) {
+          _current.selectedHideIndex =
+              (_current.selectedHideIndex == i) ? null : i;
           tapped = true;
           break;
         }
       }
       if (!tapped) {
-        if (_selectedHideIndex != null) {
-          _selectedHideIndex = null;
+        if (_current.selectedHideIndex != null) {
+          _current.selectedHideIndex = null;
         } else {
-          _drawingPoints.add(normPos);
+          _current.drawingPoints.add(normPos);
         }
       }
       return;
     }
 
     // Close polygon when near first point
-    if (_drawingPoints.length >= 3) {
+    if (_current.drawingPoints.length >= 3) {
       final firstScene = Offset(
-        _drawingPoints.first.dx * size.width,
-        _drawingPoints.first.dy * size.height,
+        _current.drawingPoints.first.dx * size.width,
+        _current.drawingPoints.first.dy * size.height,
       );
       final firstViewport = MatrixUtils.transformPoint(
         _transformController.value,
         firstScene,
       );
       if ((viewportPos - firstViewport).distance < 22.0) {
-        _hiddenPolygons.add(List.from(_drawingPoints));
-        _drawingPoints = [];
-        _isDirty = true;
+        _current.hiddenPolygons.add(List.from(_current.drawingPoints));
+        _current.drawingPoints = [];
+        _current.isDirty = true;
         return;
       }
     }
-    _drawingPoints.add(normPos);
+    _current.drawingPoints.add(normPos);
   }
 
   void _handleHighlightTap(Offset normPos) {
-    if (_firstHighlightCorner == null) {
-      // Check if tapping an existing highlight to select/deselect
+    if (_current.firstHighlightCorner == null) {
       bool tapped = false;
-      for (int i = _highlights.length - 1; i >= 0; i--) {
-        if (_isInsideHighlight(_highlights[i], normPos)) {
-          _selectedHighlightIndex = (_selectedHighlightIndex == i) ? null : i;
+      for (int i = _current.highlights.length - 1; i >= 0; i--) {
+        if (_isInsideHighlight(_current.highlights[i], normPos)) {
+          _current.selectedHighlightIndex =
+              (_current.selectedHighlightIndex == i) ? null : i;
           tapped = true;
           break;
         }
       }
       if (!tapped) {
-        if (_selectedHighlightIndex != null) {
-          _selectedHighlightIndex = null;
+        if (_current.selectedHighlightIndex != null) {
+          _current.selectedHighlightIndex = null;
         } else {
-          _firstHighlightCorner = normPos;
+          _current.firstHighlightCorner = normPos;
         }
       }
     } else {
-      final p1 = _firstHighlightCorner!;
+      final p1 = _current.firstHighlightCorner!;
       final p2 = normPos;
       if ((p2 - p1).distance > 0.01) {
-        _highlights.add(HighlightShape(
+        _current.highlights.add(HighlightShape(
           type: _highlightTool == _HighlightTool.circle
               ? HighlightShapeType.circle
               : HighlightShapeType.rect,
@@ -235,71 +277,93 @@ class _ImageOcclusionSelectorScreenState
               p1.dx > p2.dx ? p1.dx : p2.dx, p1.dy > p2.dy ? p1.dy : p2.dy),
           colorValue: _highlightColor.toARGB32(),
         ));
-        _isDirty = true;
+        _current.isDirty = true;
       }
-      _firstHighlightCorner = null;
+      _current.firstHighlightCorner = null;
     }
   }
 
   void _completePolygon() {
-    if (_drawingPoints.length < 3) return;
+    if (_current.drawingPoints.length < 3) return;
     setState(() {
-      _hiddenPolygons.add(List.from(_drawingPoints));
-      _drawingPoints = [];
-      _isDirty = true;
+      _current.hiddenPolygons.add(List.from(_current.drawingPoints));
+      _current.drawingPoints = [];
+      _current.isDirty = true;
     });
   }
 
   void _cancelDrawing() {
     setState(() {
-      _drawingPoints = [];
-      _firstRectCorner = null;
-      _firstHighlightCorner = null;
+      _current.drawingPoints = [];
+      _current.firstRectCorner = null;
+      _current.firstHighlightCorner = null;
     });
   }
 
   void _deleteSelected() {
     setState(() {
-      if (_mode == _Mode.hide && _selectedHideIndex != null) {
-        _hiddenPolygons.removeAt(_selectedHideIndex!);
-        _selectedHideIndex = null;
-        _isDirty = true;
-      } else if (_mode == _Mode.highlight && _selectedHighlightIndex != null) {
-        _highlights.removeAt(_selectedHighlightIndex!);
-        _selectedHighlightIndex = null;
-        _isDirty = true;
+      if (_mode == _Mode.hide && _current.selectedHideIndex != null) {
+        _current.hiddenPolygons.removeAt(_current.selectedHideIndex!);
+        _current.selectedHideIndex = null;
+        _current.isDirty = true;
+      } else if (_mode == _Mode.highlight &&
+          _current.selectedHighlightIndex != null) {
+        _current.highlights.removeAt(_current.selectedHighlightIndex!);
+        _current.selectedHighlightIndex = null;
+        _current.isDirty = true;
       }
     });
   }
 
   bool get _hasSelection =>
-      (_mode == _Mode.hide && _selectedHideIndex != null) ||
-      (_mode == _Mode.highlight && _selectedHighlightIndex != null);
+      (_mode == _Mode.hide && _current.selectedHideIndex != null) ||
+      (_mode == _Mode.highlight && _current.selectedHighlightIndex != null);
 
   String get _statusText {
     if (_mode == _Mode.hide) {
       if (_hideTool == _HideTool.rectangle) {
-        return _firstRectCorner == null
+        return _current.firstRectCorner == null
             ? 'Tap to place the first corner'
             : 'Tap to place the opposite corner';
       }
-      if (_drawingPoints.isEmpty) {
-        if (_hiddenPolygons.isEmpty) return 'Tap anywhere to start drawing a hidden area';
-        if (_selectedHideIndex != null) return 'Shape selected — tap Delete to remove';
+      if (_current.drawingPoints.isEmpty) {
+        if (_current.hiddenPolygons.isEmpty) {
+          return 'Tap anywhere to start drawing a hidden area';
+        }
+        if (_current.selectedHideIndex != null) {
+          return 'Shape selected — tap Delete to remove';
+        }
         return 'Tap a shape to select it, or tap an empty area to draw a new one';
       }
-      if (_drawingPoints.length < 3) {
-        return 'Keep tapping to add points (${_drawingPoints.length}/3 minimum to close)';
+      if (_current.drawingPoints.length < 3) {
+        return 'Keep tapping to add points (${_current.drawingPoints.length}/3 minimum to close)';
       }
       return 'Tap near ● to close the polygon, or keep adding points';
     } else {
-      if (_firstHighlightCorner == null) {
-        if (_highlights.isEmpty) return 'Tap to place the first corner of a highlight shape';
-        if (_selectedHighlightIndex != null) return 'Shape selected — tap Delete to remove';
+      if (_current.firstHighlightCorner == null) {
+        if (_current.highlights.isEmpty) {
+          return 'Tap to place the first corner of a highlight shape';
+        }
+        if (_current.selectedHighlightIndex != null) {
+          return 'Shape selected — tap Delete to remove';
+        }
         return 'Tap a shape to select it, or tap an empty area to draw a new one';
       }
       return 'Tap to place the opposite corner';
     }
+  }
+
+  void _save() {
+    final result = <String, OcclusionData>{};
+    for (int i = 0; i < widget.images.length; i++) {
+      final state = _perImageStates[i];
+      final data = OcclusionData(
+        hiddenAreas: state.hiddenPolygons,
+        highlights: state.highlights,
+      );
+      if (!data.isEmpty) result[widget.images[i].key] = data;
+    }
+    Navigator.pop(context, result);
   }
 
   @override
@@ -310,18 +374,6 @@ class _ImageOcclusionSelectorScreenState
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Occlusion Areas'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(
-                context,
-                OcclusionData(
-                  hiddenAreas: _hiddenPolygons,
-                  highlights: _highlights,
-                ),
-              ),
-              child: const Text('Save'),
-            ),
-          ],
         ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -337,11 +389,21 @@ class _ImageOcclusionSelectorScreenState
               ),
             ),
             Expanded(
-              child: _aspectRatio == null
+              child: _aspectRatios[_currentIndex] == null
                   ? const Center(child: CircularProgressIndicator())
                   : _buildCanvas(),
             ),
           ],
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: FilledButton.icon(
+              onPressed: _save,
+              icon: const Icon(Icons.save),
+              label: const Text('Save'),
+            ),
+          ),
         ),
       ),
     );
@@ -353,6 +415,27 @@ class _ImageOcclusionSelectorScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Image tabs — only shown when there are multiple images
+          if (widget.images.length > 1) ...[
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (int i = 0; i < widget.images.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(widget.images[i].label),
+                        selected: _currentIndex == i,
+                        onSelected: (_) => _switchImage(i),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
           // Mode toggle
           SegmentedButton<_Mode>(
             style: const ButtonStyle(visualDensity: VisualDensity.compact),
@@ -371,11 +454,11 @@ class _ImageOcclusionSelectorScreenState
             selected: {_mode},
             onSelectionChanged: (s) => setState(() {
               _mode = s.first;
-              _drawingPoints = [];
-              _firstRectCorner = null;
-              _firstHighlightCorner = null;
-              _selectedHideIndex = null;
-              _selectedHighlightIndex = null;
+              _current.drawingPoints = [];
+              _current.firstRectCorner = null;
+              _current.firstHighlightCorner = null;
+              _current.selectedHideIndex = null;
+              _current.selectedHighlightIndex = null;
             }),
           ),
           const SizedBox(height: 6),
@@ -407,12 +490,12 @@ class _ImageOcclusionSelectorScreenState
           selected: {_hideTool},
           onSelectionChanged: (s) => setState(() {
             _hideTool = s.first;
-            _drawingPoints = [];
-            _firstRectCorner = null;
+            _current.drawingPoints = [];
+            _current.firstRectCorner = null;
           }),
         ),
         const SizedBox(width: 8),
-        if (_drawingPoints.length >= 3)
+        if (_current.drawingPoints.length >= 3)
           FilledButton.tonal(
             style: const ButtonStyle(visualDensity: VisualDensity.compact),
             onPressed: _completePolygon,
@@ -454,11 +537,10 @@ class _ImageOcclusionSelectorScreenState
           selected: {_highlightTool},
           onSelectionChanged: (s) => setState(() {
             _highlightTool = s.first;
-            _firstHighlightCorner = null;
+            _current.firstHighlightCorner = null;
           }),
         ),
         const SizedBox(width: 8),
-        // Color chips
         ...(_kHighlightColors.map((c) => Padding(
               padding: const EdgeInsets.only(right: 4),
               child: GestureDetector(
@@ -516,7 +598,7 @@ class _ImageOcclusionSelectorScreenState
   Widget _buildCanvas() {
     return Center(
       child: AspectRatio(
-        aspectRatio: _aspectRatio!,
+        aspectRatio: _aspectRatios[_currentIndex]!,
         child: LayoutBuilder(
           builder: (context, constraints) {
             return Stack(
@@ -530,18 +612,22 @@ class _ImageOcclusionSelectorScreenState
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      AppImage(path: widget.imagePath, fit: BoxFit.contain),
+                      AppImage(
+                        path: widget.images[_currentIndex].imagePath,
+                        fit: BoxFit.contain,
+                      ),
                       CustomPaint(
                         painter: _OcclusionSelectorPainter(
-                          hiddenPolygons: _hiddenPolygons,
-                          highlights: _highlights,
-                          drawingPoints: _drawingPoints,
-                          firstRectCorner: _firstRectCorner,
-                          firstHighlightCorner: _firstHighlightCorner,
+                          hiddenPolygons: _current.hiddenPolygons,
+                          highlights: _current.highlights,
+                          drawingPoints: _current.drawingPoints,
+                          firstRectCorner: _current.firstRectCorner,
+                          firstHighlightCorner: _current.firstHighlightCorner,
                           highlightTool: _highlightTool,
                           highlightColor: _highlightColor,
-                          selectedHideIndex: _selectedHideIndex,
-                          selectedHighlightIndex: _selectedHighlightIndex,
+                          selectedHideIndex: _current.selectedHideIndex,
+                          selectedHighlightIndex:
+                              _current.selectedHighlightIndex,
                           scale: _currentScale,
                           mode: _mode,
                         ),
@@ -627,7 +713,9 @@ class _OcclusionSelectorPainter extends CustomPainter {
       for (int i = 1; i < pts.length; i++) {
         canvas.drawCircle(pts[i], 4 / scale, dotPaint);
       }
-      canvas.drawCircle(pts.first, 9 / scale,
+      canvas.drawCircle(
+          pts.first,
+          9 / scale,
           Paint()
             ..color = Colors.orange.shade100
             ..style = PaintingStyle.fill);
@@ -647,12 +735,15 @@ class _OcclusionSelectorPainter extends CustomPainter {
         firstRectCorner!.dx * size.width,
         firstRectCorner!.dy * size.height,
       );
-      canvas.drawCircle(pt, 8 / scale,
+      canvas.drawCircle(
+          pt,
+          8 / scale,
           Paint()
             ..color = Colors.orange.shade100
             ..style = PaintingStyle.fill);
       canvas.drawCircle(
-          pt, 8 / scale,
+          pt,
+          8 / scale,
           Paint()
             ..color = Colors.orange.shade700
             ..strokeWidth = 2.5 / scale
@@ -677,12 +768,15 @@ class _OcclusionSelectorPainter extends CustomPainter {
         firstHighlightCorner!.dx * size.width,
         firstHighlightCorner!.dy * size.height,
       );
-      canvas.drawCircle(pt, 8 / scale,
+      canvas.drawCircle(
+          pt,
+          8 / scale,
           Paint()
             ..color = highlightColor.shade100
             ..style = PaintingStyle.fill);
       canvas.drawCircle(
-          pt, 8 / scale,
+          pt,
+          8 / scale,
           Paint()
             ..color = highlightColor.shade700
             ..strokeWidth = 2.5 / scale
@@ -692,8 +786,9 @@ class _OcclusionSelectorPainter extends CustomPainter {
 
   void _drawHiddenPolygon(Canvas canvas, Size size, List<Offset> polygon,
       {required bool isSelected}) {
-    final pts =
-        polygon.map((p) => Offset(p.dx * size.width, p.dy * size.height)).toList();
+    final pts = polygon
+        .map((p) => Offset(p.dx * size.width, p.dy * size.height))
+        .toList();
     final path = Path()..moveTo(pts.first.dx, pts.first.dy);
     for (final p in pts.skip(1)) {
       path.lineTo(p.dx, p.dy);
@@ -701,7 +796,8 @@ class _OcclusionSelectorPainter extends CustomPainter {
     path.close();
 
     final fillColor = isSelected ? Colors.blue : Colors.black;
-    final borderColor = isSelected ? Colors.blue.shade700 : Colors.grey.shade800;
+    final borderColor =
+        isSelected ? Colors.blue.shade700 : Colors.grey.shade800;
 
     canvas.drawPath(
         path,
@@ -715,8 +811,10 @@ class _OcclusionSelectorPainter extends CustomPainter {
           ..strokeWidth = 2.5 / scale
           ..style = PaintingStyle.stroke);
     for (final p in pts) {
-      canvas.drawCircle(
-          p, 4 / scale, Paint()..color = borderColor..style = PaintingStyle.fill);
+      canvas.drawCircle(p, 4 / scale,
+          Paint()
+            ..color = borderColor
+            ..style = PaintingStyle.fill);
     }
   }
 

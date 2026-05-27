@@ -258,7 +258,7 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
               child: QuestionImage(
                 path: _resolvedImagePath!,
                 maxHeight: double.infinity,
-                occlusionData: widget.question.occlusionData,
+                occlusionData: widget.question.occlusionDataByImage[_resolvedImagePath],
                 occlusionRevealed: widget.answerState != AnswerState.unanswered,
               ),
             ),

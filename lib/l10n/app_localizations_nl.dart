@@ -705,6 +705,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Achterkant heeft minimaal tekst of een afbeelding nodig';
 
   @override
+  String get flashcardSaveAndAddReversed =>
+      'Opslaan & omgekeerde kopie toevoegen';
+
+  @override
   String get questionImageOptional => 'Vraagafbeelding (optioneel)';
 
   @override
@@ -1054,6 +1058,31 @@ class AppLocalizationsNl extends AppLocalizations {
   String get occlusionClear => 'Verwijderen';
 
   @override
+  String get occlusionClearAll => 'Alles wissen';
+
+  @override
+  String occlusionImagesCount(int setCount, int totalCount) {
+    return '$setCount/$totalCount afbeeldingen hebben occlusie';
+  }
+
+  @override
+  String get occlusionTypeChangeTitle => 'Occlusiedata gaat verloren';
+
+  @override
+  String occlusionTypeChangeContent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count afbeeldingen hebben occlusiegebieden die',
+      one: '1 afbeelding heeft occlusiegebieden die',
+    );
+    return '$_temp0 worden verwijderd bij het wisselen van vraagtype.';
+  }
+
+  @override
+  String get occlusionTypeChangeContinue => 'Toch wisselen';
+
+  @override
   String get imageLibraryTitle => 'Afbeeldingsbibliotheek';
 
   @override
@@ -1098,4 +1127,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String deleteOrphanImages(int count) {
     return 'Verwijder ook $count ongebruikte afbeelding(en)';
   }
+
+  @override
+  String get saveOrphanImagesTitle => 'Ongebruikte afbeeldingen verwijderen?';
+
+  @override
+  String get saveOrphanImagesContent =>
+      'De opgeslagen wijzigingen hebben afbeeldingen verwijderd die nergens anders worden gebruikt.';
 }

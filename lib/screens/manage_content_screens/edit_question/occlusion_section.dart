@@ -1,31 +1,36 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:leerlus/l10n/app_localizations.dart';
 import 'package:leerlus/models/occlusion_data.dart';
 import 'package:leerlus/screens/manage_content_screens/image_occlusion_selector_screen.dart';
 
 class OcclusionSection extends StatelessWidget {
-  /// The image path to draw occlusion on. Null means no image is set yet.
-  final String? imagePathForOcclusion;
+  /// Images that support occlusion for this question.
+  /// Empty means the section is hidden entirely.
+  final List<OcclusionImageEntry> images;
 
-  /// Current occlusion data, or null if none defined.
-  final OcclusionData? occlusionData;
+  /// Occlusion data keyed by [OcclusionImageEntry.key].
+  final Map<String, OcclusionData> occlusionDataByImage;
 
-  /// Called with updated data (or null to clear).
-  final ValueChanged<OcclusionData?> onChanged;
+  /// Called with the full updated map (empty map = clear all).
+  final ValueChanged<Map<String, OcclusionData>> onChanged;
 
   const OcclusionSection({
     super.key,
-    required this.imagePathForOcclusion,
-    required this.occlusionData,
+    required this.images,
+    required this.occlusionDataByImage,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (images.isEmpty) return const SizedBox.shrink();
+
     final l10n = AppLocalizations.of(context);
-    final hasImage =
-        imagePathForOcclusion != null && imagePathForOcclusion!.isNotEmpty;
-    final hasData = occlusionData != null && !occlusionData!.isEmpty;
+    final imagesWithData = images.where((img) {
+      final d = occlusionDataByImage[img.key];
+      return d != null && !d.isEmpty;
+    }).toList();
+    final hasData = imagesWithData.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,61 +40,55 @@ class OcclusionSection extends StatelessWidget {
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
-        if (!hasImage)
-          Text(
-            l10n.occlusionNoImage,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          )
-        else ...[
-          OutlinedButton.icon(
-            onPressed: () async {
-              final result =
-                  await Navigator.push<OcclusionData>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ImageOcclusionSelectorScreen(
-                    imagePath: imagePathForOcclusion!,
-                    initialData: occlusionData ??
-                        const OcclusionData(
-                          hiddenAreas: [],
-                          highlights: [],
-                        ),
-                  ),
+        OutlinedButton.icon(
+          onPressed: () async {
+            final result = await Navigator.push<Map<String, OcclusionData>>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ImageOcclusionSelectorScreen(
+                  images: images,
+                  initialData: occlusionDataByImage,
                 ),
-              );
-              if (result != null) onChanged(result);
-            },
-            icon: const Icon(Icons.layers_outlined),
-            label: Text(
-              hasData ? l10n.editOcclusionAreas : l10n.defineOcclusionAreas,
-            ),
+              ),
+            );
+            if (result != null) onChanged(result);
+          },
+          icon: const Icon(Icons.layers_outlined),
+          label: Text(
+            hasData ? l10n.editOcclusionAreas : l10n.defineOcclusionAreas,
           ),
-          if (hasData) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Text(
-                  l10n.occlusionSummary(
-                    occlusionData!.hiddenAreas.length,
-                    occlusionData!.highlights.length,
+        ),
+        if (hasData) ...[
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                images.length == 1
+                    ? l10n.occlusionSummary(
+                        imagesWithData.first == images.first
+                            ? (occlusionDataByImage[images.first.key]?.hiddenAreas.length ?? 0)
+                            : 0,
+                        imagesWithData.first == images.first
+                            ? (occlusionDataByImage[images.first.key]?.highlights.length ?? 0)
+                            : 0,
+                      )
+                    : l10n.occlusionImagesCount(imagesWithData.length, images.length),
+                style: const TextStyle(color: Colors.green, fontSize: 13),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () => onChanged({}),
+                child: Text(
+                  images.length == 1 ? l10n.occlusionClear : l10n.occlusionClearAll,
+                  style: TextStyle(
+                    color: Colors.red.shade600,
+                    fontSize: 13,
+                    decoration: TextDecoration.underline,
                   ),
-                  style: const TextStyle(color: Colors.green, fontSize: 13),
                 ),
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTap: () => onChanged(null),
-                  child: Text(
-                    l10n.occlusionClear,
-                    style: TextStyle(
-                      color: Colors.red.shade600,
-                      fontSize: 13,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
       ],
     );

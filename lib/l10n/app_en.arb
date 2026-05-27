@@ -342,6 +342,7 @@
   "flashcardBackImageOptional": "Back image (optional)",
   "flashcardFrontRequired": "Front side needs at least text or an image",
   "flashcardBackRequired": "Back side needs at least text or an image",
+  "flashcardSaveAndAddReversed": "Save & add reversed copy",
   "questionImageOptional": "Question image (optional)",
   "explanationOptional": "Explanation (optional)",
   "saveQuestion": "Save Question",
@@ -526,6 +527,22 @@
   "occlusionHideMode": "Hide",
   "occlusionHighlightMode": "Highlight",
   "occlusionClear": "Clear occlusion",
+  "occlusionClearAll": "Clear all",
+  "occlusionImagesCount": "{setCount}/{totalCount} images have occlusion",
+  "@occlusionImagesCount": {
+    "placeholders": {
+      "setCount": { "type": "int" },
+      "totalCount": { "type": "int" }
+    }
+  },
+  "occlusionTypeChangeTitle": "Occlusion data will be lost",
+  "occlusionTypeChangeContent": "{count, plural, =1{1 image has occlusion areas that} other{{count} images have occlusion areas that}} will be removed when switching question type.",
+  "@occlusionTypeChangeContent": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "occlusionTypeChangeContinue": "Switch anyway",
 
   "imageLibraryTitle": "Image Library",
   "imageLibrarySubtitle": "Manage images on this device",
@@ -554,5 +571,7 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "saveOrphanImagesTitle": "Remove unused images?",
+  "saveOrphanImagesContent": "Saving removed images that are no longer referenced anywhere."
 }

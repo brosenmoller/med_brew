@@ -701,6 +701,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Back side needs at least text or an image';
 
   @override
+  String get flashcardSaveAndAddReversed => 'Save & add reversed copy';
+
+  @override
   String get questionImageOptional => 'Question image (optional)';
 
   @override
@@ -1049,6 +1052,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get occlusionClear => 'Clear occlusion';
 
   @override
+  String get occlusionClearAll => 'Clear all';
+
+  @override
+  String occlusionImagesCount(int setCount, int totalCount) {
+    return '$setCount/$totalCount images have occlusion';
+  }
+
+  @override
+  String get occlusionTypeChangeTitle => 'Occlusion data will be lost';
+
+  @override
+  String occlusionTypeChangeContent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count images have occlusion areas that',
+      one: '1 image has occlusion areas that',
+    );
+    return '$_temp0 will be removed when switching question type.';
+  }
+
+  @override
+  String get occlusionTypeChangeContinue => 'Switch anyway';
+
+  @override
   String get imageLibraryTitle => 'Image Library';
 
   @override
@@ -1093,4 +1121,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String deleteOrphanImages(int count) {
     return 'Also delete $count unused image(s)';
   }
+
+  @override
+  String get saveOrphanImagesTitle => 'Remove unused images?';
+
+  @override
+  String get saveOrphanImagesContent =>
+      'Saving removed images that are no longer referenced anywhere.';
 }

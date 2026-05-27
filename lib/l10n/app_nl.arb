@@ -252,6 +252,7 @@
   "flashcardBackImageOptional": "Achterkant afbeelding (optioneel)",
   "flashcardFrontRequired": "Voorkant heeft minimaal tekst of een afbeelding nodig",
   "flashcardBackRequired": "Achterkant heeft minimaal tekst of een afbeelding nodig",
+  "flashcardSaveAndAddReversed": "Opslaan & omgekeerde kopie toevoegen",
   "questionImageOptional": "Vraagafbeelding (optioneel)",
   "explanationOptional": "Uitleg (optioneel)",
   "saveQuestion": "Vraag opslaan",
@@ -454,5 +455,23 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "saveOrphanImagesTitle": "Ongebruikte afbeeldingen verwijderen?",
+  "saveOrphanImagesContent": "De opgeslagen wijzigingen hebben afbeeldingen verwijderd die nergens anders worden gebruikt.",
+  "occlusionClearAll": "Alles wissen",
+  "occlusionImagesCount": "{setCount}/{totalCount} afbeeldingen hebben occlusie",
+  "@occlusionImagesCount": {
+    "placeholders": {
+      "setCount": { "type": "int" },
+      "totalCount": { "type": "int" }
+    }
+  },
+  "occlusionTypeChangeTitle": "Occlusiedata gaat verloren",
+  "occlusionTypeChangeContent": "{count, plural, =1{1 afbeelding heeft occlusiegebieden die} other{{count} afbeeldingen hebben occlusiegebieden die}} worden verwijderd bij het wisselen van vraagtype.",
+  "@occlusionTypeChangeContent": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "occlusionTypeChangeContinue": "Toch wisselen"
 }

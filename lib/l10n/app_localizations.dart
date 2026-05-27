@@ -1226,6 +1226,12 @@ abstract class AppLocalizations {
   /// **'Back side needs at least text or an image'**
   String get flashcardBackRequired;
 
+  /// No description provided for @flashcardSaveAndAddReversed.
+  ///
+  /// In en, this message translates to:
+  /// **'Save & add reversed copy'**
+  String get flashcardSaveAndAddReversed;
+
   /// No description provided for @questionImageOptional.
   ///
   /// In en, this message translates to:
@@ -1736,6 +1742,36 @@ abstract class AppLocalizations {
   /// **'Clear occlusion'**
   String get occlusionClear;
 
+  /// No description provided for @occlusionClearAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all'**
+  String get occlusionClearAll;
+
+  /// No description provided for @occlusionImagesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{setCount}/{totalCount} images have occlusion'**
+  String occlusionImagesCount(int setCount, int totalCount);
+
+  /// No description provided for @occlusionTypeChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Occlusion data will be lost'**
+  String get occlusionTypeChangeTitle;
+
+  /// No description provided for @occlusionTypeChangeContent.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 image has occlusion areas that} other{{count} images have occlusion areas that}} will be removed when switching question type.'**
+  String occlusionTypeChangeContent(int count);
+
+  /// No description provided for @occlusionTypeChangeContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch anyway'**
+  String get occlusionTypeChangeContinue;
+
   /// No description provided for @imageLibraryTitle.
   ///
   /// In en, this message translates to:
@@ -1813,6 +1849,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Also delete {count} unused image(s)'**
   String deleteOrphanImages(int count);
+
+  /// No description provided for @saveOrphanImagesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove unused images?'**
+  String get saveOrphanImagesTitle;
+
+  /// No description provided for @saveOrphanImagesContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving removed images that are no longer referenced anywhere.'**
+  String get saveOrphanImagesContent;
 }
 
 class _AppLocalizationsDelegate

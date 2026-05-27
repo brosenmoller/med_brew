@@ -13,8 +13,8 @@ class QuestionData {
   final AnswerType answerType;
   final String? explanation;
 
-  /// Optional occlusion overlay (hidden areas + highlight shapes) for this question's image.
-  final OcclusionData? occlusionData;
+  /// Occlusion overlays keyed by image path (for variants) or 'front'/'back' (flashcard).
+  final Map<String, OcclusionData> occlusionDataByImage;
 
   // Type-specific data
   final MultipleChoiceConfig? multipleChoiceConfig;
@@ -31,7 +31,7 @@ class QuestionData {
     this.explanation,
     this.imagePath,
     this.imagePathVariants = const [],
-    this.occlusionData,
+    this.occlusionDataByImage = const {},
     this.multipleChoiceConfig,
     this.typedAnswerConfig,
     this.imageClickConfig,
