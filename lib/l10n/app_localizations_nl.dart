@@ -401,6 +401,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get durationNow => 'nu';
 
   @override
+  String durationSeconds(int n) {
+    return '${n}s';
+  }
+
+  @override
   String durationDays(int n) {
     return '${n}d';
   }

@@ -152,6 +152,7 @@
   "srsEasy": "Makkelijk",
 
   "durationNow": "nu",
+  "durationSeconds": "{n}s",
   "durationDays": "{n}d",
   "durationHours": "{n}u",
   "durationMinutes": "{n}m",

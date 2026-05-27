@@ -716,6 +716,12 @@ abstract class AppLocalizations {
   /// **'now'**
   String get durationNow;
 
+  /// No description provided for @durationSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}s'**
+  String durationSeconds(int n);
+
   /// No description provided for @durationDays.
   ///
   /// In en, this message translates to:

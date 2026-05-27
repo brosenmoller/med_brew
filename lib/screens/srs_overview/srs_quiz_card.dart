@@ -205,6 +205,8 @@ class SrsQuizCard extends StatelessWidget {
     if (d.inDays > 0) return l10n.durationDays(d.inDays);
     if (d.inHours > 0) return l10n.durationHours(d.inHours);
     if (d.inMinutes > 0) return l10n.durationMinutes(d.inMinutes);
+    final secs = d.inSeconds;
+    if (secs > 0) return l10n.durationSeconds(secs);
     return l10n.durationNow;
   }
 }

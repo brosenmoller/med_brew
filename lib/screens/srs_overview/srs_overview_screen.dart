@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:leerlus/l10n/app_localizations.dart';
 import 'package:leerlus/models/question_data.dart';
 import 'package:leerlus/models/quiz_data.dart';
@@ -19,6 +21,21 @@ class SrsOverviewScreen extends StatefulWidget {
 class _SrsOverviewScreenState extends State<SrsOverviewScreen> {
   final QuestionService questionService = QuestionService();
   final SrsService srsService = SrsService();
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

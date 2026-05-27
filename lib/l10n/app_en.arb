@@ -187,6 +187,12 @@
   "srsEasy": "Easy",
 
   "durationNow": "now",
+  "durationSeconds": "{n}s",
+  "@durationSeconds": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
   "durationDays": "{n}d",
   "@durationDays": {
     "placeholders": {
