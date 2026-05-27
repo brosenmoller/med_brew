@@ -1682,6 +1682,18 @@ abstract class AppLocalizations {
   /// **'Show confetti and other visual effects'**
   String get settingsAnimationsSubtitle;
 
+  /// No description provided for @settingsDefaultQuizLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Default quiz language'**
+  String get settingsDefaultQuizLanguage;
+
+  /// No description provided for @settingsDefaultQuizLanguageNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None (don\'t set)'**
+  String get settingsDefaultQuizLanguageNone;
+
   /// No description provided for @syncThisDevice.
   ///
   /// In en, this message translates to:

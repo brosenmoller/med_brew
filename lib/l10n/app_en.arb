@@ -504,6 +504,8 @@
 
   "settingsAnimations": "Animations",
   "settingsAnimationsSubtitle": "Show confetti and other visual effects",
+  "settingsDefaultQuizLanguage": "Default quiz language",
+  "settingsDefaultQuizLanguageNone": "None (don't set)",
 
   "syncThisDevice": "This device",
   "syncDiscoverableAs": "Discoverable as: {name}",

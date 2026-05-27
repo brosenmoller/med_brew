@@ -77,6 +77,21 @@ class SettingsService {
     await _box.put(_kMaxDays, s.maxIntervalDays);
   }
 
+  // ── Default quiz language ─────────────────────────────────────────────────
+
+  static const _kDefaultQuizLang = 'default_quiz_language_code';
+
+  String? get defaultQuizLanguageCode =>
+      _box.get(_kDefaultQuizLang) as String?;
+
+  Future<void> setDefaultQuizLanguageCode(String? code) async {
+    if (code == null) {
+      await _box.delete(_kDefaultQuizLang);
+    } else {
+      await _box.put(_kDefaultQuizLang, code);
+    }
+  }
+
   // ── Animations ───────────────────────────────────────────────────────────
 
   static const _kAnimationsEnabled = 'animations_enabled';

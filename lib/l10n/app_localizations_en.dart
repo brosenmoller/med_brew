@@ -1018,6 +1018,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Show confetti and other visual effects';
 
   @override
+  String get settingsDefaultQuizLanguage => 'Default quiz language';
+
+  @override
+  String get settingsDefaultQuizLanguageNone => 'None (don\'t set)';
+
+  @override
   String get syncThisDevice => 'This device';
 
   @override

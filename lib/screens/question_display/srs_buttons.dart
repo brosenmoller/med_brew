@@ -10,11 +10,15 @@ import 'package:leerlus/services/srs_service.dart';
 class SrsButtons extends StatefulWidget {
   final QuestionData question;
   final Function(SrsQuality quality)? onAnswered;
+  // When false, keyboard focus is not claimed until this flips to true.
+  // Used by FlashcardWidget to defer focus until the card has been flipped.
+  final bool autofocus;
 
   const SrsButtons({
     super.key,
     required this.question,
     this.onAnswered,
+    this.autofocus = true,
   });
 
   @override
@@ -27,14 +31,22 @@ class _SrsButtonsState extends State<SrsButtons> {
   static bool get _isDesktop =>
       !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
+  void _claimFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    if (_isDesktop) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _focusNode.requestFocus();
-      });
-    }
+    if (_isDesktop && widget.autofocus) _claimFocus();
+  }
+
+  @override
+  void didUpdateWidget(SrsButtons oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_isDesktop && widget.autofocus && !oldWidget.autofocus) _claimFocus();
   }
 
   @override

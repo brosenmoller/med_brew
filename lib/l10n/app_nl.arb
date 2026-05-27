@@ -404,6 +404,8 @@
 
   "settingsAnimations": "Animaties",
   "settingsAnimationsSubtitle": "Toon confetti en andere visuele effecten",
+  "settingsDefaultQuizLanguage": "Standaard quiztaal",
+  "settingsDefaultQuizLanguageNone": "Geen (niet instellen)",
 
   "syncThisDevice": "Dit apparaat",
   "syncDiscoverableAs": "Zichtbaar als: {name}",

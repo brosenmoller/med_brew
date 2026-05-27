@@ -1024,6 +1024,12 @@ class AppLocalizationsNl extends AppLocalizations {
       'Toon confetti en andere visuele effecten';
 
   @override
+  String get settingsDefaultQuizLanguage => 'Standaard quiztaal';
+
+  @override
+  String get settingsDefaultQuizLanguageNone => 'Geen (niet instellen)';
+
+  @override
   String get syncThisDevice => 'Dit apparaat';
 
   @override

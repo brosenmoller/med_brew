@@ -41,6 +41,11 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
+    // Rebuild button section on status changes (dismissed / completed).
+    // The card uses AnimatedBuilder for per-frame updates; buttons only need status.
+    _controller.addStatusListener((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -69,114 +74,130 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     final frontOcclusion =
         widget.question.occlusionDataByImage[_sidesSwapped ? 'back' : 'front'];
 
+    // The answer buttons are always in the layout tree to anchor the button
+    // section height. They fade in on completion; the flip button is overlaid
+    // as a positioned child so it never affects layout height.
+    // This keeps the Expanded card area — and therefore card position — stable
+    // across all three states: before flip, during flip, and after flip.
+    final answerButtons = widget.spacedRepetitionMode
+        ? SrsButtons(
+            question: widget.question,
+            autofocus: _controller.isCompleted,
+            onAnswered: (quality) =>
+                widget.onSrsAnswered?.call(quality) ?? widget.onAnswered(true),
+          )
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: widget.locked ? null : () => widget.onAnswered(false),
+                icon: const Icon(Icons.close, color: Colors.red),
+                label: const Text('Incorrect',
+                    style: TextStyle(color: Colors.red)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.red),
+                ),
+              ),
+              const SizedBox(width: 16),
+              FilledButton.icon(
+                onPressed: widget.locked ? null : () => widget.onAnswered(true),
+                icon: const Icon(Icons.check),
+                label: const Text('Correct'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.green.shade600,
+                ),
+              ),
+            ],
+          );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: AspectRatio(
-                  aspectRatio: 5 / 4,
-                  child: AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, _) {
-                      final t = _controller.value;
-                      final showFront = t < 0.5;
-                      // Normalize t to 0→1 within each half and apply a curve
-                      // so the first half eases in (compress) and second eases out (expand).
-                      final halfT = showFront ? t / 0.5 : (t - 0.5) / 0.5;
-                      final curvedT = showFront
-                          ? Curves.easeIn.transform(halfT)
-                          : Curves.easeOut.transform(halfT);
-                      final scaleX = showFront ? 1.0 - curvedT : curvedT;
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: AspectRatio(
+                    aspectRatio: 5 / 4,
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, _) {
+                        final t = _controller.value;
+                        final showFront = t < 0.5;
+                        // Normalize t to 0→1 within each half and apply a curve
+                        // so the first half eases in (compress) and second eases out (expand).
+                        final halfT = showFront ? t / 0.5 : (t - 0.5) / 0.5;
+                        final curvedT = showFront
+                            ? Curves.easeIn.transform(halfT)
+                            : Curves.easeOut.transform(halfT);
+                        final scaleX = showFront ? 1.0 - curvedT : curvedT;
 
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Transform.scale(
-                            scaleX: scaleX,
-                            child: showFront
-                                ? _CardFace(
-                                    label: frontLabel,
-                                    text: frontText,
-                                    imagePath: frontImagePath,
-                                    occlusionData: frontOcclusion,
-                                    tapToFlip: !widget.locked,
-                                    onTap: _flip,
-                                  )
-                                : _CardFace(
-                                    label: backLabel,
-                                    text: backText,
-                                    imagePath: backImagePath,
-                                  ),
-                          ),
-                        ],
-                      );
-                    },
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Transform.scale(
+                              scaleX: scaleX,
+                              child: showFront
+                                  ? _CardFace(
+                                      label: frontLabel,
+                                      text: frontText,
+                                      imagePath: frontImagePath,
+                                      occlusionData: frontOcclusion,
+                                      tapToFlip: !widget.locked,
+                                      onTap: _flip,
+                                    )
+                                  : _CardFace(
+                                      label: backLabel,
+                                      text: backText,
+                                      imagePath: backImagePath,
+                                    ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, _) {
-                    if (_controller.isDismissed) {
-                      return Center(
+              Stack(
+                children: [
+                  // Answer buttons: always in layout (height anchor).
+                  // Non-interactive and invisible until animation completes.
+                  ExcludeFocus(
+                    excluding: !_controller.isCompleted,
+                    child: IgnorePointer(
+                      ignoring: !_controller.isCompleted,
+                      child: AnimatedOpacity(
+                        opacity: _controller.isCompleted ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: answerButtons,
+                      ),
+                    ),
+                  ),
+                  // Flip button: positioned overlay, only present when dismissed.
+                  // Does not contribute to Stack height.
+                  if (_controller.isDismissed)
+                    Positioned.fill(
+                      child: Center(
                         child: OutlinedButton.icon(
                           onPressed: widget.locked ? null : _flip,
                           icon: const Icon(Icons.flip),
                           label: const Text('Flip card'),
                         ),
-                      );
-                    }
-                    if (_controller.isCompleted) {
-                      if (widget.spacedRepetitionMode) {
-                        return SrsButtons(
-                          question: widget.question,
-                          onAnswered: (quality) =>
-                              widget.onSrsAnswered?.call(quality) ??
-                              widget.onAnswered(true),
-                        );
-                      }
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          OutlinedButton.icon(
-                            onPressed: widget.locked
-                                ? null
-                                : () => widget.onAnswered(false),
-                            icon: const Icon(Icons.close, color: Colors.red),
-                            label: const Text('Incorrect',
-                                style: TextStyle(color: Colors.red)),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          FilledButton.icon(
-                            onPressed: widget.locked
-                                ? null
-                                : () => widget.onAnswered(true),
-                            icon: const Icon(Icons.check),
-                            label: const Text('Correct'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: Colors.green.shade600,
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                    return const SizedBox(height: 48);
-                  },
-                ),
+                      ),
+                    ),
+                ],
               ),
-              const Spacer(),
             ],
           ),
-        );
+        ),
+      ),
+    );
   }
 }
 

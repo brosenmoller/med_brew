@@ -11,6 +11,7 @@ import 'package:leerlus/services/question_service.dart';
 import 'package:leerlus/services/settings_service.dart';
 import 'package:leerlus/services/srs_service.dart';
 import 'package:leerlus/services/streak_service.dart';
+import 'package:leerlus/utils/language_data.dart';
 
 class SettingsScreen extends StatefulWidget {
   final AppDatabase db;
@@ -32,6 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late bool _notifsEnabled;
   late TimeOfDay _notifTime;
   late bool _animationsEnabled;
+  late final TextEditingController _defaultLangController;
 
   @override
   void initState() {
@@ -41,6 +43,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _notifsEnabled = _streak.notifsEnabled;
     _notifTime = TimeOfDay(hour: _streak.notifsHour, minute: _streak.notifsMinute);
     _animationsEnabled = _settings.animationsEnabled;
+    _defaultLangController = TextEditingController(
+      text: codeToDisplay(_settings.defaultQuizLanguageCode),
+    );
+  }
+
+  @override
+  void dispose() {
+    _defaultLangController.dispose();
+    super.dispose();
   }
 
   Future<void> _saveSrs(SrsSettings updated) async {
@@ -122,6 +133,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (code) async {
                 await _settings.setLanguageCode(code);
                 if (mounted) setState(() {});
+              },
+            ),
+            const SizedBox(height: 8),
+
+            const SizedBox(height: 8),
+
+            // ── Default quiz language ─────────────────────────────
+            DropdownMenu<String?>(
+              controller: _defaultLangController,
+              expandedInsets: EdgeInsets.zero,
+              menuHeight: MediaQuery.sizeOf(context).height * 0.4,
+              enableFilter: true,
+              requestFocusOnTap: true,
+              label: Text(l10n.settingsDefaultQuizLanguage),
+              inputDecorationTheme: const InputDecorationTheme(
+                border: OutlineInputBorder(),
+                isDense: false,
+              ),
+              dropdownMenuEntries: [
+                DropdownMenuEntry<String?>(
+                  value: null,
+                  label: l10n.settingsDefaultQuizLanguageNone,
+                ),
+                ...kLanguages.map((l) => DropdownMenuEntry<String?>(
+                      value: l.code,
+                      label: l.display,
+                    )),
+              ],
+              onSelected: (code) async {
+                await _settings.setDefaultQuizLanguageCode(code);
+                _defaultLangController.text =
+                    code == null ? '' : codeToDisplay(code);
               },
             ),
             const SizedBox(height: 8),
