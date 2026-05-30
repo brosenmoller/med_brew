@@ -500,10 +500,16 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     await transaction(() async {
       final questionId = await insertQuestion(question);
+      final count = await (selectOnly(quizQuestions)
+            ..where(quizQuestions.quizId.equals(quizId))
+            ..addColumns([quizQuestions.questionId.count()]))
+          .map((row) => row.read(quizQuestions.questionId.count()) ?? 0)
+          .getSingle();
       await into(quizQuestions).insert(
         QuizQuestionsCompanion.insert(
           quizId: quizId,
           questionId: questionId,
+          sortOrder: Value(count),
         ),
       );
     });
