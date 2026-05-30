@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:leerlus/l10n/app_localizations.dart';
 import 'package:leerlus/models/answer_state.dart';
 import 'package:leerlus/models/question_data.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 import 'package:leerlus/widgets/question_image.dart';
 
 class SortingWidget extends StatefulWidget {
@@ -274,6 +275,7 @@ class _SortingWidgetState extends State<SortingWidget> {
             child: TextFormField(
               controller: _typeControllers[i],
               readOnly: widget.locked,
+              onTap: collapseSelectionOnTap(_typeControllers[i]),
               decoration: InputDecoration(
                 labelText: l10n.sortingItemN(i + 1),
                 border: const OutlineInputBorder(),

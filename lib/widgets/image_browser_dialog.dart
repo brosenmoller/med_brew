@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -24,11 +25,18 @@ class _ImageBrowserDialogState extends State<ImageBrowserDialog> {
   List<_ImageEntry> _images = [];
   bool _loading = true;
   String _search = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadImages();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadImages() async {
@@ -118,6 +126,8 @@ class _ImageBrowserDialogState extends State<ImageBrowserDialog> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: TextField(
+                controller: _searchController,
+                onTap: collapseSelectionOnTap(_searchController),
                 decoration: const InputDecoration(
                   hintText: 'Search images...',
                   prefixIcon: Icon(Icons.search),

@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:leerlus/services/question_service.dart';
 import 'package:leerlus/services/settings_service.dart';
 import 'package:leerlus/utils/language_data.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 import 'package:leerlus/widgets/image_picker_field.dart';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -73,6 +74,7 @@ class _EditQuizScreenState extends State<EditQuizScreen> {
               children: [
                 TextFormField(
                   controller: _titleController,
+                  onTap: collapseSelectionOnTap(_titleController),
                   decoration: InputDecoration(
                     labelText: l10n.titleLabel,
                     border: const OutlineInputBorder(),

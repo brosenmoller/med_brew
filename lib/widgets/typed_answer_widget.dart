@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:leerlus/models/answer_state.dart';
 import 'package:leerlus/models/question_data.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 import 'package:leerlus/widgets/question_image.dart';
 
 class TypedAnswerWidget extends StatefulWidget {
@@ -101,6 +102,7 @@ class _TypedAnswerWidgetState extends State<TypedAnswerWidget> {
                     enabled: !widget.locked,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => _submit(),
+                    onTap: collapseSelectionOnTap(_controller),
                     decoration: InputDecoration(
                       labelText: 'Your Answer',
                       border: const OutlineInputBorder(),

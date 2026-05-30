@@ -8,6 +8,7 @@ import 'package:leerlus/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:leerlus/models/answer_configs.dart' show FlashcardConfig, ImageClickConfig, MultipleChoiceConfig, SetConfig, SortingConfig, TypedAnswerConfig;
 import 'package:leerlus/services/question_service.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 import 'package:leerlus/widgets/app_image.dart';
 import 'package:leerlus/widgets/image_browser_dialog.dart';
 import 'package:leerlus/widgets/image_picker_field.dart';
@@ -330,6 +331,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                   if (_answerType != 'flashcard') ...[
                     TextFormField(
                       controller: _questionController,
+                      onTap: collapseSelectionOnTap(_questionController),
                       decoration: InputDecoration(
                         labelText: l10n.questionLabel,
                         border: const OutlineInputBorder(),
@@ -506,6 +508,7 @@ class _EditQuestionScreenState extends State<EditQuestionScreen> {
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _explanationController,
+                    onTap: collapseSelectionOnTap(_explanationController),
                     decoration: InputDecoration(
                       labelText: l10n.explanationOptional,
                       border: const OutlineInputBorder(),

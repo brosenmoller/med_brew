@@ -3,6 +3,7 @@ import 'package:leerlus/l10n/app_localizations.dart';
 import 'package:leerlus/data/database/app_database.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:leerlus/services/question_service.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 import 'package:leerlus/widgets/image_picker_field.dart';
 
 class EditFolderScreen extends StatefulWidget {
@@ -61,6 +62,7 @@ class _EditFolderScreenState extends State<EditFolderScreen> {
           children: [
             TextFormField(
               controller: _titleController,
+              onTap: collapseSelectionOnTap(_titleController),
               decoration: InputDecoration(
                 labelText: l10n.folderNameLabel,
                 border: const OutlineInputBorder(),

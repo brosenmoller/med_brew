@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:leerlus/l10n/app_localizations.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 
 class MultipleChoiceSection extends StatelessWidget {
   final List<TextEditingController> optionControllers;
@@ -76,6 +77,7 @@ class MultipleChoiceSection extends StatelessWidget {
                 Expanded(
                   child: TextFormField(
                     controller: e.value,
+                    onTap: collapseSelectionOnTap(e.value),
                     decoration: InputDecoration(
                       labelText: l10n.optionN(i + 1),
                       border: const OutlineInputBorder(),

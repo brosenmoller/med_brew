@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 import 'package:leerlus/widgets/image_picker_field.dart';
 
 class FlashcardSideEditor extends StatelessWidget {
@@ -33,6 +34,7 @@ class FlashcardSideEditor extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: textController,
+          onTap: collapseSelectionOnTap(textController),
           decoration: InputDecoration(
             labelText: textOptionalLabel,
             border: const OutlineInputBorder(),

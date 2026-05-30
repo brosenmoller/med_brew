@@ -5,6 +5,7 @@ import 'package:leerlus/l10n/app_localizations.dart';
 import 'package:leerlus/models/answer_configs.dart';
 import 'package:leerlus/models/answer_state.dart';
 import 'package:leerlus/models/question_data.dart';
+import 'package:leerlus/utils/text_field_selection_fix.dart';
 import 'package:leerlus/widgets/question_image.dart';
 
 class SetWidget extends StatefulWidget {
@@ -146,6 +147,7 @@ class _SetWidgetState extends State<SetWidget> {
                               controller: _inputController,
                               focusNode: _inputFocus,
                               readOnly: widget.locked,
+                              onTap: collapseSelectionOnTap(_inputController),
                               // Mobile: Enter key adds the item.
                               // Desktop: suppress default Enter so our onKeyEvent
                               // handler owns both Shift+Enter (add) and Enter (submit).
